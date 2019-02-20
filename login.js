@@ -10,6 +10,7 @@
 import React, {Component} from 'react';
 import {DeviceEventEmitter, StyleSheet, Text, View, Dimensions, Image, TextInput, TouchableOpacity} from 'react-native';
 import Constants from './global.js'
+import {strings} from './language/index'
 global.deviceWidth = Dimensions.get('window').width
 
 export default class App extends Component{
@@ -133,7 +134,7 @@ export default class App extends Component{
                 />
                 <Text style = {styles.foat}>忘记密码了?</Text>
                 <TouchableOpacity style={styles.button} onPress = {this.loginCheckAccount.bind(this)}>
-                    <Text style={styles.buttonText}>登录</Text>
+                    <Text style={styles.buttonText}>{strings('home.exit')}</Text>
                 </TouchableOpacity>
             </View>
             <View style = {styles.line}>
