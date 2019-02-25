@@ -93,7 +93,9 @@ export default class App extends Component{
   loginCheckAccount = () => {
     const { navigation } = this.props;
     if(this.checkAccount()){
-        this.props.navigation.navigate('HomePage')
+        this.props.navigation.navigate('HomePage',{
+            perUser : this.state.userName
+        })
         this.setState({
             userName : '',
             passWord : ''

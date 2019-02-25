@@ -136,7 +136,7 @@ const RootStack = createStackNavigator(
     })}
   },
   {
-    initialRouteName:'Login'
+    initialRouteName:'HomePage' //默认入口
   }
 )
 
