@@ -1,7 +1,6 @@
 //czg data 2019-02-19
 import React, { Component } from 'react';
 import {
-    Platform,
     StyleSheet,
     Text,
     View,
@@ -9,7 +8,8 @@ import {
     Dimensions,
     TextInput,
     ScrollView,
-    Animated
+    Animated,
+    Share
 } from 'react-native';
 
  //引用插件
@@ -237,7 +237,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             }
           ).start();
     }
-    //分享
+    //拉取分享面板
     share = () => {
         if(this.state.shareFlag){
             Animated.timing(
@@ -252,6 +252,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
               })
         }
     }
+    //分享
     hideShareBg = () => {
         Animated.timing(   
             this.state.sharefadeAnim,
@@ -262,6 +263,32 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
           ).start();
         this.setState({
             shareFlag : true
+        })
+        try {
+            const result = Share.share({
+              message:
+                'React Native | A framework for building native apps using React',
+            })
+      
+            if (result.action === Share.sharedAction) {
+              if (result.activityType) {
+                // shared with activity type of result.activityType
+              } else {
+                // shared
+              }
+            } else if (result.action === Share.dismissedAction) {
+              // dismissed
+            }
+          } catch (error) {
+            alert(error.message);
+          }
+    }
+
+    //跳转用户列表
+    goComList = () => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('ComList',{
+            list : this.state.addCommentItem
         })
     }
     render() {
@@ -283,7 +310,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                     <View style = {styles.addItemPer}>
                         <View style = {styles.headerTitle}>
                             <Text style = {styles.addPerLeft}>推荐用户</Text>
-                            <Text style = {styles.addPerRight}>显示全部</Text>
+                            <Text style = {styles.addPerRight} onPress = {this.goComList.bind(this)}>显示全部</Text>
                         </View>
                         <ScrollView style = {styles.addItemList} horizontal = {true} showsHorizontalScrollIndicator={false}>
                             {this.addPerItem()}

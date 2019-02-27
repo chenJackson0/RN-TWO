@@ -9,6 +9,7 @@ import Collection from "./collection";
 import PersonalCenter from "./personalCenter";
 import VerificationCode from "./verificationCode";
 import SetPassWord from "./setPassWord";
+import ComList from "./comList";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -125,6 +126,10 @@ const RootStack = createStackNavigator(
       header:null,
     })},
     HomePage:{screen:TabNavigator,navigationOptions :({navigation})=>({
+      // headerTitle:"首页",
+      header:null
+    })},
+    ComList:{screen:ComList,navigationOptions :({navigation})=>({
       // headerTitle:"首页",
       header:null
     })},
