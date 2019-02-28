@@ -252,6 +252,21 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
               })
         }
     }
+    //隐藏分享面板
+    shareHide = () => {
+        if(this.state.shareFlag){
+            Animated.timing(
+                this.state.sharefadeAnim,
+                {
+                  toValue: -110,
+                  duration: 500,
+                }
+              ).start();
+              this.setState({
+                shareFlag : true
+              })
+        }
+    }
     //分享
     hideShareBg = () => {
         Animated.timing(   
@@ -345,7 +360,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                         <AntDesign name = {'codepen-circle'} size = {40} color = {'black'} style = {styles.shareLogo} onPress = {this.hideShareBg.bind(this)}/>
                         <Text style = {styles.shareName}>微信朋友圈</Text>
                     </View>
-                    <Text style = {styles.closeShare} onPress = {this.hideShareBg.bind(this)}>X</Text>
+                    <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
             </View>
         )
