@@ -40,7 +40,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             fadeAnim: new Animated.Value(-180),
             sharefadeAnim: new Animated.Value(-110),
             commentFlag : true,
-            shareFlag : true,
+            shareFlag : false,
             addCommentItem : [
                 {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',commeName : 'kanon_fukuda',addCommentNum : 2,focusOn :'关注',focusOnFlag : true},
                 {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',commeName : 'evliac_kio',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
@@ -239,7 +239,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
     }
     //拉取分享面板
     share = () => {
-        if(this.state.shareFlag){
+        if(!this.state.shareFlag){
             Animated.timing(
                 this.state.sharefadeAnim,
                 {
@@ -248,7 +248,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                 }
               ).start();
               this.setState({
-                shareFlag : false
+                shareFlag : true
               })
         }
     }
@@ -263,7 +263,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                 }
               ).start();
               this.setState({
-                shareFlag : true
+                shareFlag : false
               })
         }
     }
@@ -277,7 +277,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             }
           ).start();
         this.setState({
-            shareFlag : true
+            shareFlag : false
         })
         try {
             const result = Share.share({
@@ -346,7 +346,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                     <Text style = {styles.codeLine}></Text>
                     <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
                 </Animated.View>
-                <View style = {[styles.opacityBg,this.state.shareFlag ? '' : styles.showopacityBg]} ></View>
+                <View style = {[styles.opacityBg,this.state.shareFlag ? styles.showopacityBg : '']} ></View>
                 <Animated.View style = {[styles.showShare,{bottom:sharefadeAnim}]}>
                     <View style = {styles.shareItem}>
                         <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.shareLogo} onPress = {this.hideShareBg.bind(this)}/>

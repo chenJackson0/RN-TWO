@@ -7,6 +7,7 @@ import HomePage from "./homePage";
 import Rearch from "./rearch";
 import Collection from "./collection";
 import PersonalCenter from "./personalCenter";
+import EditPage from "./editPage";
 import VerificationCode from "./verificationCode";
 import SetPassWord from "./setPassWord";
 import ComList from "./comList";
@@ -130,6 +131,10 @@ const RootStack = createStackNavigator(
       header:null
     })},
     ComList:{screen:ComList,navigationOptions :({navigation})=>({
+      // headerTitle:"首页",
+      header:null
+    })},
+    EditPage:{screen:EditPage,navigationOptions :({navigation})=>({
       // headerTitle:"首页",
       header:null
     })},

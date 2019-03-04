@@ -3,7 +3,7 @@ import {Platform, StyleSheet, Text, View, Dimensions, Image, TextInput, Touchabl
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 global.deviceWidth = Dimensions.get('window').width
-export default class PublicHeads extends Component{
+export default class EditPageHeads extends Component{
 
   constructor(props){
       super(props)
@@ -16,18 +16,17 @@ export default class PublicHeads extends Component{
     return (
         <View style = {styles.max}>
             <View style = {styles.headerP}>
-                <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onPress = {() => {
-                    this.props.choosePicker()
-                }}/>
+                <Text style = {styles.cencal} onPress = {()=>{
+                    this.props.goBackPage()
+                }}>取消</Text>
             </View>
             <View style = {styles.headerT}>
                 <Text style = {styles.headerText}>{this.props.title}</Text>
             </View>
             <View style = {styles.headerV}>
-                <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/>
-            </View>
-            <View style = {styles.headerS}>
-                <SimpleLineIcons name = {'paper-plane'} size = {22} color = {'black'}/>
+                <Text style = {styles.ok} onPress = {()=>{
+                    this.props.successSet()
+                }}>完成</Text>
             </View>
         </View>
     );
@@ -47,29 +46,26 @@ const styles = StyleSheet.create({
         paddingBottom:6,
     },
     headerP: {
-        width:22,
-        height:22,
+        width:32,
         marginLeft:25,
         marginRight:30,
     },
+    cencal: {
+        fontSize:15,
+        color:'#898989'
+    },
     headerT: {
-        width:244,
-        height:22,
+        width:236,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerV: {
-        width:22,
-        height:22,
+    ok: {
+        fontSize:15,
+        color:'#B23AEE'
     },
-    headerS: {
-        width:22,
-        height:22,
+    headerV: {
+        width:32,
         marginRight:20,
         marginLeft:15,
     },
-    line: {
-        flex:1,
-        backgroundColor:'red'
-    }
 });

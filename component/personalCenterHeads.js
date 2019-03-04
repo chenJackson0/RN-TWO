@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View, Dimensions, Image, TextInput, TouchableOpacity} from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import EvilIcons from 'react-native-vector-icons/EvilIcons'
 global.deviceWidth = Dimensions.get('window').width
-export default class PublicHeads extends Component{
+export default class PersonalCenterHeads extends Component{
 
   constructor(props){
       super(props)
@@ -16,7 +16,7 @@ export default class PublicHeads extends Component{
     return (
         <View style = {styles.max}>
             <View style = {styles.headerP}>
-                <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onPress = {() => {
+                <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onPress = {()=>{
                     this.props.choosePicker()
                 }}/>
             </View>
@@ -24,10 +24,9 @@ export default class PublicHeads extends Component{
                 <Text style = {styles.headerText}>{this.props.title}</Text>
             </View>
             <View style = {styles.headerV}>
-                <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/>
-            </View>
-            <View style = {styles.headerS}>
-                <SimpleLineIcons name = {'paper-plane'} size = {22} color = {'black'}/>
+                <EvilIcons name = {'navicon'} size = {30} color = {'black'} onPress = {()=>{
+                    this.props.showMenuBar()
+                }}/>
             </View>
         </View>
     );
@@ -52,24 +51,24 @@ const styles = StyleSheet.create({
         marginLeft:25,
         marginRight:30,
     },
+    cencal: {
+        height:22,
+        color:'#898989'
+    },
     headerT: {
-        width:244,
+        width:248,
         height:22,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerV: {
-        width:22,
-        height:22,
+    ok: {
+        fontSize:15,
+        color:'#B23AEE'
     },
-    headerS: {
-        width:22,
+    headerV: {
+        width:30,
         height:22,
         marginRight:20,
         marginLeft:15,
     },
-    line: {
-        flex:1,
-        backgroundColor:'red'
-    }
 });
