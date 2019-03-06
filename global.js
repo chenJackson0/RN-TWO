@@ -12,10 +12,31 @@ var storage = new Storage({
   // 读写时在内存中缓存数据。默认启用。
   enableCache: true,
 })
-accountList = []
+accountList = []//所以注册用户列表
+publishedList = [//发表的作品
+    // {   userName : 'jackson',
+    //     publicHeadImg : [{img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}],
+    //     text : 'Madrid MadridAtletico Madri',
+    //     flag : true,
+    //     butText : '查看更多点赞',
+    //     cllFlag : true,
+    //     perUser : 'lukamodric10',
+    //     playNum : 1508124,
+    //     commentsNum : 989,
+    //     time : 1551841668000,
+    //     timeText : '',
+    //     giveALike : ['jackson','chanmeg','maxmain'],
+    //     giveALikeList : ''
+    // }
+] 
+
+getSublishedList = () => {
+    return this.publishedList
+}
 getStorageAccount = () => {
     return this.accountList
 }
+//模拟获取api用户列表
 storageF = () => {
     storage.load({
         key : 'account',
@@ -26,9 +47,23 @@ storageF = () => {
         console.log()
     })
 }
+
+//模拟获取api用户发布作品列表
+publishedListStorageF = () => {
+    storage.load({
+        key : 'publishedLis',
+        autoSync : true
+    }).then(ret => {
+        this.publishedList = ret
+    }).catch(err => {
+        console.log()
+    })
+}
 const storageG = {
   storage : storage,
   storageF : storageF,
-  getStorageAccount : getStorageAccount
+  publishedListStorageF : publishedListStorageF,
+  getStorageAccount : getStorageAccount,
+  getSublishedList : getSublishedList
 }
 export default storageG

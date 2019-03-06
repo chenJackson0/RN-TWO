@@ -14,6 +14,7 @@ import {
 
  //引用插件
 import Header from './component/publicHeads'
+import VideoImg from './component/videoImg'
 // 取得屏幕的宽高Dimensions
 const { ScreenWidth, height } = Dimensions.get('window');
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -21,6 +22,21 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import ImagePicker from 'react-native-image-picker'
+import Constants from './global.js'
+const photoOptions = {
+    title:'请选择',
+    quality: 0.8,
+    cancelButtonTitle:'取消',
+    takePhotoButtonTitle:'拍照',
+    chooseFromLibraryButtonTitle:'选择相册',
+    allowsEditing: true,
+    noData: false,
+    storageOptions: {
+        skipBackup: true,
+        path: 'images'
+    }
+};
  export default class HomePage extends Component {
   constructor(props) {
    super(props);
@@ -28,19 +44,13 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             title : '首页',
             butText : '展开',
             userName : '',
-            data : [
-                {
-                    text : 'Madrid MadridAtletico Madrid……',flag : true,butText : '展开',cllFlag : true,perUser : 'lukamodric10'
-                },{
-                    text : 'Madrid MadridAtletico Madrid……',flag : true,butText : '展开',cllFlag : true,perUser : 'lukamodric10'
-                },{
-                    text : 'Madrid MadridAtletico Madrid……',flag : true,butText : '展开',cllFlag : true,perUser : 'lukamodric10'
-                }
-            ],
+            user : '',
+            data : [],
             fadeAnim: new Animated.Value(-180),
             sharefadeAnim: new Animated.Value(-110),
             commentFlag : true,
             shareFlag : false,
+            videoImgFlag : false,
             addCommentItem : [
                 {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',commeName : 'kanon_fukuda',addCommentNum : 2,focusOn :'关注',focusOnFlag : true},
                 {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',commeName : 'evliac_kio',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
@@ -51,6 +61,71 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                 {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',commeName : 'jacksonChen',addCommentNum : 9,focusOn :'关注',focusOnFlag : true},
             ]
         }
+    }
+    //时间戳转时间
+
+    changeTime = (date) => {
+        let month = Math.floor(date / (3600*24*30))
+        let day = Math.floor(date / (3600*24));
+        let hour =  Math.floor((date % (3600*24)) / 3600);
+        let minute = Math.floor(((date % (3600*24)) % 3600) / 60);
+        if(month>0){
+            return month + '月前'
+        }else if(day>0){
+            return day + '天前'
+        }else if(hour>1){
+            return hour + '时前'
+        }else if(minute>1){
+            return minute + '分钟前'
+        }else{
+            return '刚刚' 
+        }
+    }
+    addPublised = () => {
+        const { navigation } = this.props;
+        let data = this.state.data
+        let publisedList = navigation.getParam("publisedList")
+        if(publisedList){
+            data.unshift(publisedList)
+            this.setState({
+                data:data
+            })
+        }
+    }
+     //注册通知
+    componentDidMount(){
+        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
+    }   
+    
+    //加载页面
+    componentWillMount = () =>{
+        Constants.publishedListStorageF()//加载缓存获取数据
+        setTimeout(()=>{
+            this.init()
+        },100)
+    }
+    //处理业务逻辑
+
+    init = () => {
+        let publishedList = Constants.getSublishedList() ? Constants.getSublishedList() : []
+        const { navigation } = this.props;
+        let newTiem = Date.parse(new Date())
+        let user = navigation.getParam("perUser")
+        let lastTime
+        let getChangeTime
+        for(let i = 0;i<publishedList.length;i++){
+            lastTime = newTiem - publishedList[i].time
+            if(lastTime>0){
+                getChangeTime = this.changeTime(lastTime)
+                publishedList[i].timeText = getChangeTime
+            }else{
+                return
+            }
+        }
+        this.setState({
+            data : publishedList,
+            user:user
+         })
     }
     //加载待关注用户
     personItem = () => {
@@ -100,6 +175,16 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             addCommentItem : data
         })
     }
+    //判断是否有图片
+    isImg = (img) => {
+        if(img){
+            return (
+                <Image source={{uri:img}} style = {styles.perMaxImg} />
+            )
+        }else{
+            return
+        }
+    }
     //加载已关注的用户发不的作品
     saveWorks = () =>{
         let array = {
@@ -110,11 +195,11 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
            <View style = {styles.perTitle}>
                     <Image source={{uri:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
                     <Text style = {styles.perName}>
-                        marcoasensio 10
+                        {this.state.data[i].userName}
                     </Text>
                     <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
                 </View>
-                <Image source={{uri:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perMaxImg} />
+                {this.isImg(this.state.data[i].publicHeadImg[0].img)}
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i)}/>
@@ -126,14 +211,14 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                     </View>
                 </View>
                 <View style = {styles.commentsItem}>
-                    <Text style = {styles.playNum}>1,508,124次播放 · {this.state.data[i].perUser}赞了</Text>
-                    <Text style = {styles.playText}>realmadrid EXCUSIVE DERBY CONTENT</Text>
+                    <Text style = {styles.playNum}>{this.state.data[i].playNum}次播放 · {this.state.data[i].perUser}赞了</Text>
+                    <Text style = {styles.playText}>{this.state.data[i].text}</Text>
                     <View style = {styles.playCont}>
-                        <Text style = {styles.leftText}>{this.state.data[i].text}</Text>
+                        <Text style = {styles.leftText}>{this.state.data[i].giveALikeList}</Text>
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,i)}>{this.state.data[i].butText}</Text>
                     </View>
-                    <Text style = {styles.commentNum}>共989条评论</Text>
-                    <Text style = {styles.commentDay}>一天前</Text>
+                    <Text style = {styles.commentNum}>共{this.state.data[i].commentsNum}条评论</Text>
+                    <Text style = {styles.commentDay}>{this.state.data[i].timeText}</Text>
                 </View>
             </View>
             array.works.push(item)
@@ -142,18 +227,22 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
     }
     //展示
     showContent =  (j) =>{
+        let giveName = ''
         for(let i = 0;i<this.state.data.length;i++){
             if(this.state.data[i].flag){
                 if( i == j){
-                    this.state.data[i].text = 'Madrid MadridAtletico Madrid 1-3 Real MadridAtletico Madrid 1-3 Madrid Atletico Madrid 1-3 RealMadridAtleticoMadridAtleticoMadridAtletico Madri'
+                    for(let j = 0;j<this.state.data[i].giveALike.length;j++){
+                        giveName = giveName + this.state.data[i].giveALike[j] + ', '
+                    }
+                    this.state.data[i].giveALikeList = '他们都点赞了 ' + giveName
                     this.state.data[i].flag = false
                     this.state.data[i].butText = '收起'
                 }
             }else{
                 if( i == j){
-                    this.state.data[i].text = 'Madrid MadridAtletico……'
+                    this.state.data[i].giveALikeList = ''
                     this.state.data[i].flag = true
-                    this.state.data[i].butText = '展开'
+                    this.state.data[i].butText = '查看更多点赞'
                 }
             }
         }
@@ -182,12 +271,10 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
     }
     //点赞
     clickCall = (j) => {
-        const { navigation } = this.props;
-        let user = navigation.getParam("perUser")
         for(let i = 0;i<this.state.data.length;i++){
             if( i == j){
                 this.state.data[i].cllFlag = false
-                this.state.data[i].perUser = user
+                this.state.data[i].perUser = this.state.user
             }
         }
         this.setState({
@@ -306,12 +393,61 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
             list : this.state.addCommentItem
         })
     }
+
+    //发布作品不带图片
+    videoImg = () => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user})
+    }
+    //发布作品选择图片
+    getImg = () => {
+        ImagePicker.showImagePicker(photoOptions, (response) => {
+            if (response.didCancel) {
+            
+            }
+            else if (response.error) {
+                
+            }
+            else if (response.customButton) {
+                
+            }
+            else {
+                let source = response.uri;
+                const { navigation } = this.props;
+                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user})
+            }
+        });
+    }
+    //加载发布选择组件
+    showAndHidw = () => {
+        if(this.state.videoImgFlag){
+            return (
+                <VideoImg/>
+            )
+        }else{
+            return
+        }
+    }
+    //点击浮层隐藏弹窗
+    hideF = () => {
+        Animated.timing(
+            this.state.sharefadeAnim,
+            {
+              toValue: -110,
+              duration: 500,
+            }
+          ).start();
+        this.setState({
+            shareFlag : false,
+            videoImgFlag : false
+        })
+    }
     render() {
         let {fadeAnim}  = this.state;
         let {sharefadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title}/>
+                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} getImg = {this.getImg.bind(this)}/>
                 <ScrollView style = {styles.items}>
                     <View style = {styles.listItem}>
                         <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
@@ -346,7 +482,9 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                     <Text style = {styles.codeLine}></Text>
                     <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
                 </Animated.View>
-                <View style = {[styles.opacityBg,this.state.shareFlag ? styles.showopacityBg : '']} ></View>
+                <View style = {[styles.opacityBg,this.state.shareFlag ? styles.showopacityBg : '']} >
+                    <Text style = {styles.bindClick} onPress = {this.hideF.bind(this)}></Text>
+                </View>
                 <Animated.View style = {[styles.showShare,{bottom:sharefadeAnim}]}>
                     <View style = {styles.shareItem}>
                         <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.shareLogo} onPress = {this.hideShareBg.bind(this)}/>
@@ -362,12 +500,16 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
                     </View>
                     <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
+                {/* {this.showAndHidw()} */}
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+    bindClick: {
+        flex:1
+    },
     closeShare: {
         position:'absolute',
         top:7,
@@ -378,7 +520,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
     opacityBg: {
         position:'absolute',
         right:0,
-        top:0,
+        top:-20,
         left:0,
         backgroundColor:'#000000',
         opacity:0.5
@@ -532,10 +674,12 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
     leftText: {
         fontSize:11,
         color:'#333333',
+        marginTop:4
     },
     leftButton: {
         fontSize:11,
         color:'#898989',
+        marginTop:4
     },
     commentNum: {
         fontSize:11,

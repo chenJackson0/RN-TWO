@@ -11,6 +11,7 @@ import EditPage from "./editPage";
 import VerificationCode from "./verificationCode";
 import SetPassWord from "./setPassWord";
 import ComList from "./comList";
+import Published from "./published";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -135,6 +136,10 @@ const RootStack = createStackNavigator(
       header:null
     })},
     EditPage:{screen:EditPage,navigationOptions :({navigation})=>({
+      // headerTitle:"首页",
+      header:null
+    })},
+    Published:{screen:Published,navigationOptions :({navigation})=>({
       // headerTitle:"首页",
       header:null
     })},
