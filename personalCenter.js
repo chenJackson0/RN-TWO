@@ -18,6 +18,7 @@ const { ScreenWidth, height } = Dimensions.get('window');
 import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
+import Constants from './global.js'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -38,8 +39,82 @@ const photoOptions = {
             title : '个人中心',
             avatarSource: 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             fadeAnim: new Animated.Value(-200),
-            menuFlag : false
+            menuFlag : false,
+            userName : '',
+            publishedList : [],
+            post : 0,
+            fans : 0,
+            FocusOn : 0,
+            perItem : []
         }
+    }
+    
+    //注册监听事件
+    showData = () => {
+        Constants.publishedListStorageF()//加载缓存获取数据
+        Constants.getUserNameStorageF()
+        Constants.getcommentsItemStorageF()
+        Constants.getUserNameImgStorageF()
+        this.setState({
+            post : 0,
+            fans : 0,
+            FocusOn : 0,
+            perItem : [],
+            publishedList : []
+        })
+        setTimeout(()=>{
+            this.init()
+        },200)
+    }
+     //注册通知
+     componentWillMount (){
+        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.showData())]; //BottomTab路由改变时增加读取数据的监听事件 
+    }  
+    //加载数据
+    init = () => {
+        let userName = Constants.getUserName() ? Constants.getUserName() : ''
+        let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
+        alert(JSON.stringify(commentsItem))
+        for(let i = 0;i<commentsItem.length;i++){
+            if(userName == commentsItem[i].userName){
+                
+                commentsItem[i].img = userNameImg
+                alert(commentsItem[i].fensi)
+                this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
+                this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
+                break
+            }
+        }
+        // alert(this.state.fans)
+        Constants.storage.save({
+            key : 'commentsItemFoucsOn',
+            data : commentsItem,
+            defaultExpires: true, 
+        })
+        //获取作品数量
+        for(let i = 0;i<publishedList.length;i++){
+            if(userName == publishedList[i].userName){
+                this.state.post = this.state.post + 1
+                //获取用户下的所有发布产品
+                for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
+                    this.state.perItem.push(publishedList[i].publicHeadImg[j])
+                }
+            }
+        }
+        //获取关注人数和粉丝人数
+        // for(let i = 0;commentsItem.length;i++){
+            
+        // }
+        this.setState({
+            userName : userName,
+            publishedList : publishedList,
+            post : this.state.post,
+            fans : this.state.fans,
+            FocusOn : this.state.FocusOn,
+            perItem : this.state.perItem
+        })
     }
     //获取手机相册
     choosePicker=()=>{
@@ -93,6 +168,17 @@ const photoOptions = {
             menuFlag : false    
           })
     }
+    //作品展示
+    perItem = () => {
+        let imgs = []
+        for(let i = 0;i<this.state.publishedList.length;i++){
+            if(this.state.userName == publishedList[i].userName){
+                let view = <Image source={{uri :'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.userConter4Img} key = {i}/>
+                imgs.push(view)
+            } 
+        }
+        return imgs
+    }
     render() {
         let {fadeAnim}  = this.state;
         return(
@@ -105,9 +191,9 @@ const photoOptions = {
                         </View>
                         <View style = {styles.userConter1Right}>
                             <View style = {styles.userConter1RightTop}>
-                                <Text style = {styles.userConter1RightTop1}>1</Text>
-                                <Text style = {styles.userConter1RightTop1}>0</Text>
-                                <Text style = {styles.userConter1RightTop1}>10</Text>
+                                <Text style = {styles.userConter1RightTop1}>{this.state.post}</Text>
+                                <Text style = {styles.userConter1RightTop1}>{this.state.fans}</Text>
+                                <Text style = {styles.userConter1RightTop1}>{this.state.FocusOn}</Text>
                             </View>
                             <View style = {styles.userConter1RightMidd}>
                                 <Text style = {styles.userConter1RightMidd1}>帖子</Text>
@@ -120,7 +206,7 @@ const photoOptions = {
                         </View>
                     </View>
                     <View style = {styles.userConter2}>
-                        <Text style = {styles.userConterName}>Jackson Chen</Text>
+                        <Text style = {styles.userConterName}>{this.state.userName}</Text>
                     </View>
                     <View style = {styles.userConter3}>
                         <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />
@@ -128,7 +214,7 @@ const photoOptions = {
                         <EvilIcons name = {'image'} size = {30} color = {'#898989'} style = {styles.userConterTab} />
                     </View>
                     <View style = {styles.userConter4}>
-                        <Image source={{uri :'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.userConter4Img} />
+                        {this.perItem()}
                     </View>
                     <View style = {styles.userConter5}>
                         <Text style = {styles.userConter5Title}>完善个人主页</Text>

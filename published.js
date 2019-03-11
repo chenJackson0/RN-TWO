@@ -57,6 +57,11 @@ const options = {
             confirmationWindowFlag : false,
             deleteImgLastFlag : false,
             num : -1,
+            userNameImg : '',
+            publishedList: [],
+            id : 0,
+            address : '上海',
+            addCommentNum : 0,
             confirmationWindowFlagData : [
                 {
                     title : '保存此次编辑',
@@ -76,23 +81,47 @@ const options = {
         }
     }
     num = -1
-    componentWillMount = () => {
+    addPublised = () => {
         Constants.publishedListStorageF()//加载缓存获取数据
+        Constants.getcommentsItemStorageF()
+        this.setState({
+            publishedList: [],
+        })
+        setTimeout(()=>{
+            this.init()
+        },300)
+        
+    }
+    componentWillMount = () => {
         const { navigation } = this.props;
         let itemData = []
         let itemList = {}
         let imgFlag = navigation.getParam("imgFlag")
         let avatarSource = navigation.getParam("avatarSource")
         let user = navigation.getParam("user")
+        let userNameImg = navigation.getParam("userNameImg")
         itemList.img = avatarSource
         itemData.push(itemList)
         this.setState({
             imgFlag : imgFlag,
             item : itemData,
             avatarSource : avatarSource,
-            user: user
+            user: user,
+            userNameImg : userNameImg,
         })
     }
+    //处理业务
+    init = () => {
+        let published = Constants.getSublishedList() ? Constants.getSublishedList() : []
+        this.setState({
+            publishedList : published
+        })
+    }
+    componentDidMount = () => {
+        //注册监听事件
+        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
+    }
+    
 
     //编辑发布作品时,点击不保留按钮
     noKeep = () => {
@@ -254,13 +283,14 @@ const options = {
             typeNameChange: false
         })
     }
-
     //发布提交
     publishedF = () => {
-        let publishedList = Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let publishedList = this.state.publishedList
         let date = Date.parse(new Date());
         const { navigation } = this.props;
         let data = {
+            id : this.state.publishedList.length + 1,
+            perImg : this.state.userNameImg,
             userName : this.state.user,
             publicHeadImg : [{img : this.state.item[0].img}],
             text : this.state.publisedText,
@@ -269,16 +299,17 @@ const options = {
             cllFlag : true,
             perUser : this.state.user,
             playNum : 1508124,
-            commentsNum : 989,
+            commentsNum : 0,
             time : date,
             timeText : '刚刚',
             giveALike : ['jackson','chanmeg','maxmain'],
-            giveALikeList : ''
+            data : [],
+            address : this.state.address,
         }
         data.publicHeadImg = this.state.item
         publishedList.unshift(data)
         Constants.storage.save({
-            key : 'publishedLis',
+            key : 'publishedLi',
             data : publishedList,
             defaultExpires: true, 
         })
@@ -310,7 +341,7 @@ const options = {
                     <View style = {styles.publised3}>
                         <EvilIcons name = {'location'} size = {25} color = {'black'} style = {styles.collect}/>
                         <Text style = {styles.publisedTitle}>所在位置</Text>
-                        <Text style = {styles.publisedMsg}>上海</Text>
+                        <Text style = {styles.publisedMsg}>{this.state.address}</Text>
                         <EvilIcons name = {'chevron-right'} size = {25} color = {'#898989'} style = {styles.collect}/>
                     </View>
                     <View style = {styles.publised3}>

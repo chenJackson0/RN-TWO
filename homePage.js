@@ -9,7 +9,8 @@ import {
     TextInput,
     ScrollView,
     Animated,
-    Share
+    Share,
+    SectionList
 } from 'react-native';
 
  //引用插件
@@ -46,20 +47,19 @@ const photoOptions = {
             userName : '',
             user : '',
             data : [],
-            fadeAnim: new Animated.Value(-180),
+            fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
             commentFlag : true,
             shareFlag : false,
             videoImgFlag : false,
-            addCommentItem : [
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',commeName : 'kanon_fukuda',addCommentNum : 2,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',commeName : 'evliac_kio',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雪中送腿 / FA',commeName : 'alian_li',addCommentNum : 4,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '春夏秋冬 / SHYUANF',commeName : 'fames_si',addCommentNum : 5,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '别来无恙 / HAO',commeName : 'li_shuai',addCommentNum : 3,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '换看春秋 / WEI',commeName : 'kang_wei',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-                {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',commeName : 'jacksonChen',addCommentNum : 9,focusOn :'关注',focusOnFlag : true},
-            ]
+            comments : '',
+            addCommentItem : [],
+            commentsItem : [],
+            index : '',
+            commentNim : 0,
+            userNameImg : '',
+            addCommentNum : 0,
+            oldcommentsItem : []
         }
     }
     //时间戳转时间
@@ -83,34 +83,43 @@ const photoOptions = {
     }
     addPublised = () => {
         const { navigation } = this.props;
-        let data = this.state.data
-        let publisedList = navigation.getParam("publisedList")
-        if(publisedList){
-            data.unshift(publisedList)
-            this.setState({
-                data:data
-            })
-        }
+        // let data = this.state.data
+        // let publisedList = navigation.getParam("publisedList")
+        Constants.publishedListStorageF()//加载缓存获取数据
+        Constants.getUserNameImgStorageF()
+        Constants.getUserNameStorageF()
+        Constants.getcommentsItemStorageF()
+        this.setState({
+            user : '',
+            data : [],
+            userNameImg : '',
+            addCommentItem : [],
+            addCommentNum : 0
+        },()=>{
+            setTimeout(()=>{
+                this.init()
+                this.addCommentNum()
+            },500)
+        })
+        
+        // if(publisedList){
+        //     data.unshift(publisedList)
+        //     this.setState({
+        //         data:data
+        //     })
+        // }
     }
      //注册通知
-    componentDidMount(){
+     componentWillMount(){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
     }   
-    
-    //加载页面
-    componentWillMount = () =>{
-        Constants.publishedListStorageF()//加载缓存获取数据
-        setTimeout(()=>{
-            this.init()
-        },100)
-    }
     //处理业务逻辑
-
     init = () => {
-        let publishedList = Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
+        let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         const { navigation } = this.props;
         let newTiem = Date.parse(new Date())
-        let user = navigation.getParam("perUser")
+        let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
         let lastTime
         let getChangeTime
         for(let i = 0;i<publishedList.length;i++){
@@ -122,10 +131,32 @@ const photoOptions = {
                 return
             }
         }
+        Constants.storage.save({
+            key : 'userName',
+            data : user,
+            defaultExpires: true, 
+        })
         this.setState({
             data : publishedList,
-            user:user
+            user:user,
+            userNameImg : userNameImg,
+            addCommentItem : publishedList.addCommentItem ? publishedList.addCommentItem : []
          })
+    }
+    //获取主播关注的人数
+    addCommentNum = () => {
+        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        let commentsItemList = []
+        for(let i = 0;i<commentsItem.length;i++){
+            if(this.state.user != commentsItem[i].userName){
+                commentsItemList.push(commentsItem[i])
+                commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+            }
+        }
+        this.setState({
+            addCommentItem : commentsItemList,
+            oldcommentsItem : commentsItem
+        })
     }
     //加载待关注用户
     personItem = () => {
@@ -151,9 +182,9 @@ const photoOptions = {
         for(let i = 0;i<this.state.addCommentItem.length;i++){
            let item =  <View style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i}>
                 <Image source={{uri:this.state.addCommentItem[i].img}} style = {styles.addPerListImg} />
-                <Text style = {styles.addPerName}>{this.state.addCommentItem[i].name}</Text>
+                <Text style = {styles.addPerName}>{this.state.addCommentItem[i].userName}</Text>
                 <Text style = {styles.addPerMsg}>{this.state.addCommentItem[i].commeName}和其他{this.state.addCommentItem[i].addCommentNum}位用户关注了</Text>
-                <Text style = {[styles.addPerButton,this.state.addCommentItem[i].focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,i)}>{this.state.addCommentItem[i].focusOn}</Text>
+                <Text style = {[styles.addPerButton,this.state.addCommentItem[i].focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,i,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>{this.state.addCommentItem[i].focusOn}</Text>
                 <Text style = {styles.addPerColse} onPress = {this.closeCommentItem.bind(this,i)}>X</Text>
             </View>
             array.perItem.push(item)
@@ -193,7 +224,7 @@ const photoOptions = {
         for(let i = 0;i<this.state.data.length;i++){
            let item =   <View style = {styles.perListItem} key = {i} ref = {i}>
            <View style = {styles.perTitle}>
-                    <Image source={{uri:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
+                    <Image source={{uri:this.state.data[i].perImg ? this.state.data[i].perImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
                     <Text style = {styles.perName}>
                         {this.state.data[i].userName}
                     </Text>
@@ -203,7 +234,7 @@ const photoOptions = {
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i)}/>
-                        <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this)}/>
+                        <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,i)}/>
                         <EvilIcons name = {'share-google'} size = {30} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
                     </View>
                     <View style = {styles.right}>
@@ -211,13 +242,13 @@ const photoOptions = {
                     </View>
                 </View>
                 <View style = {styles.commentsItem}>
-                    <Text style = {styles.playNum}>{this.state.data[i].playNum}次播放 · {this.state.data[i].perUser}赞了</Text>
+                    <Text style = {styles.playNum}>{this.state.data[i].playNum}次播放 · {this.state.data[i].giveALike[this.state.data[i].giveALike.length-1]}赞了</Text>
                     <Text style = {styles.playText}>{this.state.data[i].text}</Text>
                     <View style = {styles.playCont}>
-                        <Text style = {styles.leftText}>{this.state.data[i].giveALikeList}</Text>
+                        {this.moreCall(this.state.data[i].giveALike,this.state.data[i].flag)}
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,i)}>{this.state.data[i].butText}</Text>
                     </View>
-                    <Text style = {styles.commentNum}>共{this.state.data[i].commentsNum}条评论</Text>
+                    <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
                     <Text style = {styles.commentDay}>{this.state.data[i].timeText}</Text>
                 </View>
             </View>
@@ -225,22 +256,31 @@ const photoOptions = {
         }
         return array.works
     }
+    //更多点赞的人
+    moreCall = (like,flag) => {
+        let giveName = ''
+        for(let i = 0;i<like.length;i++){
+            giveName = giveName + like[i] + ', '
+        }
+        if(!flag){
+            return(
+                <Text style = {styles.leftText}>他们都点赞了 {giveName}</Text>
+            )
+        }else{
+            return
+        }
+        
+    }
     //展示
     showContent =  (j) =>{
-        let giveName = ''
         for(let i = 0;i<this.state.data.length;i++){
             if(this.state.data[i].flag){
                 if( i == j){
-                    for(let j = 0;j<this.state.data[i].giveALike.length;j++){
-                        giveName = giveName + this.state.data[i].giveALike[j] + ', '
-                    }
-                    this.state.data[i].giveALikeList = '他们都点赞了 ' + giveName
                     this.state.data[i].flag = false
                     this.state.data[i].butText = '收起'
                 }
             }else{
                 if( i == j){
-                    this.state.data[i].giveALikeList = ''
                     this.state.data[i].flag = true
                     this.state.data[i].butText = '查看更多点赞'
                 }
@@ -251,7 +291,9 @@ const photoOptions = {
         })
     }
     //点击关注
-    focusOn = (j) => {
+    focusOn = (j,name,img) => {
+        let deteleFochs = []
+        let deteleFensi = []
         for(let i = 0;i<this.state.addCommentItem.length;i++){
             if(this.state.addCommentItem[i].focusOnFlag){
                 if(i == j){
@@ -265,16 +307,63 @@ const photoOptions = {
                 }
             }
         }
+        for(let i = 0;i<this.state.oldcommentsItem.length;i++){
+            if(this.state.oldcommentsItem[i].focusOnFlag){
+                if(i == j){
+                    let data = {
+                        id : this.state.oldcommentsItem[i].id,
+                        name : name,
+                        img : img
+                    }
+                    deteleFochs.push(data)
+                    let dataT = {
+                        id : this.state.oldcommentsItem[i].id,
+                        name : this.state.user,
+                        img : this.state.userNameImg
+                    }
+                    deteleFensi.push(dataT)
+                }
+            }else{
+                if(i == j){
+                    for(let k = 0;k<deteleFochs.length;k++){
+                        if(deteleFochs[k].name != name){
+                            deteleFochs.push(deteleFochs[i])
+                        }
+                    }
+                    for(let k = 0;k<deteleFensi.length;k++){
+                        if(deteleFensi[k].name != this.state.user){
+                            deteleFensi.push(deteleFensi[i])
+                        }
+                    }
+                }
+            }
+            this.state.oldcommentsItem[i].focusOns = deteleFochs
+            this.state.oldcommentsItem[i].fensi = deteleFensi
+        }
         this.setState({
             addCommentItem : this.state.addCommentItem
+        })
+        Constants.storage.save({
+            key : 'commentsItemFoucsOn',
+            data : this.state.oldcommentsItem,
+            defaultExpires: true, 
         })
     }
     //点赞
     clickCall = (j) => {
         for(let i = 0;i<this.state.data.length;i++){
-            if( i == j){
-                this.state.data[i].cllFlag = false
-                this.state.data[i].perUser = this.state.user
+            if(this.state.data[i].cllFlag){
+                if( i == j){
+                    this.state.data[i].cllFlag = false
+                    this.state.data[i].perUser = this.state.user
+                    this.state.data[i].giveALike.push(this.state.user)
+                }
+            }else{
+                if( i == j){
+                    this.state.data[i].cllFlag = true
+                    this.state.data[i].perUser = this.state.user + '取消'
+                    this.state.data[i].giveALike.pop(this.state.user)
+                }
             }
         }
         this.setState({
@@ -286,15 +375,27 @@ const photoOptions = {
                 loveWidth : -100
             })
         },500)
+        Constants.storage.save({
+            key : 'publishedLis',
+            data : this.state.data,
+            defaultExpires: true, 
+        })
+        {this.showContent()}
     }
 
     //评论
-    comment = () => {
+    comment = (i) => {
+        let commentsItem = this.state.data[i].data ? this.state.data[i].data : []
+        this.setState({
+            commentsItem : commentsItem,
+            commentNim : this.state.data[i].commentsNum,
+            index : i
+        })
         if(this.state.commentFlag){
             Animated.timing(
                 this.state.fadeAnim,
                 {
-                  toValue: 0,
+                  toValue: 550,
                   duration: 500,
                 }
               ).start();
@@ -305,7 +406,7 @@ const photoOptions = {
             Animated.timing(   
                 this.state.fadeAnim,
                 {
-                  toValue:-180,
+                  toValue:0,
                   duration: 500,
                 }
               ).start();
@@ -314,15 +415,46 @@ const photoOptions = {
               })
         }
     }
-    //发送评论
-    saveMsg = () => {
+    //关闭发送评论
+    closeSaveMsg = () => {
         Animated.timing(   
             this.state.fadeAnim,
             {
-              toValue:-180,
+              toValue:0,
               duration: 500,
             }
           ).start();
+          this.setState({
+            commentFlag : true
+          })
+    }
+    //发送评论
+    saveMsg = () => {
+        let data = {
+            id : this.state.data[this.state.index].commentsNum + 1,
+            img : this.state.userNameImg,
+            name : this.state.user,
+            nameT : this.state.comments,
+        }
+        let commentsItem = 
+            {
+                data : []
+            }
+        
+        commentsItem.data.unshift(data)
+        this.state.data[this.state.index].data.push(commentsItem)
+        this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
+        this.setState({
+            comments : '',
+            commentsItem : this.state.data[this.state.index].data,
+            commentNim : this.state.data[this.state.index].commentsNum
+        })
+        Constants.storage.save({
+            key : 'publishedLi',
+            data : this.state.data,
+            defaultExpires: true, 
+        })
+        
     }
     //拉取分享面板
     share = () => {
@@ -397,7 +529,7 @@ const photoOptions = {
     //发布作品不带图片
     videoImg = () => {
         const { navigation } = this.props;
-        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user})
+        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg : this.state.userNameImg})
     }
     //发布作品选择图片
     getImg = () => {
@@ -414,7 +546,7 @@ const photoOptions = {
             else {
                 let source = response.uri;
                 const { navigation } = this.props;
-                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user})
+                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
             }
         });
     }
@@ -441,6 +573,24 @@ const photoOptions = {
             shareFlag : false,
             videoImgFlag : false
         })
+    }
+    //评论列表
+    addcommentsItem = ({item}) => {
+        return(
+            <View style = {styles.commentList}>
+                <View style = {styles.commentLeftPerImg}>
+                    <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
+                </View>
+                <View style = {styles.commentRightPerText}>
+                    <Text style = {styles.commentRIghtPerName}>
+                        {item.name}
+                    </Text>
+                    <Text style = {styles.commentRIghtPerText}>
+                        {item.nameT}
+                    </Text>
+                </View>
+            </View>
+        )
     }
     render() {
         let {fadeAnim}  = this.state;
@@ -469,18 +619,35 @@ const photoOptions = {
                     </View>
                 </ScrollView>
                 <Entypo name = {'heart'} size = {this.state.loveWidth} color = {'red'} style = {styles.love}/>
-                <Animated.View style = {[styles.adimatedView,{top:fadeAnim}]}>
-                    <TextInput
-                        ref = "code"
-                        style = {styles.code}
-                        placeholder = '请输入您想说的话……'
-                        maxLength = {20}
-                        autoCapitalize = "none"
-                        clearButtonMode = "while-editing"
-                        keyboardType='numeric'
-                    />
-                    <Text style = {styles.codeLine}></Text>
-                    <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
+                <Animated.View style = {[styles.adimatedView,{height:fadeAnim}]}>
+                    <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
+                    <Text style = {styles.commerCosle} onPress = {this.closeSaveMsg.bind(this)}>X</Text>
+                    <SectionList style = {styles.sectList}
+                        renderItem={this.addcommentsItem}
+                        showsVerticalScrollIndicator={false}
+                        keyExtractor = {(item,index) => item + index}
+                        sections={
+                            this.state.commentsItem
+                        }>
+                    </SectionList>
+                    <View style = {[styles.commentInput,this.state.commentFlag ? '' : styles.commentInputB]}>
+                        <TextInput
+                            ref = "code"
+                            style = {styles.code}
+                            onChangeText={(comments) => {
+                                this.setState({
+                                    comments : comments
+                                })
+                            }}
+                            value={this.state.comments}
+                            placeholder = '请输入您想说的话……'
+                            maxLength = {50}
+                            autoCapitalize = "none"
+                            clearButtonMode = "while-editing"
+                        />
+                        <Text style = {styles.codeLine}></Text>
+                        <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
+                    </View>
                 </Animated.View>
                 <View style = {[styles.opacityBg,this.state.shareFlag ? styles.showopacityBg : '']} >
                     <Text style = {styles.bindClick} onPress = {this.hideF.bind(this)}></Text>
@@ -507,6 +674,64 @@ const photoOptions = {
  }
 
  const styles = StyleSheet.create({
+    sectList:{
+        marginBottom:30
+    },
+    commerCosle:{
+        position:'absolute',
+        top:15,
+        right:20
+    },
+    commentInput:{
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position:'absolute',
+        left:15,
+        bottom:-50,
+        borderTopColor:'#dddddd',
+        borderTopWidth:1,
+    },
+    commentInputB:{
+        bottom:0
+    },
+    commentInputBt:{
+        bottom:-50
+    },
+    commentsTitle:{
+        fontSize:14,
+        color:'#000000',
+        paddingTop:15,
+        paddingBottom:15,
+        textAlign:'center'
+    },
+    commentList: {
+        marginBottom:20,
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    commentLeftPerImg:{
+        flex:1
+    },
+    commentLeftPerListImg:{
+        width:30,
+        height:30,
+        borderRadius:15
+    },
+    commentRightPerText:{
+        paddingLeft:15,
+        flex:9
+    },
+    commentRIghtPerName:{
+        fontSize:14,
+        color:'#EE82EE'
+    },
+    commentRIghtPerText:{
+        fontSize:14,
+        color:'#999999',
+        marginTop:8
+    },
     bindClick: {
         flex:1
     },
@@ -554,19 +779,19 @@ const photoOptions = {
         marginTop:6,
     },
     adimatedView: {
-        flexDirection:'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop:100,
-        borderBottomColor:'#dddddd',
-        borderBottomWidth:1,
-        borderRadius:2,
+        height:0,
+        // top:0,
+        bottom:-2,
+        right:0,
+        borderTopLeftRadius:10,
+        borderTopRightRadius:10,
         paddingLeft:15,
         paddingRight:15,
         position:'absolute',
         left:0,
-        backgroundColor:'#AB82FF',
-        paddingBottom:30
+        backgroundColor:'#ffffff',
+        borderColor:'#dddddd',
+        borderWidth:1,
     },
     addItemPer: {
         backgroundColor :'#f8f8f8',
@@ -668,7 +893,6 @@ const photoOptions = {
         marginBottom:2
     },
     playCont: {
-        flexDirection:'row',
         paddingRight:15
     },
     leftText: {
@@ -830,21 +1054,16 @@ const photoOptions = {
         color:'#000000',
         flex:10,
         paddingLeft:5,
-        // borderColor:'#666666',
-        // borderWidth:1,
-        height:30,
+        height:40,
         backgroundColor:'#ffffff'
     },
     getCode: {
         fontSize:11,
-        color:'#ffffff',
+        color:'#000000',
         flex:1,
         textAlign:'center',
-        paddingTop:8.5,
-        paddingBottom:8,
-        marginLeft:10
-        // borderColor:'#666666',
-        // borderWidth:1,
-        
+        height:40,
+        marginLeft:10,
+        lineHeight:40
     },
 });

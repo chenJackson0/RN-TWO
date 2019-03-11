@@ -16,6 +16,7 @@ import Header from './component/editPageHeads'
 // 取得屏幕的宽高Dimensions
 const { ScreenWidth, height } = Dimensions.get('window');
 import ImagePicker from 'react-native-image-picker'
+import Constants from './global.js'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -41,9 +42,21 @@ const photoOptions = {
             personalResume : '',
             email : '',
             phone : '',
-            sex : ''
-
+            sex : '',
         }
+    }
+    componentWillMount = () => {
+        Constants.getUserNameImgStorageF()
+        setTimeout(()=>{
+            this.init()
+        },300)
+    }
+
+    init = () => {
+        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
+        this.setState({
+            avatarSource:userNameImg
+        })
     }
     //获取手机相册
     choosePicker=()=>{
@@ -62,6 +75,11 @@ const photoOptions = {
                 this.setState({
                     avatarSource: source
                   });
+                  Constants.storage.save({
+                    key : 'userNameImg',
+                    data : source,
+                    defaultExpires: true, 
+                })
             }
         });
     }

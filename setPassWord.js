@@ -18,22 +18,18 @@ export default class SetPassWord extends Component{
       super(props)
       this.state = {
         account: '',
-        accountFlag : true
+        accountFlag : true,
+        commentsItem : [],
+        userImg : '',
+        userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
+        addCommentNum : 0
       }
   };
   user = ''; //用户名
   passWord = ''; //密码
   newPassWord = ''; //确认密码
   accountList = []
-  //页面加载获取前一个页面传来的手机号码
-  componentWillMount = () => {
-    Constants.storageF()//加载缓存获取数据
-    const { navigation } = this.props;
-    this.setState({
-        account : navigation.getParam("account")
-    })
-  };
-
+  
   //页面将要离开的是时候发送通知
 //   componentWillUnmount(){
 //     DeviceEventEmitter.emit('ChangeUI', {account:this.state.account,accountList:this.accountList});
@@ -49,10 +45,30 @@ export default class SetPassWord extends Component{
 //         this.accountList = dic.accountList
 //    });
 //  }
-  
+  //注册的事件
    getAccount = () => {
         Constants.storageF()//加载缓存获取数据
+        Constants.getcommentsItemStorageF()
+        this.setState({
+            account : '',
+            commentsItem : [],
+            id : 0
+        },()=>{
+            setTimeout(()=>{
+                this.init()
+            },500)
+        })
+        
   };
+  //加载数据
+  init = () => {
+    const { navigation } = this.props;
+    let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+    this.setState({
+        account : navigation.getParam("account"), //页面加载获取前一个页面传来的手机号码
+        commentsItem : commentsItem
+    })
+  }
   //注册通知
   componentDidMount(){
 //     DeviceEventEmitter.addListener('ChangeUI',(dic)=>{
@@ -100,6 +116,7 @@ export default class SetPassWord extends Component{
                 data : this.accountList,
                 defaultExpires: true, 
             })
+            this.commentsItemBind()
             this.props.navigation.navigate('Login',{
                 account : this.state.account
             })
@@ -109,7 +126,26 @@ export default class SetPassWord extends Component{
     }else{
         alert("密码不能为空!")
     }
-    
+  }
+  //创建粉丝和关注绑定关系
+  commentsItemBind = () => {
+    let data = {
+        id : this.state.commentsItem.length + 1,
+        userName : this.state.account,
+        fensi : [], //关注主播的人
+        focusOns : [], //主播关注的人
+        img : this.state.userNameImg,
+        commeName : this.state.account,
+        addCommentNum : this.state.addCommentNum,
+        focusOn :'关注',
+        focusOnFlag : true
+    }
+    this.state.commentsItem.push(data)
+    Constants.storage.save({
+        key : 'commentsItemFoucsOn',
+        data : this.state.commentsItem,
+        defaultExpires: true, 
+    })
   }
   render() {
     return (

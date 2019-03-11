@@ -28,8 +28,8 @@ export default class App extends Component{
   //页面加载时执行
   componentWillMount = () => {
     Constants.storageF()//加载缓存获取数据
+    //删除所以数据
   }
-
   //获取前一个page传来的值
   getAccount = () => {
     const { navigation } = this.props;
