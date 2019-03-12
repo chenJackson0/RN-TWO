@@ -8,13 +8,18 @@ import {
     Image,
     Dimensions,
     Animated,
-    ScrollView
+    ScrollView,
+    TouchableOpacity,
+    SectionList
 } from 'react-native';
 
  //引用插件
 import Header from './component/personalCenterHeads'
 // 取得屏幕的宽高Dimensions
-const { ScreenWidth, height } = Dimensions.get('window');
+let windowsSize = {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get("window").height
+};
 import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
@@ -32,6 +37,17 @@ const photoOptions = {
         path: 'images'
     }
 };
+class Row extends Component {
+    render(){
+        return(
+            <TouchableOpacity style={styles.row}>
+                <View style={{flex:1, alignItems: 'center', justifyContent: 'center', backgroundColor: "#dddddd"}}>
+                    <Image source={{uri : this.props.data.img}} style = {styles.userConter4Img}/>
+                </View>
+            </TouchableOpacity>
+        )
+    };
+};
  export default class PersonalCenter extends Component {
   constructor(props) {
    super(props);
@@ -45,6 +61,7 @@ const photoOptions = {
             post : 0,
             fans : 0,
             FocusOn : 0,
+            TellMeAbout : 0,
             perItem : []
         }
     }
@@ -59,6 +76,7 @@ const photoOptions = {
             post : 0,
             fans : 0,
             FocusOn : 0,
+            TellMeAbout : 0,
             perItem : [],
             publishedList : []
         })
@@ -74,20 +92,17 @@ const photoOptions = {
     init = () => {
         let userName = Constants.getUserName() ? Constants.getUserName() : ''
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
         let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
-        alert(JSON.stringify(commentsItem))
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
-                
                 commentsItem[i].img = userNameImg
-                alert(commentsItem[i].fensi)
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
             }
         }
-        // alert(this.state.fans)
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
             data : commentsItem,
@@ -96,10 +111,19 @@ const photoOptions = {
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
             if(userName == publishedList[i].userName){
-                this.state.post = this.state.post + 1
-                //获取用户下的所有发布产品
-                for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
-                    this.state.perItem.push(publishedList[i].publicHeadImg[j])
+                if(publishedList[i].type == 'works'){
+                    this.state.post = this.state.post + 1
+                    works.push(publishedList[i])
+                    //获取用户下的所有发布产品
+                    for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
+                        let data = {
+                            id : publishedList[i].id,
+                            img : publishedList[i].publicHeadImg[j].img
+                        }
+                        this.state.perItem.push(data)
+                    }
+                }else{
+                    this.state.TellMeAbout = this.state.TellMeAbout + 1
                 }
             }
         }
@@ -109,9 +133,10 @@ const photoOptions = {
         // }
         this.setState({
             userName : userName,
-            publishedList : publishedList,
+            publishedList : works,
             post : this.state.post,
             fans : this.state.fans,
+            TellMeAbout : this.state.TellMeAbout,
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem
         })
@@ -169,16 +194,29 @@ const photoOptions = {
           })
     }
     //作品展示
-    perItem = () => {
-        let imgs = []
-        for(let i = 0;i<this.state.publishedList.length;i++){
-            if(this.state.userName == publishedList[i].userName){
-                let view = <Image source={{uri :'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.userConter4Img} key = {i}/>
-                imgs.push(view)
-            } 
+    getImg = () => {
+        let data = []
+        for(let i = 0;i<this.state.perItem.length;i++){
+            let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItem[i].id)}>
+                        <Image source={{uri : this.state.perItem[i].img}} style = {styles.userConter4Img}/>
+                    </TouchableOpacity>
+            data.push(view)
         }
-        return imgs
+        return data
     }
+    goDetail = (id) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Detail',{
+            id : id
+        })
+    }
+    _renderItem =({item})=> {
+        return(
+            <View style={styles.userConterSection4}>
+                <Row key={item.index} data={item}/>
+            </View>
+        )
+    };
     render() {
         let {fadeAnim}  = this.state;
         return(
@@ -192,11 +230,13 @@ const photoOptions = {
                         <View style = {styles.userConter1Right}>
                             <View style = {styles.userConter1RightTop}>
                                 <Text style = {styles.userConter1RightTop1}>{this.state.post}</Text>
+                                <Text style = {styles.userConter1RightTop1}>{this.state.TellMeAbout}</Text>
                                 <Text style = {styles.userConter1RightTop1}>{this.state.fans}</Text>
                                 <Text style = {styles.userConter1RightTop1}>{this.state.FocusOn}</Text>
                             </View>
                             <View style = {styles.userConter1RightMidd}>
-                                <Text style = {styles.userConter1RightMidd1}>帖子</Text>
+                                <Text style = {styles.userConter1RightMidd1}>作品</Text>
+                                <Text style = {styles.userConter1RightMidd1}>说说</Text>
                                 <Text style = {styles.userConter1RightMidd1}>粉丝</Text>
                                 <Text style = {styles.userConter1RightMidd1}>关注</Text>
                             </View>
@@ -213,8 +253,16 @@ const photoOptions = {
                         <EvilIcons name = {'credit-card'} size = {30} color = {'#898989'} style = {styles.userConterTab} />
                         <EvilIcons name = {'image'} size = {30} color = {'#898989'} style = {styles.userConterTab} />
                     </View>
-                    <View style = {styles.userConter4}>
-                        {this.perItem()}
+                    <View style = {styles.userConterSection4}>
+                        {/* <SectionList style = {styles.userConter4}
+                            renderItem={this._renderItem}
+                            showsVerticalScrollIndicator={false}
+                            keyExtractor = {(item,index) => item + index}
+                            sections={
+                                this.state.perItem
+                            }>
+                        </SectionList> */}
+                        {this.getImg()}
                     </View>
                     <View style = {styles.userConter5}>
                         <Text style = {styles.userConter5Title}>完善个人主页</Text>
@@ -276,6 +324,13 @@ const photoOptions = {
  }
 
  const styles = StyleSheet.create({
+    row:{
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        // alignItems: 'center',
+        width: windowsSize.width/4,
+        height: windowsSize.width/4,
+    },
     menuClose: {
         color:'#898989',
         fontSize:14,
@@ -390,12 +445,17 @@ const photoOptions = {
         textAlign:'center',
         overflow:'hidden'
     },
-    userConter4: {
-
+    userConterSection4: {
+        flexDirection: 'row', //这里的属性很重要，可以学习下flex布局
+        flexWrap: 'wrap',
+        alignItems: 'flex-start',
+        backgroundColor:'#ffffff'
     },
     userConter4Img: {
-        width:100,
-        height:100
+        width: windowsSize.width/4,
+        height: windowsSize.width/4,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     userConter3: {
         paddingTop:5,

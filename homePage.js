@@ -98,7 +98,6 @@ const photoOptions = {
         },()=>{
             setTimeout(()=>{
                 this.init()
-                this.addCommentNum()
             },500)
         })
         
@@ -117,13 +116,20 @@ const photoOptions = {
     init = () => {
         let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        let works = []
+        let commentsItemList = []
         const { navigation } = this.props;
         let newTiem = Date.parse(new Date())
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
         let lastTime
         let getChangeTime
+        //获取作品列表
         for(let i = 0;i<publishedList.length;i++){
             lastTime = newTiem - publishedList[i].time
+            if(publishedList[i].type == 'works'){
+                works.push(publishedList[i])
+            }
             if(lastTime>0){
                 getChangeTime = this.changeTime(lastTime)
                 publishedList[i].timeText = getChangeTime
@@ -131,32 +137,62 @@ const photoOptions = {
                 return
             }
         }
+        //获取推荐的用户
+        for(let i = 0;i<commentsItem.length;i++){
+            //关注用户不包括自己,需要时放开
+            // if(user != commentsItem[i].userName){
+            //     // commentsItemList.push(commentsItem[i])
+            //     commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+            // }
+            if(user == commentsItem[i].userName){
+                let newAddName = []
+                if(commentsItem[i].focusOns.length == 0){
+                    this.changFocusOnFlag(commentsItem,newAddName)
+                }else{
+                    for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                        newAddName.push(commentsItem[i].focusOns[j].name)
+                        this.changFocusOnFlag(commentsItem,newAddName)
+                    }
+                }
+            }
+            commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+        }
         Constants.storage.save({
             key : 'userName',
             data : user,
-            defaultExpires: true, 
+            defaultExpires: true,
         })
         this.setState({
-            data : publishedList,
+            data : works,
             user:user,
             userNameImg : userNameImg,
-            addCommentItem : publishedList.addCommentItem ? publishedList.addCommentItem : []
+            addCommentItem : commentsItem,
+            oldcommentsItem : commentsItem
          })
     }
-    //获取主播关注的人数
-    addCommentNum = () => {
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let commentsItemList = []
-        for(let i = 0;i<commentsItem.length;i++){
-            if(this.state.user != commentsItem[i].userName){
-                commentsItemList.push(commentsItem[i])
-                commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+    //关注的用户,在没有关注的用户中要是能被关注的
+    changFocusOnFlag = (commentsItem,newAddName) => {
+        let newCommentsItemIndex = []
+        if(newAddName.length == 0){
+            for(let i = 0;i<commentsItem.length;i++){
+                commentsItem[i].focusOnFlag = true
+            }
+        }else{
+            for(let i = 0;i<commentsItem.length;i++){
+                for(let j = 0;j<newAddName.length;j++){
+                    if(commentsItem[i].userName == newAddName[j]){
+                        commentsItem[i].focusOnFlag = false
+                        break //此处的break很重要
+                    }else{
+                        commentsItem[i].focusOnFlag = true
+                        // newCommentsItem.push(commentsItem[i])
+                    }
+                }
             }
         }
-        this.setState({
-            addCommentItem : commentsItemList,
-            oldcommentsItem : commentsItem
-        })
+        // this.setState({
+        //     addCommentItem : newCommentsItem
+        // })
     }
     //加载待关注用户
     personItem = () => {
@@ -216,7 +252,7 @@ const photoOptions = {
             return
         }
     }
-    //加载已关注的用户发不的作品
+    //加载已关注的用户发布的作品
     saveWorks = () =>{
         let array = {
             works:[]
@@ -294,58 +330,62 @@ const photoOptions = {
     focusOn = (j,name,img) => {
         let deteleFochs = []
         let deteleFensi = []
+        let deteleFochsIndex = 0
+        let deteleFensiIndex = 0
+        for(let i = 0;i<this.state.addCommentItem.length;i++){
+            if(this.state.addCommentItem[i].userName == name){ 
+                deteleFensiIndex = i
+            }
+            if(this.state.addCommentItem[i].userName == this.state.user){
+                deteleFochsIndex = i
+            }
+        }
         for(let i = 0;i<this.state.addCommentItem.length;i++){
             if(this.state.addCommentItem[i].focusOnFlag){
                 if(i == j){
                     this.state.addCommentItem[i].focusOn = '已关注'
                     this.state.addCommentItem[i].focusOnFlag = false
+                    let data = {
+                        id : this.state.addCommentItem[i].id,
+                        name : name,
+                        img : img
+                    }
+                    this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
+                    let dataT = {
+                        id : this.state.addCommentItem[i].id,
+                        name : this.state.user,
+                        img : this.state.userNameImg
+                    }
+                    this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
+                    break
                 }
             }else{
                 if(i == j){
                     this.state.addCommentItem[i].focusOn = '关注'
                     this.state.addCommentItem[i].focusOnFlag = true
-                }
-            }
-        }
-        for(let i = 0;i<this.state.oldcommentsItem.length;i++){
-            if(this.state.oldcommentsItem[i].focusOnFlag){
-                if(i == j){
-                    let data = {
-                        id : this.state.oldcommentsItem[i].id,
-                        name : name,
-                        img : img
-                    }
-                    deteleFochs.push(data)
-                    let dataT = {
-                        id : this.state.oldcommentsItem[i].id,
-                        name : this.state.user,
-                        img : this.state.userNameImg
-                    }
-                    deteleFensi.push(dataT)
-                }
-            }else{
-                if(i == j){
-                    for(let k = 0;k<deteleFochs.length;k++){
-                        if(deteleFochs[k].name != name){
-                            deteleFochs.push(deteleFochs[i])
+                    for(let k = 0;k<this.state.addCommentItem[deteleFochsIndex].focusOns.length;k++){
+                        if(this.state.addCommentItem[deteleFochsIndex].focusOns[k].name != name){
+                            deteleFochs.push(this.state.addCommentItem[deteleFochsIndex].focusOns[k])
                         }
                     }
-                    for(let k = 0;k<deteleFensi.length;k++){
-                        if(deteleFensi[k].name != this.state.user){
-                            deteleFensi.push(deteleFensi[i])
+                    for(let k = 0;k<this.state.addCommentItem[deteleFensiIndex].fensi.length;k++){
+                        if(this.state.addCommentItem[deteleFensiIndex].fensi[k].name != this.state.user){
+                            deteleFensi.push(this.state.addCommentItem[deteleFensiIndex].fensi[k])
                         }
                     }
+                    this.state.addCommentItem[deteleFochsIndex].focusOns = deteleFochs
+                    this.state.addCommentItem[deteleFensiIndex].fensi = deteleFensi
+                    break
                 }
             }
-            this.state.oldcommentsItem[i].focusOns = deteleFochs
-            this.state.oldcommentsItem[i].fensi = deteleFensi
         }
         this.setState({
             addCommentItem : this.state.addCommentItem
         })
+        
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
-            data : this.state.oldcommentsItem,
+            data : this.state.addCommentItem,
             defaultExpires: true, 
         })
     }
@@ -531,7 +571,7 @@ const photoOptions = {
         const { navigation } = this.props;
         this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg : this.state.userNameImg})
     }
-    //发布作品选择图片
+    //发布作品带图片
     getImg = () => {
         ImagePicker.showImagePicker(photoOptions, (response) => {
             if (response.didCancel) {

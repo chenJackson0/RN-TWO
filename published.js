@@ -305,6 +305,15 @@ const options = {
             giveALike : ['jackson','chanmeg','maxmain'],
             data : [],
             address : this.state.address,
+            type : '',
+            commentsFlag : true,
+            focusOnFlag : true,
+            focusOn :'关注'
+        }
+        if(this.state.imgFlag){
+            data.type = 'works'
+        }else{
+            data.type = 'TellMeAbout'
         }
         data.publicHeadImg = this.state.item
         publishedList.unshift(data)

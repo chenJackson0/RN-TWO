@@ -12,6 +12,7 @@ import VerificationCode from "./verificationCode";
 import SetPassWord from "./setPassWord";
 import ComList from "./comList";
 import Published from "./published";
+import Detail from "./detail";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -148,7 +149,11 @@ const RootStack = createStackNavigator(
     })},
     SetPassWord : {screen:SetPassWord,navigationOptions :({navigation})=>({
       headerTitle:"确定密码",
-    })}
+    })},
+    Detail:{screen:Detail,navigationOptions :({navigation})=>({
+      // headerTitle:"首页",
+      header:null
+    })},
   },
   {
     initialRouteName:'Login' //默认入口

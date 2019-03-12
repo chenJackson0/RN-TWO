@@ -92,7 +92,7 @@ getcommentsItemStorageF = () => {
 }
 a = () => {
     storage.remove({
-        key: 'commentsItemFoucsOn'
+        key: 'publishedLi'
     });
 }
 //模拟获取api用户表
