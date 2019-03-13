@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
  //引用插件
-import Header from './component/personalCenterHeads'
+import Header from './component/backHeads'
 // 取得屏幕的宽高Dimensions
 let windowsSize = {
     width: Dimensions.get('window').width,
@@ -48,11 +48,11 @@ class Row extends Component {
         )
     };
 };
- export default class PersonalCenter extends Component {
+ export default class DuthonPerCenter extends Component {
   constructor(props) {
    super(props);
     this.state = {
-            title : '个人中心',
+            title : '主页',
             avatarSource: 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             fadeAnim: new Animated.Value(-200),
             menuFlag : false,
@@ -82,7 +82,7 @@ class Row extends Component {
             TellMeAbout : 0,
             perItem : [],
             publishedList : [],
-            saysayItem : []
+            saysayItem: []
         })
         setTimeout(()=>{
             this.init()
@@ -94,15 +94,14 @@ class Row extends Component {
     }  
     //加载数据
     init = () => {
-        let userName = Constants.getUserName() ? Constants.getUserName() : ''
+        const { navigation } = this.props;
+        let userName = navigation.getParam("userName") ? navigation.getParam("userName") : ''
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
-        //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
-                commentsItem[i].img = userNameImg
+                this.state.avatarSource = commentsItem[i].img
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
@@ -117,9 +116,9 @@ class Row extends Component {
         for(let i = 0;i<publishedList.length;i++){
             if(userName == publishedList[i].userName){
                 if(publishedList[i].type == 'works'){
-                    //获取用户下的所有发布产品
                     this.state.post = this.state.post + 1
                     works.push(publishedList[i])
+                    //获取用户下的所有发布产品
                     for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
                         let data = {
                             id : publishedList[i].id,
@@ -134,6 +133,10 @@ class Row extends Component {
                 }
             }
         }
+        //获取关注人数和粉丝人数
+        // for(let i = 0;commentsItem.length;i++){
+            
+        // }
         this.setState({
             userName : userName,
             publishedList : works,
@@ -142,48 +145,13 @@ class Row extends Component {
             TellMeAbout : this.state.TellMeAbout,
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem,
-            avatarSource : userNameImg,
+            avatarSource : this.state.avatarSource,
             saysayItem : this.state.saysayItem
         })
     }
-    //获取手机相册
-    choosePicker=()=>{
-        ImagePicker.showImagePicker(photoOptions, (response) => {
-            if (response.didCancel) {
-               
-            }
-            else if (response.error) {
-                
-            }
-            else if (response.customButton) {
-                
-            }
-            else {
-                let source = response.uri;
-                this.setState({
-                    avatarSource: source
-                  });
-            }
-        });
-    }
-    //编辑主页跳转
-    editPage = () => {
-        const { navigation } = this.props;
-        this.props.navigation.navigate('EditPage')
-    }
-
-    //展开菜单兰
-    showMenuBar = () => {
-        Animated.timing(
-            this.state.fadeAnim,
-            {
-              toValue: 0,
-              duration: 200,
-            }
-          ).start();
-          this.setState({
-            menuFlag : true
-          })
+    //关注主播、、
+    focusOn = () => {
+       
     }
     //收起菜单兰
     closeMenu = () => {
@@ -240,13 +208,6 @@ class Row extends Component {
         
         return data
     }
-    //跳作品想情
-    goDetail = (id) => {
-        const { navigation } = this.props;
-        this.props.navigation.navigate('Detail',{
-            id : id,changeTabNum : this.state.changeTabNum
-        })
-    }
     //切换作品,说说,收藏
     changeTab = (type) => {
         let changeTabNum = 0
@@ -261,6 +222,14 @@ class Row extends Component {
             changeTabNum : changeTabNum
         })
     }
+    //跳作品详情
+    goDetail = (id) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Detail',{
+            id : id,changeTabNum : this.state.changeTabNum
+        })
+    }
+    //加载所以作品的图
     _renderItem =({item})=> {
         return(
             <View style={styles.userConterSection4}>
@@ -268,11 +237,16 @@ class Row extends Component {
             </View>
         )
     };
+     //返回
+     goBackPage = () =>{
+        const { navigation } = this.props;
+        this.props.navigation.goBack()
+    }
     render() {
         let {fadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title} choosePicker = {this.choosePicker.bind(this)} showMenuBar = {this.showMenuBar.bind(this)}/>
+                <Header title = {this.state.title} goBackPage = {this.goBackPage.bind(this)}/>
                 <View style = {styles.userConter1}>
                     <View style = {styles.userConter1Left}>
                         <Image source={{uri :this.state.avatarSource}} style = {styles.userImg} />
@@ -291,7 +265,7 @@ class Row extends Component {
                             <Text style = {styles.userConter1RightMidd1}>关注</Text>
                         </View>
                         <View style = {styles.userConter1RightBottom}>
-                            <Text style = {styles.userConter1RightBottomText} onPress = {this.editPage.bind(this)}>编辑主页</Text>
+                            <Text style = {styles.userConter1RightBottomText} onPress = {this.focusOn.bind(this)}>+ 关注</Text>
                         </View>
                     </View>
                 </View>
@@ -318,60 +292,7 @@ class Row extends Component {
                         </SectionList> */}
                         {this.getAll()}
                     </View>
-                    <View style = {styles.userConter5}>
-                        <Text style = {styles.userConter5Title}>完善个人主页</Text>
-                        <Text style = {styles.userConter5Msg}>完成3/4项</Text>
-                        <View style = {styles.userConter5Item}>
-                            <View style = {[styles.userConter5ItemOne,styles.userConter5ItemOneR]}>
-                                <EvilIcons name = {'comment'} size = {50} color = {'#E066FF'} style = {styles.userConterTab} />
-                                <Text style = {styles.userConter5ItemOneT}>添加个人简历</Text>
-                                <Text style = {styles.userConter5ItemOneS}>向粉丝介绍一下自己吧.</Text>
-                                <Text style = {styles.userConter5ItemOneB}>添加个人简历</Text>
-                            </View>
-                            <View style = {styles.userConter5ItemOne}>
-                                <EvilIcons name = {'link'} size = {50} color = {'#E066FF'} style = {styles.userConterTab} />
-                                <Text style = {styles.userConter5ItemOneT}>查找用户并关注</Text>
-                                <Text style = {styles.userConter5ItemOneS}>关注想了解的用户和感兴趣的内容.</Text>
-                                <Text style = {[styles.userConter5ItemOneB,styles.userConter5ItemOneButB]}>查看更多</Text>
-                            </View>
-                        </View>
-                    </View>
                 </ScrollView>
-
-                <View style = {this.state.menuFlag ? styles.menuBarBg : ''}></View>
-                <Animated.View style = {[styles.perMenuBar,{right:fadeAnim}]}>
-                    <View style = {styles.menuBar}>
-                        <View style = {styles.menuBarLeft}>
-                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
-                        </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>你的活动</Text></View>
-                    </View>
-                    <View style = {styles.menuBar}>
-                        <View style = {styles.menuBarLeft}>
-                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} /> 
-                        </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>名片</Text></View>
-                    </View>
-                    <View style = {styles.menuBar}>
-                        <View style = {styles.menuBarLeft}>
-                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
-                        </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>收藏夹</Text></View>
-                    </View>
-                    <View style = {styles.menuBar}>
-                        <View style = {styles.menuBarLeft}>
-                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
-                        </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>特别关注好友</Text></View>
-                    </View>
-                    <View style = {styles.menuBar}>
-                        <View style = {styles.menuBarLeft}>
-                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
-                        </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>发现用户</Text></View>
-                    </View>
-                    <Text style = {styles.menuClose} onPress = {this.closeMenu.bind(this)}>X</Text>
-                </Animated.View> 
             </View>
         )
     }

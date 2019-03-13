@@ -47,6 +47,8 @@ const photoOptions = {
     }
     componentWillMount = () => {
         Constants.getUserNameImgStorageF()
+        Constants.publishedListStorageF()//加载缓存获取数据
+        Constants.getUserNameStorageF()
         setTimeout(()=>{
             this.init()
         },300)
@@ -72,12 +74,24 @@ const photoOptions = {
             }
             else {
                 let source = response.uri;
+                let userName = Constants.getUserName() ? Constants.getUserName() : ''
+                let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
                 this.setState({
                     avatarSource: source
-                  });
-                  Constants.storage.save({
+                });
+                for(let i = 0;i<publishedList.length;i++){
+                    if(userName == publishedList[i].userName){
+                        publishedList[i].perImg = source
+                    }
+                }
+                Constants.storage.save({
                     key : 'userNameImg',
                     data : source,
+                    defaultExpires: true, 
+                })
+                Constants.storage.save({
+                    key : 'publishedLi',
+                    data : publishedList,
                     defaultExpires: true, 
                 })
             }

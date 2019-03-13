@@ -13,6 +13,7 @@ import SetPassWord from "./setPassWord";
 import ComList from "./comList";
 import Published from "./published";
 import Detail from "./detail";
+import DuthonPerCenter from "./duthonPerCenter"
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -151,6 +152,10 @@ const RootStack = createStackNavigator(
       headerTitle:"确定密码",
     })},
     Detail:{screen:Detail,navigationOptions :({navigation})=>({
+      // headerTitle:"首页",
+      header:null
+    })},
+    DuthonPerCenter:{screen:DuthonPerCenter,navigationOptions :({navigation})=>({
       // headerTitle:"首页",
       header:null
     })},

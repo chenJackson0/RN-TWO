@@ -57,7 +57,7 @@ const options = {
             confirmationWindowFlag : false,
             deleteImgLastFlag : false,
             num : -1,
-            userNameImg : '',
+            userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             publishedList: [],
             id : 0,
             address : '上海',
@@ -285,6 +285,10 @@ const options = {
     }
     //发布提交
     publishedF = () => {
+        if(!this.state.imgFlag&&!this.state.publisedText){
+            alert("发布说说不能为空!")
+            return
+        }
         let publishedList = this.state.publishedList
         let date = Date.parse(new Date());
         const { navigation } = this.props;

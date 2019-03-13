@@ -10,7 +10,8 @@ import {
     ScrollView,
     Animated,
     Share,
-    SectionList
+    SectionList,
+    TouchableOpacity
 } from 'react-native';
 
  //引用插件
@@ -57,7 +58,7 @@ const photoOptions = {
             commentsItem : [],
             index : '',
             commentNim : 0,
-            userNameImg : '',
+            userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             addCommentNum : 0,
             oldcommentsItem : []
         }
@@ -216,13 +217,13 @@ const photoOptions = {
             perItem:[]
         }
         for(let i = 0;i<this.state.addCommentItem.length;i++){
-           let item =  <View style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i}>
-                <Image source={{uri:this.state.addCommentItem[i].img}} style = {styles.addPerListImg} />
+           let item =  <TouchableOpacity style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.addCommentItem[i].userName)}>
+                <Image source={{uri:this.state.addCommentItem[i].img?this.state.addCommentItem[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addPerListImg} />
                 <Text style = {styles.addPerName}>{this.state.addCommentItem[i].userName}</Text>
                 <Text style = {styles.addPerMsg}>{this.state.addCommentItem[i].commeName}和其他{this.state.addCommentItem[i].addCommentNum}位用户关注了</Text>
                 <Text style = {[styles.addPerButton,this.state.addCommentItem[i].focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,i,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>{this.state.addCommentItem[i].focusOn}</Text>
                 <Text style = {styles.addPerColse} onPress = {this.closeCommentItem.bind(this,i)}>X</Text>
-            </View>
+            </TouchableOpacity>
             array.perItem.push(item)
         }
         return array.perItem
@@ -252,6 +253,20 @@ const photoOptions = {
             return
         }
     }
+    //跳转作品详情
+    goDetail = (id) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Detail',{
+            id : id
+        })
+    }
+    //跳转作者主页
+    goPersonCenter = (userName) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('DuthonPerCenter',{
+            userName : userName
+        })
+    }
     //加载已关注的用户发布的作品
     saveWorks = () =>{
         let array = {
@@ -259,14 +274,18 @@ const photoOptions = {
         }
         for(let i = 0;i<this.state.data.length;i++){
            let item =   <View style = {styles.perListItem} key = {i} ref = {i}>
-           <View style = {styles.perTitle}>
-                    <Image source={{uri:this.state.data[i].perImg ? this.state.data[i].perImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
-                    <Text style = {styles.perName}>
-                        {this.state.data[i].userName}
-                    </Text>
-                    <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
-                </View>
-                {this.isImg(this.state.data[i].publicHeadImg[0].img)}
+                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.data[i].userName)}>
+                    <View style = {styles.perTitle}>
+                        <Image source={{uri:this.state.data[i].perImg ? this.state.data[i].perImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
+                        <Text style = {styles.perName}>
+                            {this.state.data[i].userName}
+                        </Text>
+                        <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress = {this.goDetail.bind(this,this.state.data[i].id)}>
+                    {this.isImg(this.state.data[i].publicHeadImg[0].img)}
+                </TouchableOpacity>
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i)}/>
@@ -300,7 +319,7 @@ const photoOptions = {
         }
         if(!flag){
             return(
-                <Text style = {styles.leftText}>他们都点赞了 {giveName}</Text>
+                <Text style = {styles.leftText}>{like.length}人都点赞了 {giveName}</Text>
             )
         }else{
             return
@@ -382,7 +401,7 @@ const photoOptions = {
         this.setState({
             addCommentItem : this.state.addCommentItem
         })
-        
+        alert(JSON.stringify(this.state.addCommentItem))
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
             data : this.state.addCommentItem,
@@ -470,31 +489,34 @@ const photoOptions = {
     }
     //发送评论
     saveMsg = () => {
-        let data = {
-            id : this.state.data[this.state.index].commentsNum + 1,
-            img : this.state.userNameImg,
-            name : this.state.user,
-            nameT : this.state.comments,
-        }
-        let commentsItem = 
-            {
-                data : []
+        if(this.state.comments){
+            let data = {
+                id : this.state.data[this.state.index].commentsNum + 1,
+                img : this.state.userNameImg,
+                name : this.state.user,
+                nameT : this.state.comments,
             }
-        
-        commentsItem.data.unshift(data)
-        this.state.data[this.state.index].data.push(commentsItem)
-        this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-        this.setState({
-            comments : '',
-            commentsItem : this.state.data[this.state.index].data,
-            commentNim : this.state.data[this.state.index].commentsNum
-        })
-        Constants.storage.save({
-            key : 'publishedLi',
-            data : this.state.data,
-            defaultExpires: true, 
-        })
-        
+            let commentsItem = 
+                {
+                    data : []
+                }
+            
+            commentsItem.data.unshift(data)
+            this.state.data[this.state.index].data.push(commentsItem)
+            this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
+            this.setState({
+                comments : '',
+                commentsItem : this.state.data[this.state.index].data,
+                commentNim : this.state.data[this.state.index].commentsNum
+            })
+            Constants.storage.save({
+                key : 'publishedLi',
+                data : this.state.data,
+                defaultExpires: true, 
+            })
+        }else{
+            alert("评论不能为空!")
+        }
     }
     //拉取分享面板
     share = () => {
@@ -714,6 +736,14 @@ const photoOptions = {
  }
 
  const styles = StyleSheet.create({
+    goDetail: {
+        height:345,
+        position:'absolute',
+        left:0,
+        top:45,
+        zIndex:9999,
+        right:0
+    },
     sectList:{
         marginBottom:30
     },
@@ -1012,7 +1042,7 @@ const photoOptions = {
     },
     perListItem: {
         
-        
+        position:'relative',
         paddingTop:8,
         
         // justifyContent: 'center',
