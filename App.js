@@ -20,7 +20,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import Octicons from 'react-native-vector-icons/Octicons'
-
+// import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 export default class App extends Component {
     render() {
         return (
@@ -58,15 +58,15 @@ const TabNavigator = createBottomTabNavigator({
     }
   })},
   Collection:{screen:Collection,navigationOptions :({navigation})=>({
-    tabBarLabel: '收藏',
+    tabBarLabel: '说说',
     tabBarIcon: ({focused}) => {
       if(!focused){
         return (
-          <EvilIcons name = {'heart'} size = {25} color = {'black'}/>
+          <MaterialIcons name = {'chat-bubble-outline'} size = {20} color = {'black'}/>
         );
       }else{
         return (
-          <Entypo name = {'heart'} size = {25} color = {'black'}/>
+          <MaterialIcons name = {'chat-bubble'} size = {20} color = {'black'}/>
         );
       }
     }

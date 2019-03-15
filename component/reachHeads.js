@@ -4,7 +4,7 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 global.deviceWidth = Dimensions.get('window').width
 
-export default class PublicHeads extends Component{
+export default class ReachHeads extends Component{
 
   constructor(props){
       super(props)
@@ -12,12 +12,12 @@ export default class PublicHeads extends Component{
         videoImgFlag : true
       }
   };
-  //发视频或者图文作品
+  //发视频或图文
     getImg = () => {
         this.props.getImg()
     }
 
-    //长按事件,发说说,全文字
+    //发说说
     onLongC = () =>{
         this.props.videoImg()
     }
@@ -25,16 +25,16 @@ export default class PublicHeads extends Component{
     return (
         <View style = {styles.max}>
             <View style = {styles.headerP}>
-                <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onLongPress = {this.onLongC.bind(this)} onPress = {this.getImg.bind(this)}/>
+                {/* <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onLongPress = {this.onLongC.bind(this)} onPress = {this.getImg.bind(this)}/> */}
             </View>
             <View style = {styles.headerT}>
                 <Text style = {styles.headerText}>{this.props.title}</Text>
             </View>
             <View style = {styles.headerV}>
-                <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/>
+                {/* <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/> */}
             </View>
             <View style = {styles.headerS}>
-                <SimpleLineIcons name = {'paper-plane'} size = {22} color = {'black'}/>
+                {/* <SimpleLineIcons name = {'paper-plane'} size = {22} color = {'black'}/> */}
             </View>
         </View>
     );

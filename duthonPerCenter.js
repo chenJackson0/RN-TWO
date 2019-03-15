@@ -65,7 +65,11 @@ class Row extends Component {
             perItem : [],
             saysayItem : [],
             changeTabNum : 0,
-            playNum : 4533
+            playNum : 4533,
+            focusOnText : '关注',
+            focusOnTextFlag : true,
+            addCommentItem : [],
+            perUserName : ''
         }
     }
     
@@ -82,7 +86,9 @@ class Row extends Component {
             TellMeAbout : 0,
             perItem : [],
             publishedList : [],
-            saysayItem: []
+            saysayItem: [],
+            addCommentItem : [],
+            perNameImg : ''
         })
         setTimeout(()=>{
             this.init()
@@ -96,10 +102,21 @@ class Row extends Component {
     init = () => {
         const { navigation } = this.props;
         let userName = navigation.getParam("userName") ? navigation.getParam("userName") : ''
+        let perUserName = Constants.getUserName() ? Constants.getUserName() : ''
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
+        let perNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
         let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
         for(let i = 0;i<commentsItem.length;i++){
+            //判断改主播是否已经被关注过
+            if(userName == commentsItem[i].userName){
+                for(let j = 0;j<commentsItem[i].fensi.length;j++){
+                    if(commentsItem[i].fensi[j].name == perUserName){
+                        this.state.focusOnText = '取消关注'
+                        this.state.focusOnTextFlag = false
+                    }
+                }
+            }
             if(userName == commentsItem[i].userName){
                 this.state.avatarSource = commentsItem[i].img
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
@@ -107,11 +124,7 @@ class Row extends Component {
                 break
             }
         }
-        Constants.storage.save({
-            key : 'commentsItemFoucsOn',
-            data : commentsItem,
-            defaultExpires: true, 
-        })
+        
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
             if(userName == publishedList[i].userName){
@@ -139,19 +152,83 @@ class Row extends Component {
         // }
         this.setState({
             userName : userName,
+            perUserName : perUserName,
             publishedList : works,
+            addCommentItem : commentsItem,
             post : this.state.post,
             fans : this.state.fans,
             TellMeAbout : this.state.TellMeAbout,
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem,
             avatarSource : this.state.avatarSource,
-            saysayItem : this.state.saysayItem
+            saysayItem : this.state.saysayItem,
+            focusOnText : this.state.focusOnText,
+            focusOnTextFlag : this.state.focusOnTextFlag,
+            perNameImg : perNameImg
         })
     }
-    //关注主播、、
+    //关注主播
     focusOn = () => {
-       
+        let deteleFochs = []
+        let deteleFensi = []
+        let deteleFochsIndex = 0
+        let deteleFensiIndex = 0
+        for(let i = 0;i<this.state.addCommentItem.length;i++){
+            if(this.state.addCommentItem[i].userName == this.state.userName){ 
+                deteleFensiIndex = i
+            }
+            if(this.state.addCommentItem[i].userName == this.state.perUserName){
+                deteleFochsIndex = i
+            }
+        }
+        if(this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
+            this.state.addCommentItem[deteleFensiIndex].focusOn = '取消关注'
+            this.state.addCommentItem[deteleFensiIndex].focusOnFlag = false
+            let data = {
+                id : this.state.addCommentItem[deteleFensiIndex].id,
+                name : this.state.userName,
+                img : this.state.avatarSource
+            }
+            this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
+            let dataT = {
+                id : this.state.addCommentItem[deteleFochsIndex].id,
+                name : this.state.perUserName,
+                img : this.state.perNameImg
+            }
+            this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
+            this.state.focusOnText = '取消关注'
+            this.state.focusOnTextFlag = false
+            
+        }else{
+            this.state.addCommentItem[deteleFensiIndex].focusOn = '关注'
+            this.state.addCommentItem[deteleFensiIndex].focusOnFlag = true
+            for(let k = 0;k<this.state.addCommentItem[deteleFochsIndex].focusOns.length;k++){
+                if(this.state.addCommentItem[deteleFochsIndex].focusOns[k].name != this.state.userName){
+                    deteleFochs.push(this.state.addCommentItem[deteleFochsIndex].focusOns[k])
+                }
+            }
+            for(let k = 0;k<this.state.addCommentItem[deteleFensiIndex].fensi.length;k++){
+                if(this.state.addCommentItem[deteleFensiIndex].fensi[k].name != this.state.perUserName){
+                    deteleFensi.push(this.state.addCommentItem[deteleFensiIndex].fensi[k])
+                }
+            }
+            this.state.addCommentItem[deteleFochsIndex].focusOns = deteleFochs
+            this.state.addCommentItem[deteleFensiIndex].fensi = deteleFensi
+            this.state.focusOnText = '关注'
+            this.state.focusOnTextFlag = true
+            
+        }
+        this.setState({
+            addCommentItem : this.state.addCommentItem,
+            focusOnText : this.state.focusOnText,
+            focusOnTextFlag : this.state.focusOnTextFlag
+        })
+        this.init()
+        Constants.storage.save({
+            key : 'commentsItemFoucsOn',
+            data : this.state.addCommentItem,
+            defaultExpires: true, 
+        })
     }
     //收起菜单兰
     closeMenu = () => {
@@ -265,7 +342,7 @@ class Row extends Component {
                             <Text style = {styles.userConter1RightMidd1}>关注</Text>
                         </View>
                         <View style = {styles.userConter1RightBottom}>
-                            <Text style = {styles.userConter1RightBottomText} onPress = {this.focusOn.bind(this)}>+ 关注</Text>
+                            <Text style = {[styles.userConter1RightBottomText,this.state.focusOnTextFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this)}>+ {this.state.focusOnText}</Text>
                         </View>
                     </View>
                 </View>
@@ -312,11 +389,14 @@ class Row extends Component {
         fontSize:13,
         color:'#898989',
         textAlign:'center',
-        paddingTop:8,
-        paddingBottom:8
+        paddingTop:13,
+        paddingBottom:13
     },
     changText: {
-        color:'#E066FF'
+        color:'#FF00FF',
+        borderBottomColor:'#262626',
+        borderBottomWidth:1,
+        backgroundColor:'#FDF5E6'
     },
     row:{
         backgroundColor: '#FFFFFF',
@@ -452,8 +532,6 @@ class Row extends Component {
         alignItems: 'center',
     },
     userConter3: {
-        paddingTop:5,
-        paddingBottom:5,
         flexDirection:'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -477,7 +555,7 @@ class Row extends Component {
         alignItems: 'center',
     },
     userConter1Left: {
-        width:70,
+        flex:2,
         height:70,
         marginRight:8
     },
@@ -487,7 +565,7 @@ class Row extends Component {
         borderRadius:35,
     },
     userConter1Right: {
-        width:281,
+        flex:8,
         marginTop:5,
     },
     userConter1RightTop: {
@@ -514,18 +592,25 @@ class Row extends Component {
         textAlign:'center'
     },
     userConter1RightBottom: {
-        marginTop:8
+        marginTop:8,
+        overflow:'hidden'
     },
     userConter1RightBottomText: {
         fontSize:12,
-        color:'#000000',
+        color:'#ffffff',
         fontWeight:'700',
         borderRadius:5,
         borderWidth:1,
         borderColor:'#EDEDED',
         paddingTop:5,
         paddingBottom:5,
-        textAlign:'center'
+        textAlign:'center',
+        backgroundColor:'#AB82FF',
+        overflow:'hidden'
+    },
+    changeaddPerButtonBg: {
+        backgroundColor:'#f2f2f2',
+        color:'#cccccc'
     },
     userConter2: {
         borderBottomColor:'#EDEDED',

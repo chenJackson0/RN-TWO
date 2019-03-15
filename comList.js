@@ -13,6 +13,7 @@ import {SectionList, StyleSheet, Text, View, Dimensions, Image, ScrollView, Anim
 import Header from './component/backHeads'
 global.deviceWidth = Dimensions.get('window').width
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import Constants from './global.js'
 export default class ComList extends Component{
 
   constructor(props){
@@ -20,49 +21,81 @@ export default class ComList extends Component{
       this.state = {
         title : '用户列表',
         changeBcolor : true,
-        addCommentItem : [{
-            data: [{img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',nameT : 'HARU',commeName : 'kanon_fukuda',addCommentNum : 2,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',nameT : 'HI',commeName : 'evliac_kio',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雪中送腿 / FA',nameT : 'FA',commeName : 'alian_li',addCommentNum : 4,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '春夏秋冬 / SHYUANF',nameT : 'SHYUANF',commeName : 'fames_si',addCommentNum : 5,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '别来无恙 / HAO',nameT : 'HAO',commeName : 'li_shuai',addCommentNum : 3,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '换看春秋 / WEI',nameT : 'WEI',commeName : 'kang_wei',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',nameT : 'KAN',commeName : 'jacksonChen',addCommentNum : 9,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',nameT : 'HARU',commeName : 'kanon_fukuda',addCommentNum : 2,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',nameT : 'HI',commeName : 'evliac_kio',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雪中送腿 / FA',nameT : 'FA',commeName : 'alian_li',addCommentNum : 4,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '春夏秋冬 / SHYUANF',nameT : 'SHYUANF',commeName : 'fames_si',addCommentNum : 5,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '别来无恙 / HAO',nameT : 'HAO',commeName : 'li_shuai',addCommentNum : 3,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '换看春秋 / WEI',nameT : 'WEI',commeName : 'kang_wei',addCommentNum : 1,focusOn :'关注',focusOnFlag : true},
-            {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',nameT : 'KAN',commeName : 'jacksonChen',addCommentNum : 9,focusOn :'关注',focusOnFlag : true}]
-        }],
+        addCommentItem : [],
         fadeAnim: new Animated.Value(375),
+        fensi : 0,
+        foncsOn : 0,
+        showFensiList : [],
+        foucsOnList : []
       }
   }
-  //页面加载获取前一个页面传来的list
-  componentWillMount = () => {
-    const { navigation } = this.props;
-    this.setState({
-        list : navigation.getParam("list")
-    })
-  };
+  //绑定事件
+    commentList = () => {
+        Constants.getcommentsItemStorageF()
+        this.setState({
+            showFensiList : [],
+            foucsOnList : []
+        })
+        setTimeout(()=>{
+            this.init()
+        },500)
+    }
+    //注册通知
+    componentWillMount(){
+        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.commentList())]; //BottomTab路由改变时增加读取数据的监听事件 
+    }
+    //获取数据
+    init = () => {
+        const { navigation } = this.props;
+        let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
+        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        //获取关注人数和粉丝人数
+        for(let i = 0;i<commentsItem.length;i++){
+            if(user == commentsItem[i].userName){
+                this.state.fensi = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
+                this.state.foncsOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
+                for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                    this.state.foucsOnList.push(commentsItem[i].focusOns[j])
+                }
+                for(let k = 0;k<commentsItem[i].fensi.length;k++){
+                    this.state.showFensiList.push(commentsItem[i].fensi[k])
+                }
+                break
+            }
+        }
+        this.setState({
+            user : user,
+            addCommentItem : commentsItem,
+            fensi : this.state.fensi,
+            foncsOn : this.state.foncsOn,
+            foucsOnList : this.state.foucsOnList,
+            showFensiList : this.state.showFensiList
+        })
+    }
+    //跳转作者主页
+    goPersonCenter = (userName) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('DuthonPerCenter',{
+            userName : userName
+        })
+    }
   //加载推荐用户
   addPerItem = ({item,index}) =>{
     return (
-     <View style = {styles.addList} key = {index}>
-       <View style = {styles.addOne}>
-           <Image source={{uri:item.img}} style = {styles.addListImg} />
-       </View>
-       <View style = {styles.addTwo}>
-           <Text style = {styles.lNameO}>{item.name}</Text>
-           <Text style = {styles.lNameT}>{item.nameT}</Text>
-           <Text style = {styles.lNameS}>{item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
-       </View>
-       <View style = {styles.addThree}>
-           <Text style = {[styles.guanzhu,item.focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,index)}>{item.focusOn}</Text>
-           <Text style = {styles.lClose} onPress = {this.closeCommentItem.bind(this,index)}>X</Text>
-       </View>
-    </View>
+        <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName)}>
+            <View style = {styles.addOne}>
+                <Image source={{uri:item.img?item.img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addListImg} />
+            </View>
+            <View style = {styles.addTwo}>
+                <Text style = {styles.lNameO}>{item.userName}</Text>
+                {/* <Text style = {styles.lNameT}>{item.commeName}</Text> */}
+                <Text style = {styles.lNameS}>{item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
+            </View>
+            <View style = {styles.addThree}>
+                <Text style = {[styles.guanzhu,item.focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,index,item.userName,item.img)}>{item.focusOn}</Text>
+                {/* <Text style = {styles.lClose} onPress = {this.closeCommentItem.bind(this,index)}>X</Text> */}
+            </View>
+        </TouchableOpacity>
     )
   }
   //点击删除commentItem
@@ -83,22 +116,66 @@ export default class ComList extends Component{
     })
   }
   //点击关注
-  focusOn = (j) => {
-    for(let i = 0;i<this.state.addCommentItem[0].data.length;i++){
-        if(this.state.addCommentItem[0].data[i].focusOnFlag){
+  focusOn = (j,name,img) => {
+    let deteleFochs = []
+    let deteleFensi = []
+    let deteleFochsIndex = 0
+    let deteleFensiIndex = 0
+    for(let i = 0;i<this.state.addCommentItem.length;i++){
+        if(this.state.addCommentItem[i].userName == name){ 
+            deteleFensiIndex = i
+        }
+        if(this.state.addCommentItem[i].userName == this.state.user){
+            deteleFochsIndex = i
+        }
+    }
+    for(let i = 0;i<this.state.addCommentItem.length;i++){
+        if(this.state.addCommentItem[i].focusOnFlag){
             if(i == j){
-                this.state.addCommentItem[0].data[i].focusOn = '已关注'
-                this.state.addCommentItem[0].data[i].focusOnFlag = false
+                this.state.addCommentItem[i].focusOn = '取消关注'
+                this.state.addCommentItem[i].focusOnFlag = false
+                let data = {
+                    id : this.state.addCommentItem[i].id,
+                    name : name,
+                    img : img
+                }
+                this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
+                let dataT = {
+                    id : this.state.addCommentItem[i].id,
+                    name : this.state.user,
+                    img : this.state.userNameImg
+                }
+                this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
+                break
             }
         }else{
             if(i == j){
-                this.state.addCommentItem[0].data[i].focusOn = '关注'
-                this.state.addCommentItem[0].data[i].focusOnFlag = true
+                this.state.addCommentItem[i].focusOn = '关注'
+                this.state.addCommentItem[i].focusOnFlag = true
+                for(let k = 0;k<this.state.addCommentItem[deteleFochsIndex].focusOns.length;k++){
+                    if(this.state.addCommentItem[deteleFochsIndex].focusOns[k].name != name){
+                        deteleFochs.push(this.state.addCommentItem[deteleFochsIndex].focusOns[k])
+                    }
+                }
+                for(let k = 0;k<this.state.addCommentItem[deteleFensiIndex].fensi.length;k++){
+                    if(this.state.addCommentItem[deteleFensiIndex].fensi[k].name != this.state.user){
+                        deteleFensi.push(this.state.addCommentItem[deteleFensiIndex].fensi[k])
+                    }
+                }
+                this.state.addCommentItem[deteleFochsIndex].focusOns = deteleFochs
+                this.state.addCommentItem[deteleFensiIndex].fensi = deteleFensi
+                break
             }
         }
     }
     this.setState({
         addCommentItem : this.state.addCommentItem
+    })
+    this.init()
+    Constants.storage.save({
+        key : 'commentsItemFoucsOn',
+        data : this.state.addCommentItem,
+        defaultExpires: true, 
     })
   }
   //点击tab切换
@@ -132,6 +209,59 @@ export default class ComList extends Component{
     const { navigation } = this.props;
     this.props.navigation.goBack()
   }
+  //粉丝
+  showFensi = () => {
+    if(this.state.fensi == 0){
+        return(
+            <View style = {styles.myCommit}>
+                    <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.addLogo} />
+                    <Text style = {styles.titleName}>粉丝</Text>
+                    <Text style = {styles.titleMsg}>这里会显示所有关注你的用户.</Text>
+            </View>
+        )
+    }else{
+        let array = {
+            fensi:[]
+        }
+        for(let i = 0;i<this.state.showFensiList.length;i++){
+            let item =  <ScrollView style = {styles.perItem} key = {i} horizontal = {true} showsHorizontalScrollIndicator={false}><TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name)}>
+                <View style = {styles.radius}>
+                    <Image source={{uri:this.state.showFensiList[i].img?this.state.showFensiList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                </View> 
+                <Text style = {styles.perName}>{this.state.showFensiList[i].name}</Text>
+            </TouchableOpacity></ScrollView>
+            array.fensi.push(item)
+        }
+        return array.fensi
+    }
+  }
+  //关注的主播
+  showFoucsOn = () => {
+    let {fadeAnim}  = this.state;
+    if(this.state.foncsOn == 0){
+        return(
+            <Animated.View style = {[styles.myCommit,styles.myCommitT,{left:fadeAnim}]}>
+                <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.addLogo} />
+                <Text style = {styles.titleName}>关注的用户</Text>
+                <Text style = {styles.titleMsg}>这里会显示您关注的所有用户.</Text>
+            </Animated.View>
+        )
+    }else{
+        let array = {
+            foncsOn:[]
+        }
+        for(let i = 0;i<this.state.foucsOnList.length;i++){
+            let item =  <Animated.View key = {i} style = {[styles.myCommits,styles.myCommitT,{left:fadeAnim}]}><ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}><TouchableOpacity style = {styles.per}  onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
+                <View style = {styles.radius}>
+                    <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                </View> 
+                <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
+            </TouchableOpacity></ScrollView></Animated.View>
+            array.foncsOn.push(item)
+        }
+        return array.foncsOn
+    }
+  }
   render() {
     let {fadeAnim}  = this.state;
     return (
@@ -140,28 +270,20 @@ export default class ComList extends Component{
            <View style = {styles.comTab}>
                 <TouchableOpacity style = {styles.touchLeft} onPress = {this.changeTab.bind(this,0)}>
                     <View style = {[styles.comLeft,this.state.changeBcolor ? styles.changBottomColor : '']}>
-                        <Text style = {[styles.comNum,this.state.changeBcolor ? styles.changColor : '']}>0</Text>
+                        <Text style = {[styles.comNum,this.state.changeBcolor ? styles.changColor : '']}>{this.state.fensi}</Text>
                         <Text style = {[styles.comText,this.state.changeBcolor ? styles.changColor : '']}>粉丝</Text>
                     </View>
                 </TouchableOpacity>
                 <TouchableOpacity style = {styles.touchRight} onPress = {this.changeTab.bind(this,1)}>
                     <View style = {[styles.comRight,this.state.changeBcolor ? '' :styles.changBottomColor]}>
-                        <Text style = {[styles.comNum,this.state.changeBcolor ? '' : styles.changColor]}>10</Text>
+                        <Text style = {[styles.comNum,this.state.changeBcolor ? '' : styles.changColor]}>{this.state.foncsOn}</Text>
                         <Text style = {[styles.comText,this.state.changeBcolor ? '' : styles.changColor]}>已关注</Text>
                     </View>
                 </TouchableOpacity>
            </View>
            <View style = {styles.animates}>
-                <View style = {styles.myCommit}>
-                        <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.addLogo} />
-                        <Text style = {styles.titleName}>粉丝</Text>
-                        <Text style = {styles.titleMsg}>这里会显示所有关注你的用户.</Text>
-                </View>
-                <Animated.View style = {[styles.myCommit,styles.myCommitT,{left:fadeAnim}]}>
-                    <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.addLogo} />
-                    <Text style = {styles.titleName}>关注的用户</Text>
-                    <Text style = {styles.titleMsg}>这里会显示您关注的所有用户.</Text>
-                </Animated.View>
+                {this.showFensi()}
+                {this.showFoucsOn()}
            </View>
            
            <View style = {styles.addCommList}>
@@ -173,9 +295,7 @@ export default class ComList extends Component{
                     renderItem={this.addPerItem}
                     showsVerticalScrollIndicator={false}
                     keyExtractor = {(item,index) => item + index}
-                    sections={
-                        this.state.addCommentItem
-                    }>
+                    sections={[{data:this.state.addCommentItem}]}>
                 </SectionList>
            </View>
            </ScrollView>
@@ -186,7 +306,12 @@ export default class ComList extends Component{
 
 const styles = StyleSheet.create({
     animates: {
-        position:'relative'
+        position:'relative',
+        paddingLeft:15,
+        paddingRight:15,
+        // paddingTop:10,
+        // paddingBottom:10,
+        width:deviceWidth
     },
     myCommitT: {
         position:'absolute',
@@ -223,7 +348,7 @@ const styles = StyleSheet.create({
         color:'#cccccc'
     },
     addOne: {
-        width:50,
+        flex:2,
         height:50,
         marginRight:8,
         justifyContent: 'center',
@@ -236,7 +361,7 @@ const styles = StyleSheet.create({
         borderRadius:25,
     },
     addTwo: {
-        width:200,
+        flex:6
     },
     lNameO: {
         fontSize:10,
@@ -253,7 +378,7 @@ const styles = StyleSheet.create({
         marginTop:3
     },
     addThree: {
-        width:91,
+        flex:2,
         flexDirection:'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -284,6 +409,13 @@ const styles = StyleSheet.create({
         paddingTop:50,
         justifyContent: 'center',
         alignItems: 'center',
+        width:deviceWidth
+    },
+    myCommits: {
+        backgroundColor:'#FFFAFA',
+        // paddingBottom:70,
+        // paddingTop:50,
+        width:deviceWidth,
     },
     addLogo: {
 
@@ -337,6 +469,33 @@ const styles = StyleSheet.create({
     },
     changColor: {
         color:'#000000'
+    },
+    per: {
+        width:70,
+        height:70,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radius: {
+        width:50,
+        height:50,
+        overflow:'hidden',
+        borderRadius:35,
+    },
+    perImg: {
+        width:50,
+        height:50,
+    },
+    perName: {
+        width:70,
+        fontSize:12,
+        color:'#898989',
+        paddingTop:5,
+        overflow:'hidden',
+        textAlign:'center'
+    },
+    perItem: {
+        paddingBottom:70,
+        paddingTop:50,
     }
-
 });

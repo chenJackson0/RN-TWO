@@ -40,7 +40,28 @@ import Constants from './global.js'
             text : '',
             changeTabNum : 0,
             works : '作品',
-            say : '说说'
+            say : '说说',
+            time : '',
+            address : ''
+        }
+    }
+    //时间戳转时间
+
+    changeTime = (date) => {
+        let day = Math.floor(date / (3600*24));
+        let hour =  Math.floor((date % (3600*24)) / 3600);
+        let minute = Math.floor(((date % (3600*24)) % 3600) / 60);
+        let month = Math.floor(day / (31))
+        if(month>0){
+            return month + '月前'
+        }else if(day>0){
+            return day + '天前'
+        }else if(hour>1){
+            return hour + '时前'
+        }else if(minute>1){
+            return minute + '分钟前'
+        }else{
+            return '刚刚' 
         }
     }
     //绑定监听事件
@@ -69,6 +90,7 @@ import Constants from './global.js'
     }
     //加载数据
     init = () => {
+        let newTiem = Date.parse(new Date())
         const { navigation } = this.props;
         let id = navigation.getParam("id")
         let changeTabNum = navigation.getParam("changeTabNum")
@@ -78,7 +100,7 @@ import Constants from './global.js'
         for(let i = 0;i<publishedList.length;i++){
             if(publishedList[i].id == id){
                 this.state.itemDetail = publishedList[i],
-                this.state.itemImg = publishedList[i].publicHeadImg
+                // this.state.itemImg = publishedList[i].publicHeadImg
                 this.state.index = i
                 break //这里一定要return,否则一个作品多张图时,会执行多次,重复
             }
@@ -88,7 +110,7 @@ import Constants from './global.js'
             id : id,
             data : publishedList,
             itemDetail : this.state.itemDetail,
-            itemImg : this.state.itemImg,
+            itemImg : publishedList[this.state.index].publicHeadImg,
             commentsItem : commentsItem,
             commentNim : publishedList[this.state.index].commentsNum,
             userNameImg : userNameImg,
@@ -97,7 +119,9 @@ import Constants from './global.js'
             authorImg : publishedList[this.state.index].perImg,
             author : publishedList[this.state.index].userName,
             text : publishedList[this.state.index].text,
-            changeTabNum : changeTabNum
+            changeTabNum : changeTabNum,
+            time : this.changeTime((newTiem-publishedList[this.state.index].time)/1000),
+            address : publishedList[this.state.index].address
         })
     }
     //加载图片或视频
@@ -190,6 +214,7 @@ import Constants from './global.js'
                     <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次</Text>
                     <Text style = {styles.authorText}>{this.state.text}</Text>
                     <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
+                    <Text style = {[styles.time]}>{this.state.time} {this.state.address}</Text>
                 </View>
                 <ScrollView>
                     <View style = {[styles.adimatedView]}>
@@ -227,6 +252,11 @@ import Constants from './global.js'
  }
 
  const styles = StyleSheet.create({
+    time: {
+        fontSize:11,
+        color:'#898989',
+        paddingBottom:10,
+    },
     max: {
         flex :1
     },

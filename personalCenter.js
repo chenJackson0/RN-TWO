@@ -108,6 +108,7 @@ class Row extends Component {
                 break
             }
         }
+        //主播编辑图片修改时返回个人中心保存
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
             data : commentsItem,
@@ -268,6 +269,13 @@ class Row extends Component {
             </View>
         )
     };
+    //查看粉丝和关注的主播
+    goTofensiAndFoucsOn = (name) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('ComList',{
+            perUser : name
+        })
+    }
     render() {
         let {fadeAnim}  = this.state;
         return(
@@ -281,14 +289,14 @@ class Row extends Component {
                         <View style = {styles.userConter1RightTop}>
                             <Text style = {styles.userConter1RightTop1}>{this.state.post}</Text>
                             <Text style = {styles.userConter1RightTop1}>{this.state.TellMeAbout}</Text>
-                            <Text style = {styles.userConter1RightTop1}>{this.state.fans}</Text>
-                            <Text style = {styles.userConter1RightTop1}>{this.state.FocusOn}</Text>
+                            <Text style = {styles.userConter1RightTop1} onPress = {this.goTofensiAndFoucsOn.bind(this,this.state.userName)}>{this.state.fans}</Text>
+                            <Text style = {styles.userConter1RightTop1} onPress = {this.goTofensiAndFoucsOn.bind(this,this.state.userName)}>{this.state.FocusOn}</Text>
                         </View>
                         <View style = {styles.userConter1RightMidd}>
                             <Text style = {styles.userConter1RightMidd1}>作品</Text>
                             <Text style = {styles.userConter1RightMidd1}>说说</Text>
-                            <Text style = {styles.userConter1RightMidd1}>粉丝</Text>
-                            <Text style = {styles.userConter1RightMidd1}>关注</Text>
+                            <Text style = {styles.userConter1RightMidd1} onPress = {this.goTofensiAndFoucsOn.bind(this,this.state.userName)}>粉丝</Text>
+                            <Text style = {styles.userConter1RightMidd1} onPress = {this.goTofensiAndFoucsOn.bind(this,this.state.userName)}>关注</Text>
                         </View>
                         <View style = {styles.userConter1RightBottom}>
                             <Text style = {styles.userConter1RightBottomText} onPress = {this.editPage.bind(this)}>编辑主页</Text>
@@ -395,7 +403,10 @@ class Row extends Component {
         paddingBottom:8
     },
     changText: {
-        color:'#E066FF'
+        color:'#FF00FF',
+        borderBottomColor:'#262626',
+        borderBottomWidth:1,
+        backgroundColor:'#FDF5E6'
     },
     row:{
         backgroundColor: '#FFFFFF',
@@ -556,7 +567,7 @@ class Row extends Component {
         alignItems: 'center',
     },
     userConter1Left: {
-        width:70,
+        flex:2,
         height:70,
         marginRight:8
     },
@@ -566,7 +577,7 @@ class Row extends Component {
         borderRadius:35,
     },
     userConter1Right: {
-        width:281,
+        flex:8,
         marginTop:5,
     },
     userConter1RightTop: {

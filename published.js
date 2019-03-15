@@ -49,6 +49,7 @@ const options = {
             title : '发布作品',
             avatarSource: '',
             typeNameChange : false,
+            typeNum : 0,//0 公开 1 私密 2 对粉丝可见
             text : '公开',
             imgFlag : false,
             item:[],
@@ -252,9 +253,9 @@ const options = {
         if(this.state.typeNameChange){
             return(
                 <View style = {styles.typeName}>
-                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,'公开')}>公开</Text>
-                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,'私密')}>私密</Text>
-                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,'粉丝可见')}>粉丝可见</Text>
+                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,0,'公开')}>公开</Text>
+                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,1,'私密')}>私密</Text>
+                    <Text style = {styles.typeNameItem} onPress = {this.changName.bind(this,2,'仅粉丝可见')}>粉丝可见</Text>
                 </View>
             )
         }else{
@@ -277,16 +278,21 @@ const options = {
     }
 
     //选择对外开发的类型名称
-    changName = (name) => {
+    changName = (typeNum,text) => {
         this.setState({
-            text: name,
+            typeNum: typeNum,
+            text : text,
             typeNameChange: false
         })
     }
     //发布提交
     publishedF = () => {
+        let pageName = 'HomePage'
         if(!this.state.imgFlag&&!this.state.publisedText){
-            alert("发布说说不能为空!")
+            alert("发布说说文字不能为空!")
+            return
+        }else if(!this.state.publisedText){
+            alert("发布作品文字不能为空!")
             return
         }
         let publishedList = this.state.publishedList
@@ -312,7 +318,8 @@ const options = {
             type : '',
             commentsFlag : true,
             focusOnFlag : true,
-            focusOn :'关注'
+            focusOn :'关注',
+            typeNum : this.state.typeNum
         }
         if(this.state.imgFlag){
             data.type = 'works'
@@ -326,7 +333,12 @@ const options = {
             data : publishedList,
             defaultExpires: true, 
         })
-        this.props.navigation.navigate('HomePage',{
+        if(this.state.imgFlag){
+            pageName = 'HomePage'//跳首页
+        }else{
+            pageName = 'Collection'//跳说说
+        }
+        this.props.navigation.navigate(pageName,{
             publisedList : data
         })
     }
@@ -432,14 +444,15 @@ const options = {
         flex:1
     },
     publisedTitle: {
-        flex:8,
+        flex:6,
         fontSize:15,
-        color:'#000000'
+        color:'#000000',
     },
     publisedMsg: {
-        flex:1,
+        flex:3,
         fontSize:15,
-        color:'#898989'
+        color:'#898989',
+        textAlign:'right',
     },
     max: {
         flex :1

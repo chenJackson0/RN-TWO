@@ -18,7 +18,10 @@ import {
 import Header from './component/publicHeads'
 import VideoImg from './component/videoImg'
 // 取得屏幕的宽高Dimensions
-const { ScreenWidth, height } = Dimensions.get('window');
+let windowsSize = {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get("window").height
+};
 import Entypo from 'react-native-vector-icons/Entypo'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
@@ -60,16 +63,21 @@ const photoOptions = {
             commentNim : 0,
             userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             addCommentNum : 0,
-            oldcommentsItem : []
+            oldcommentsItem : [],
+            foucsOnList : [],
+            onTFlag : false,
+            onFFlag : false,
+            onTFlagF : true,
+            onFFlagF : true
         }
     }
     //时间戳转时间
 
     changeTime = (date) => {
-        let month = Math.floor(date / (3600*24*30))
         let day = Math.floor(date / (3600*24));
         let hour =  Math.floor((date % (3600*24)) / 3600);
         let minute = Math.floor(((date % (3600*24)) % 3600) / 60);
+        let month = Math.floor(day / (31))
         if(month>0){
             return month + '月前'
         }else if(day>0){
@@ -96,12 +104,10 @@ const photoOptions = {
             userNameImg : '',
             addCommentItem : [],
             addCommentNum : 0
-        },()=>{
-            setTimeout(()=>{
-                this.init()
-            },500)
         })
-        
+        setTimeout(()=>{
+            this.init()
+        },500)
         // if(publisedList){
         //     data.unshift(publisedList)
         //     this.setState({
@@ -119,7 +125,8 @@ const photoOptions = {
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
         let works = []
-        let commentsItemList = []
+        let foucsOnList = []
+        let newAddName = []
         const { navigation } = this.props;
         let newTiem = Date.parse(new Date())
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
@@ -128,16 +135,39 @@ const photoOptions = {
         //获取作品列表
         for(let i = 0;i<publishedList.length;i++){
             lastTime = newTiem - publishedList[i].time
-            if(publishedList[i].type == 'works'){
-                works.push(publishedList[i])
+            if(publishedList[i].typeNum == 0){
+                if(publishedList[i].type == 'works'){
+                    works.push(publishedList[i])
+                    this.state.onTFlagF = false
+                }
+            }else if(publishedList[i].typeNum == 1){
+                //私密的
+
+            }else if(publishedList[i].typeNum == 2){
+                for(let i = 0;i<commentsItem.length;i++){
+                    if(user == commentsItem[i].userName){
+                        for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                            if(publishedList[i].userName == commentsItem[i].focusOns[j].name){
+                                works.push(publishedList[i])
+                            }
+                        }
+                    }
+                }
             }
+            
             if(lastTime>0){
-                getChangeTime = this.changeTime(lastTime)
+                getChangeTime = this.changeTime(lastTime/1000)
                 publishedList[i].timeText = getChangeTime
             }else{
                 return
             }
         }
+        if(this.state.onTFlagF){
+            this.state.onTFlag = true
+        }else{
+            this.state.onTFlag = false
+        }
+        
         //获取推荐的用户
         for(let i = 0;i<commentsItem.length;i++){
             //关注用户不包括自己,需要时放开
@@ -146,17 +176,23 @@ const photoOptions = {
             //     commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
             // }
             if(user == commentsItem[i].userName){
-                let newAddName = []
                 if(commentsItem[i].focusOns.length == 0){
                     this.changFocusOnFlag(commentsItem,newAddName)
                 }else{
                     for(let j = 0;j<commentsItem[i].focusOns.length;j++){
                         newAddName.push(commentsItem[i].focusOns[j].name)
+                        foucsOnList.push(commentsItem[i].focusOns[j])
                         this.changFocusOnFlag(commentsItem,newAddName)
+                        this.state.onFFlagF = false
                     }
                 }
             }
             commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+        }
+        if(this.state.onFFlagF){
+            this.state.onFFlag = true
+        }else{
+            this.state.onFFlag = false
         }
         Constants.storage.save({
             key : 'userName',
@@ -168,7 +204,8 @@ const photoOptions = {
             user:user,
             userNameImg : userNameImg,
             addCommentItem : commentsItem,
-            oldcommentsItem : commentsItem
+            oldcommentsItem : commentsItem,
+            foucsOnList : foucsOnList
          })
     }
     //关注的用户,在没有关注的用户中要是能被关注的
@@ -177,15 +214,18 @@ const photoOptions = {
         if(newAddName.length == 0){
             for(let i = 0;i<commentsItem.length;i++){
                 commentsItem[i].focusOnFlag = true
+                commentsItem[i].focusOn = '关注'
             }
         }else{
             for(let i = 0;i<commentsItem.length;i++){
                 for(let j = 0;j<newAddName.length;j++){
                     if(commentsItem[i].userName == newAddName[j]){
                         commentsItem[i].focusOnFlag = false
+                        commentsItem[i].focusOn = '取消关注'
                         break //此处的break很重要
                     }else{
                         commentsItem[i].focusOnFlag = true
+                        commentsItem[i].focusOn = '关注'
                         // newCommentsItem.push(commentsItem[i])
                     }
                 }
@@ -195,18 +235,18 @@ const photoOptions = {
         //     addCommentItem : newCommentsItem
         // })
     }
-    //加载待关注用户
+    //加载已经关注用户
     personItem = () => {
         let array = {
             user:[]
         }
-        for(let i = 0;i<10;i++){
-           let item =  <View style = {styles.per} key = {i}>
+        for(let i = 0;i<this.state.foucsOnList.length;i++){
+           let item =  <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
                 <View style = {styles.radius}>
-                    <Image source={{uri:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                    <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
                 </View> 
-                <Text style = {styles.perName}>jackson</Text>
-            </View>
+                <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
+            </TouchableOpacity>
             array.user.push(item)
         }
         return array.user
@@ -257,7 +297,7 @@ const photoOptions = {
     goDetail = (id) => {
         const { navigation } = this.props;
         this.props.navigation.navigate('Detail',{
-            id : id
+            id : id,changeTabNum : 0
         })
     }
     //跳转作者主页
@@ -266,6 +306,22 @@ const photoOptions = {
         this.props.navigation.navigate('DuthonPerCenter',{
             userName : userName
         })
+    }
+    //没有说说的时候ui
+    onT = () => {
+        if(this.state.onTFlag){
+            return(
+                <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何作品,赶紧点击左上角相机吧.</Text>
+            )
+        }
+    }
+    //没有关注主播的时候ui
+    onF = () => {
+        if(this.state.onFFlag){
+            return(
+                <Text style = {styles.noT} key = {1}>空空如也,您还没有关注任何的主播,赶紧去关注自己喜欢的主播吧.</Text>
+            )
+        }
     }
     //加载已关注的用户发布的作品
     saveWorks = () =>{
@@ -304,7 +360,7 @@ const photoOptions = {
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,i)}>{this.state.data[i].butText}</Text>
                     </View>
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
-                    <Text style = {styles.commentDay}>{this.state.data[i].timeText}</Text>
+                    <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
                 </View>
             </View>
             array.works.push(item)
@@ -362,7 +418,7 @@ const photoOptions = {
         for(let i = 0;i<this.state.addCommentItem.length;i++){
             if(this.state.addCommentItem[i].focusOnFlag){
                 if(i == j){
-                    this.state.addCommentItem[i].focusOn = '已关注'
+                    this.state.addCommentItem[i].focusOn = '取消关注'
                     this.state.addCommentItem[i].focusOnFlag = false
                     let data = {
                         id : this.state.addCommentItem[i].id,
@@ -401,7 +457,6 @@ const photoOptions = {
         this.setState({
             addCommentItem : this.state.addCommentItem
         })
-        alert(JSON.stringify(this.state.addCommentItem))
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
             data : this.state.addCommentItem,
@@ -662,6 +717,7 @@ const photoOptions = {
                 <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} getImg = {this.getImg.bind(this)}/>
                 <ScrollView style = {styles.items}>
                     <View style = {styles.listItem}>
+                    {this.onF()}
                         <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
                             {this.personItem()}
                             <View style = {styles.add}>
@@ -669,6 +725,7 @@ const photoOptions = {
                             </View>
                         </ScrollView>
                     </View>
+                    {this.onT()}
                    {this.saveWorks()}
                     <View style = {styles.addItemPer}>
                         <View style = {styles.headerTitle}>
@@ -982,7 +1039,7 @@ const photoOptions = {
         marginBottom:4
     },
     commentDay: {
-        fontSize:8,
+        fontSize:10,
         color:'#898989',
     },
     max: {
@@ -993,6 +1050,7 @@ const photoOptions = {
         paddingRight:4
     },
     listItem: {
+        flex:1,
         paddingRight:10,
         paddingLeft:10,
         paddingTop:6,
@@ -1135,5 +1193,13 @@ const photoOptions = {
         height:40,
         marginLeft:10,
         lineHeight:40
+    },
+    noT: {
+        fontSize:13,
+        color:'#898989',
+        paddingTop:30,
+        paddingBottom:20,
+        textAlign:'center',
+        flex:1
     },
 });
