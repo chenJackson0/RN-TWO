@@ -33,21 +33,13 @@ const photoOptions = {
         path: 'images'
     }
 };
-const options = {
-    title: '选择视频',
-    cancelButtonTitle: '取消',
-    takePhotoButtonTitle: '录制视频',
-    chooseFromLibraryButtonTitle: '选择视频',
-    mediaType: 'video',
-    videoQuality: 'medium'
-};
 
  export default class Published extends Component {
   constructor(props) {
    super(props);
     this.state = {
             title : '发布作品',
-            avatarSource: '',
+            avatarSource: 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             typeNameChange : false,
             typeNum : 0,//0 公开 1 私密 2 对粉丝可见
             text : '公开',
@@ -65,7 +57,7 @@ const options = {
             addCommentNum : 0,
             confirmationWindowFlagData : [
                 {
-                    title : '保存此次编辑',
+                    title : '保存此次编辑?',
                     leftT : '不保存',
                     rightT : '保存',
                     type : 'cancel'
@@ -94,6 +86,11 @@ const options = {
         
     }
     componentWillMount = () => {
+        
+    }
+    //处理业务
+    init = () => {
+        let published = Constants.getSublishedList() ? Constants.getSublishedList() : []
         const { navigation } = this.props;
         let itemData = []
         let itemList = {}
@@ -109,16 +106,10 @@ const options = {
             avatarSource : avatarSource,
             user: user,
             userNameImg : userNameImg,
-        })
-    }
-    //处理业务
-    init = () => {
-        let published = Constants.getSublishedList() ? Constants.getSublishedList() : []
-        this.setState({
             publishedList : published
         })
     }
-    componentDidMount = () => {
+    componentWillMount = () => {
         //注册监听事件
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
     }

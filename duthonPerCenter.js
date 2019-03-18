@@ -69,7 +69,8 @@ class Row extends Component {
             focusOnText : '关注',
             focusOnTextFlag : true,
             addCommentItem : [],
-            perUserName : ''
+            perUserName : '',
+            address : '上海'
         }
     }
     
@@ -110,6 +111,7 @@ class Row extends Component {
         for(let i = 0;i<commentsItem.length;i++){
             //判断改主播是否已经被关注过
             if(userName == commentsItem[i].userName){
+                this.state.address = commentsItem[i].address
                 for(let j = 0;j<commentsItem[i].fensi.length;j++){
                     if(commentsItem[i].fensi[j].name == perUserName){
                         this.state.focusOnText = '取消关注'
@@ -164,7 +166,8 @@ class Row extends Component {
             saysayItem : this.state.saysayItem,
             focusOnText : this.state.focusOnText,
             focusOnTextFlag : this.state.focusOnTextFlag,
-            perNameImg : perNameImg
+            perNameImg : perNameImg,
+            address : this.state.address
         })
     }
     //关注主播
@@ -347,7 +350,7 @@ class Row extends Component {
                     </View>
                 </View>
                 <View style = {styles.userConter2}>
-                    <Text style = {styles.userConterName}>{this.state.userName}</Text>
+                    <Text style = {styles.userConterName}>{this.state.userName} {this.state.address}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />

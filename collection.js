@@ -590,7 +590,7 @@ const photoOptions = {
     onT = () => {
         if(this.state.onTFlag){
             return(
-                <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何说说.</Text>
+                <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何说说,快《长按》左上角的相机图标,发布您的第一条说说吧.</Text>
             )
         }
     }
@@ -673,7 +673,6 @@ const photoOptions = {
         paddingTop:30,
         paddingBottom:20,
         textAlign:'center',
-        width:windowsSize.width
     },
     goDetail: {
         height:345,

@@ -31,7 +31,7 @@ export default class PublicHeads extends Component{
                 <Text style = {styles.headerText}>{this.props.title}</Text>
             </View>
             <View style = {styles.headerV}>
-                <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/>
+                {/* <MaterialIcons name = {'live-tv'} size = {22} color = {'black'}/> */}
             </View>
             <View style = {styles.headerS}>
                 <SimpleLineIcons name = {'paper-plane'} size = {22} color = {'black'}/>

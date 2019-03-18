@@ -53,16 +53,20 @@ const { ScreenWidth, height } = Dimensions.get('window');
                         <Text style = {styles.contBottomText}>{this.state.data[0].title}</Text>
                     </View>
                     <View style = {styles.contTop}>
-                        <Text style = {styles.contTopLeft}
-                            onPress = {this.noKeep.bind(this)}
-                        >
-                            {this.state.data[0].leftT}
-                        </Text>
-                        <Text style = {styles.contTopRight}
-                            onPress = {this.keep.bind(this)}
-                        >
-                            {this.state.data[0].rightT}
-                        </Text>
+                        <View style = {styles.contTopLeft}>
+                            <Text style = {styles.contTopLefts}
+                                onPress = {this.noKeep.bind(this)}
+                            >
+                                {this.state.data[0].leftT}
+                            </Text>
+                        </View>
+                        <View style = {styles.contTopRight}>
+                            <Text style = {styles.contTopRights}
+                                onPress = {this.keep.bind(this)}
+                            >
+                                {this.state.data[0].rightT}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             
@@ -92,25 +96,30 @@ const { ScreenWidth, height } = Dimensions.get('window');
     contTop: {
         flexDirection:'row',
         justifyContent:'space-between',
-        
     },
     contTopLeft: {
+        flex:1,
+        borderRightColor:'#EDEDED',
+        borderRightWidth:1,
+    },
+    contTopLefts: {
         flex:1,
         fontSize:14,
         color:'#000000',
         textAlign:'center',
         paddingTop:20,
-        paddingBottom:20
+        paddingBottom:20,
     },
     contTopRight: {
+        flex:1,
+    },
+    contTopRights: {
         flex:1,
         fontSize:14,
         color:'#B23AEE',
         textAlign:'center',
         paddingTop:20,
         paddingBottom:20,
-        borderLeftColor:'red',
-        borderLeftWidth:1,
     },
     contBottom: {
         borderBottomColor:'#EDEDED',

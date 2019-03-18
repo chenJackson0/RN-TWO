@@ -92,14 +92,15 @@ getcommentsItemStorageF = () => {
 }
 
 //清除数据用的,到时候删--------------------
-let removeName = ['account','commentsItemFoucsOn','publishedLi']
+removeNameList = ['account','commentsItemFoucsOn','publishedLi','userName','userNameImg']
 removeName = () => {
-    for(let i = 0;i<removeName.length;i++){
+    for(let i = 0;i<this.removeNameList.length;i++){
         storage.remove({
-            key: removeName[i]
+            key: this.removeNameList[i]
         });
     }
 }
+// this.removeName()
 //----------------------------------
 
 //模拟获取api用户表
@@ -137,6 +138,5 @@ const storageG = {
   getUserNameImgStorageF : getUserNameImgStorageF,
   getUserName : getUserName,
   getUserNameStorageF : getUserNameStorageF,
-    // removeName:removeName()
 }
 export default storageG

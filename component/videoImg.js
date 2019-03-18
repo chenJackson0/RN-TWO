@@ -32,39 +32,25 @@ const photoOptions = {
     super(props);
 
     }
-    //获取手机相册
-    getImg = () => {
-        ImagePicker.showImagePicker(photoOptions, (response) => {
-            if (response.didCancel) {
-               
-            }
-            else if (response.error) {
-                
-            }
-            else if (response.customButton) {
-                
-            }
-            else {
-                let source = response.uri;
-                this.setState({
-                    avatarSource: source
-                  });
-            }
-        });
-    }
     render() {
         return(
                 <View style = {styles.cont}>
                     <View style = {styles.contTop}>
-                        <Text style = {styles.contTopLeft}>
-                            拍摄
+                        <Text style = {styles.contTopLeft} onPress = {
+                            ()=>{
+                                this.props.getVideo()
+                            }
+                        }>
+                            视频
                         </Text>
                         <Text style = {styles.contTopRight}>
                             照片或视频
                         </Text>
                     </View>
                     <View style = {styles.contBottom}>
-                        <Text style = {styles.contBottomText} onPress = {this.getImg.bind(this)}>从相册选择</Text>
+                        <Text style = {styles.contBottomText} onPress = {()=>{
+                            this.props.getImgs()
+                        }}>照片</Text>
                     </View>
                 </View>
             
@@ -100,12 +86,15 @@ const photoOptions = {
         paddingBottom:12
     },
     contTopLeft: {
+        flex:2,
         fontSize:14,
         color:'#000000'
     },
     contTopRight: {
+        flex:1,
         fontSize:10,
-        color:'#898989'
+        color:'#898989',
+        textAlign:'right',
     },
     contBottom: {
         borderTopColor:'#EDEDED',

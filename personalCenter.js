@@ -65,7 +65,8 @@ class Row extends Component {
             perItem : [],
             saysayItem : [],
             changeTabNum : 0,
-            playNum : 4533
+            playNum : 4533,
+            address : '上海'
         }
     }
     
@@ -98,11 +99,12 @@ class Row extends Component {
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
+        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
                 commentsItem[i].img = userNameImg
+                this.state.address = commentsItem[i].address
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
@@ -144,7 +146,8 @@ class Row extends Component {
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem,
             avatarSource : userNameImg,
-            saysayItem : this.state.saysayItem
+            saysayItem : this.state.saysayItem,
+            address : this.state.address
         })
     }
     //获取手机相册
@@ -304,7 +307,7 @@ class Row extends Component {
                     </View>
                 </View>
                 <View style = {styles.userConter2}>
-                    <Text style = {styles.userConterName}>{this.state.userName}</Text>
+                    <Text style = {styles.userConterName}>{this.state.userName}  {this.state.address}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />
@@ -399,8 +402,8 @@ class Row extends Component {
         fontSize:13,
         color:'#898989',
         textAlign:'center',
-        paddingTop:8,
-        paddingBottom:8
+        paddingTop:13,
+        paddingBottom:13
     },
     changText: {
         color:'#FF00FF',
@@ -542,8 +545,6 @@ class Row extends Component {
         alignItems: 'center',
     },
     userConter3: {
-        paddingTop:5,
-        paddingBottom:5,
         flexDirection:'row',
         justifyContent: 'center',
         alignItems: 'center',

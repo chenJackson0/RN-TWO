@@ -16,9 +16,9 @@ export default class PersonalCenterHeads extends Component{
     return (
         <View style = {styles.max}>
             <View style = {styles.headerP}>
-                <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onPress = {()=>{
+                {/* <SimpleLineIcons name = {'camera'} size = {22} color = {'black'} onPress = {()=>{
                     this.props.choosePicker()
-                }}/>
+                }}/> */}
             </View>
             <View style = {styles.headerT}>
                 <Text style = {styles.headerText}>{this.props.title}</Text>

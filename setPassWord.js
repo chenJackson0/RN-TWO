@@ -22,7 +22,8 @@ export default class SetPassWord extends Component{
         commentsItem : [],
         userImg : '',
         userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
-        addCommentNum : 0
+        addCommentNum : 0,
+        address : '上海'
       }
   };
   user = ''; //用户名
@@ -138,7 +139,8 @@ export default class SetPassWord extends Component{
         commeName : this.state.account,
         addCommentNum : this.state.addCommentNum,
         focusOn :'关注',
-        focusOnFlag : true
+        focusOnFlag : true,
+        address : this.state.address
     }
     this.state.commentsItem.push(data)
     Constants.storage.save({

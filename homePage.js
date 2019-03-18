@@ -42,6 +42,14 @@ const photoOptions = {
         path: 'images'
     }
 };
+const options = {
+    title: '选择视频',
+    cancelButtonTitle: '取消',
+    takePhotoButtonTitle: '录制视频',
+    chooseFromLibraryButtonTitle: '选择视频',
+    mediaType: 'video',
+    videoQuality: 'medium'
+};
  export default class HomePage extends Component {
   constructor(props) {
    super(props);
@@ -68,7 +76,7 @@ const photoOptions = {
             onTFlag : false,
             onFFlag : false,
             onTFlagF : true,
-            onFFlagF : true
+            onFFlagF : true,
         }
     }
     //时间戳转时间
@@ -648,8 +656,43 @@ const photoOptions = {
         const { navigation } = this.props;
         this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg : this.state.userNameImg})
     }
-    //发布作品带图片
+    //唤起发布作品选择组件
     getImg = () => {
+        this.setState({
+            videoImgFlag : true,
+            shareFlag : true
+        })
+    }
+    //视频
+    getVideo = () => {
+        this.setState({
+            videoImgFlag : false,
+            shareFlag : false
+        })
+        ImagePicker.showImagePicker(options, (response) => {
+            if (response.didCancel) {
+                
+            }
+            else if (response.error) {
+                
+            }
+            else if (response.customButton) {
+                
+            }
+            else {
+                alert(JSON.stringify(response))
+                // let source = response.uri;
+                // const { navigation } = this.props;
+                // this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
+            }
+        });
+    }
+    //图片
+    getImgs = () => {
+        this.setState({
+            videoImgFlag : false,
+            shareFlag : false
+        })
         ImagePicker.showImagePicker(photoOptions, (response) => {
             if (response.didCancel) {
             
@@ -667,11 +710,11 @@ const photoOptions = {
             }
         });
     }
-    //加载发布选择组件
+    //发视频或者图片选择
     showAndHidw = () => {
         if(this.state.videoImgFlag){
             return (
-                <VideoImg/>
+                <VideoImg getVideo = {this.getVideo.bind(this)} getImgs = {this.getImgs.bind(this)}/>
             )
         }else{
             return
@@ -786,7 +829,7 @@ const photoOptions = {
                     </View>
                     <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
-                {/* {this.showAndHidw()} */}
+                {this.showAndHidw()}
             </View>
         )
     }
