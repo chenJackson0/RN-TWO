@@ -224,12 +224,12 @@ export default class ComList extends Component{
             fensi:[]
         }
         for(let i = 0;i<this.state.showFensiList.length;i++){
-            let item =  <ScrollView style = {styles.perItem} key = {i} horizontal = {true} showsHorizontalScrollIndicator={false}><TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name)}>
-                <View style = {styles.radius}>
-                    <Image source={{uri:this.state.showFensiList[i].img?this.state.showFensiList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
-                </View> 
-                <Text style = {styles.perName}>{this.state.showFensiList[i].name}</Text>
-            </TouchableOpacity></ScrollView>
+            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name)}>
+                    <View style = {styles.radius}>
+                        <Image source={{uri:this.state.showFensiList[i].img?this.state.showFensiList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                    </View> 
+                    <Text style = {styles.perName}>{this.state.showFensiList[i].name}</Text>
+                </TouchableOpacity>
             array.fensi.push(item)
         }
         return array.fensi
@@ -251,12 +251,12 @@ export default class ComList extends Component{
             foncsOn:[]
         }
         for(let i = 0;i<this.state.foucsOnList.length;i++){
-            let item =  <Animated.View key = {i} style = {[styles.myCommits,styles.myCommitT,{left:fadeAnim}]}><ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}><TouchableOpacity style = {styles.per}  onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
-                <View style = {styles.radius}>
-                    <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
-                </View> 
-                <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
-            </TouchableOpacity></ScrollView></Animated.View>
+            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
+                        <View style = {styles.radius}>
+                            <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                        </View> 
+                        <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
+                    </TouchableOpacity>
             array.foncsOn.push(item)
         }
         return array.foncsOn
@@ -282,8 +282,15 @@ export default class ComList extends Component{
                 </TouchableOpacity>
            </View>
            <View style = {styles.animates}>
-                {this.showFensi()}
-                {this.showFoucsOn()}
+                <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
+                    {this.showFensi()}
+                </ScrollView>
+                <Animated.View style = {[styles.myCommits,styles.myCommitT,{left:fadeAnim}]}>
+                    <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
+                        {this.showFoucsOn()}
+                    </ScrollView>
+                </Animated.View>
+                
            </View>
            
            <View style = {styles.addCommList}>

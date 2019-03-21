@@ -74,8 +74,10 @@ const options = {
             oldcommentsItem : [],
             foucsOnList : [],
             onTFlag : false,
-            onFFlag : false,
             onTFlagF : true,
+            replyToCommentText : '',
+            replyToCommentMaxFlag : true,
+            onFFlag : false,
             onFFlagF : true,
         }
     }
@@ -111,11 +113,11 @@ const options = {
             data : [],
             userNameImg : '',
             addCommentItem : [],
-            addCommentNum : 0
+            addCommentNum : 0,
         })
         setTimeout(()=>{
             this.init()
-        },500)
+        },800)
         // if(publisedList){
         //     data.unshift(publisedList)
         //     this.setState({
@@ -213,7 +215,10 @@ const options = {
             userNameImg : userNameImg,
             addCommentItem : commentsItem,
             oldcommentsItem : commentsItem,
-            foucsOnList : foucsOnList
+            foucsOnList : foucsOnList,
+            fadeAnim: new Animated.Value(0),
+            sharefadeAnim: new Animated.Value(-110),
+            commentFlag : true,
          })
     }
     //关注的用户,在没有关注的用户中要是能被关注的
@@ -508,6 +513,11 @@ const options = {
     //评论
     comment = (i) => {
         let commentsItem = this.state.data[i].data ? this.state.data[i].data : []
+        for(let j = 0;j<commentsItem.length;j++){
+            commentsItem[j].data[0].replyToCommentListFlag = true
+            commentsItem[j].data[0].replyToCommentListT = '查看'
+            commentsItem[j].data[0].replyToCommentMaxFlag = true
+        }
         this.setState({
             commentsItem : commentsItem,
             commentNim : this.state.data[i].commentsNum,
@@ -558,6 +568,10 @@ const options = {
                 img : this.state.userNameImg,
                 name : this.state.user,
                 nameT : this.state.comments,
+                replyToComment : [],
+                replyToCommentMaxFlag : true,
+                replyToCommentListFlag : true,
+                replyToCommentListT : '查看'
             }
             let commentsItem = 
                 {
@@ -647,7 +661,7 @@ const options = {
     goComList = () => {
         const { navigation } = this.props;
         this.props.navigation.navigate('ComList',{
-            list : this.state.addCommentItem
+            list : this.state.addCommentItem,perUser:this.state.user
         })
     }
 
@@ -745,12 +759,108 @@ const options = {
                     <Text style = {styles.commentRIghtPerName}>
                         {item.name}
                     </Text>
-                    <Text style = {styles.commentRIghtPerText}>
+                    <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
                         {item.nameT}
                     </Text>
+                    <View style = {[styles.eplyToCommentMax,item.replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
+                        <TextInput
+                            ref = "code"
+                            style = {[styles.code,styles.eplyToCommentCode]}
+                            onChangeText={(replyToCommentText) => {
+                                this.setState({
+                                    replyToCommentText : replyToCommentText
+                                })
+                            }}
+                            value={this.state.replyToCommentText}
+                            placeholder = '请输入您想回复的话……'
+                            maxLength = {50}
+                            autoCapitalize = "none"
+                            clearButtonMode = "while-editing"
+                        />
+                        <Text style = {styles.codeLine}></Text>
+                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
+                    </View>
+                    <Text style = {[styles.replyToCommentTitle]} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                    {this.replyToCommentTitleList(item)}
                 </View>
             </View>
         )
+    }
+    //回复评论
+    replyToCommentSaveMsg = (index) => {
+        alert(index)
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            if(this.state.replyToCommentText){
+                let replyToComment = {
+                    img:this.state.userNameImg,
+                    name : this.state.user,
+                    nameT : this.state.replyToCommentText
+                }
+                this.state.data[this.state.index].data[index-1].data[0].replyToComment.push(replyToComment)
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                    replyToCommentText : ''
+                })
+            }else{
+                alert("回复评论不能为空!")
+            }
+            Constants.storage.save({
+                key : 'publishedLi',
+                data : this.state.data,
+                defaultExpires: true, 
+            })
+        }
+    }
+    //长按评论可回复
+    eplyToCommentT = (index) => {
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            this.setState({
+                commentsItem : this.state.data[this.state.index].data
+            })
+        }
+    }
+    //查看更多回复
+    showReplyToComment = (index) => {
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag){
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                })
+            }else{
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = true
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '查看'
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                })
+            }
+        }
+    }
+    //评论的回复
+    replyToCommentTitleList = (item) => {
+        let array = []
+        for(let i = 0;i<item.replyToComment.length;i++){
+            let view = <View style = {[styles.replyToComment,styles.commentList,item.replyToCommentListFlag ? styles.replyToCommentListStyle : '']} key = {i}>
+                <View style = {styles.commentLeftPerImg}>
+                    <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
+                </View>
+                <View style = {styles.commentRightPerText}>
+                    <Text style = {styles.commentRIghtPerName}>
+                        {item.replyToComment[i].name}
+                    </Text>
+                    <Text style = {styles.commentRIghtPerText}>
+                        {item.replyToComment[i].nameT}
+                    </Text>
+                </View>
+            </View>
+            array.push(view)
+        }
+        return array
     }
     render() {
         let {fadeAnim}  = this.state;
@@ -763,9 +873,9 @@ const options = {
                     {this.onF()}
                         <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
                             {this.personItem()}
-                            <View style = {styles.add}>
+                            {/* <View style = {styles.add}>
                                 <Entypo name = {'circle-with-plus'} size = {16} color = {'#BF3EFF'}/>
-                            </View>
+                            </View> */}
                         </ScrollView>
                     </View>
                     {this.onT()}
@@ -879,12 +989,14 @@ const options = {
         marginBottom:20,
         flexDirection:'row',
         justifyContent: 'center',
-        alignItems: 'center',
+        // alignItems: 'center',
     },
     commentLeftPerImg:{
+        paddingTop:6,
         flex:1
     },
     commentLeftPerListImg:{
+        paddingTop:10,
         width:30,
         height:30,
         borderRadius:15
@@ -1244,5 +1356,32 @@ const options = {
         paddingBottom:20,
         textAlign:'center',
         flex:1
+    },
+    eplyToCommentMax:{
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomColor:'#dddddd',
+        borderBottomWidth:1,
+
+    },
+    eplyToCommentMaxB: {
+        display:'none'
+    },
+    replyToCommentTitle: {
+        marginTop:10,
+        fontSize:14,
+        color:'#EED5D2'
+    },
+    replyToComment: {
+        marginTop:10
+    },
+    replyToCommentTitle: {
+        marginTop:10,
+        fontSize:14,
+        color:'#EED5D2'
+    },
+    replyToCommentListStyle: {
+        display:'none'
     },
 });

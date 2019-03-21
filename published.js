@@ -11,15 +11,15 @@ import {
     ScrollView,
     TextInput
 } from 'react-native';
-
  //引用插件
 import Header from './component/publishedHeads'
 import ConfirmationWindow from './component/confirmationWindow'
 // 取得屏幕的宽高Dimensions
-const { ScreenWidth, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import AddressJsonData from './addressJson.json'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -55,6 +55,8 @@ const photoOptions = {
             id : 0,
             address : '上海',
             addCommentNum : 0,
+            changeAddessHide : true,
+            offsetYNum : 3,
             confirmationWindowFlagData : [
                 {
                     title : '保存此次编辑?',
@@ -333,6 +335,34 @@ const photoOptions = {
             publisedList : data
         })
     }
+    //发布作品时选择地址--------
+    changeAddess = () => {
+        this.setState({
+            changeAddessHide : false
+        })
+    }
+    closeChangeAdderss = () =>{
+        this.setState({
+            changeAddessHide : true
+        })
+    }
+    //提交
+    submitChangeAdderss = ()=>{
+        this.setState({
+            changeAddessHide : true,
+            address : AddressJsonData[this.state.offsetYNum].provinceName
+        })
+    }
+    //end--------
+
+    addAdderss = () => {
+        let data = []
+        for(let i = 0;i<AddressJsonData.length;i++){
+            let view = <Text style = {[styles.addressItem,i==this.state.offsetYNum ? styles.addressItems : '']} key = {i}>{AddressJsonData[i].provinceName}</Text>
+            data.push(view)
+        }
+        return data
+    }
     render() {
         return(
             <View style = {styles.max}>
@@ -357,7 +387,7 @@ const photoOptions = {
                     <View style = {styles.publised3}>
                         <EvilIcons name = {'location'} size = {25} color = {'black'} style = {styles.collect}/>
                         <Text style = {styles.publisedTitle}>所在位置</Text>
-                        <Text style = {styles.publisedMsg}>{this.state.address}</Text>
+                        <Text style = {styles.publisedMsg} onPress = {this.changeAddess.bind(this)}>{this.state.address}</Text>
                         <EvilIcons name = {'chevron-right'} size = {25} color = {'#898989'} style = {styles.collect}/>
                     </View>
                     <View style = {styles.publised3}>
@@ -378,12 +408,141 @@ const photoOptions = {
                 {this.confirmationWindowF()}
                 <View style = {[styles.opacityBg,this.state.deleteImgLastFlag ? styles.showopacityBg : '']} ></View>
                 {this.deleteImgLast()}
+                <View style = {[styles.changeAddess,this.state.changeAddessHide ? styles.changeAddessHide : '']}>
+                    <View style = {styles.addressBg}></View>
+                    <View style = {styles.addressCont}>
+                        <View style = {styles.addressTitle}>
+                            <Text style = {styles.title}>切换地址</Text>
+                            <Text style = {styles.colse} onPress={this.closeChangeAdderss.bind(this)}>X</Text>
+                        </View>
+                        <View style = {styles.addressList}>
+                            <ScrollView
+                                ref = 'scrollviewS'
+                                onMomentumScrollEnd={(e) => {
+                                    // alert(e.nativeEvent.contentOffset.y)
+                                }}
+                                onScrollEndDrag = {(e)=>{
+                                    let offsetY = e.nativeEvent.contentOffset.y
+                                    let topNum = Math.floor(offsetY/30 + 0.5)
+                                    if(topNum<0){
+                                        offsetYNum = topNum + 3
+                                    }else{
+                                        offsetYNum = topNum + 3
+                                    }
+                                    this.setState({
+                                        offsetYNum : offsetYNum
+                                    })
+                                    this.refs.scrollviewS.scrollTo({x: 0, y: topNum*30, animated: true})
+                                }}
+                            >
+                                {this.addAdderss()}
+                            </ScrollView>
+                        </View>
+                        <View style = {styles.submitButton}>
+                            <Text style = {styles.submitButtonT} onPress = {this.submitChangeAdderss.bind(this)}>提交</Text>
+                        </View>
+                        <View style = {styles.lineT}></View>
+                        <View style = {styles.lineB}></View>
+                    </View>
+                </View>
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+    lineT: {
+        position:'absolute',
+        top:120,
+        left:0,
+        width:230,
+        height:1,
+        backgroundColor:'#dddddd'
+    },
+    lineB: {
+        position:'absolute',
+        top:150,
+        left:0,
+        width:230,
+        height:1,
+        backgroundColor:'#dddddd'
+    },
+    changeAddessHide: {
+        display:'none'
+    },
+    changeAddess: {
+        position:'absolute',
+        // right:0,
+        // left:0,
+        // top:0,
+        // bottom:0,
+        
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addressBg: {
+        height:height,
+        width:width,
+        backgroundColor:'#000000',
+        opacity:0.7
+    },
+    addressCont: {
+        borderRadius:8,
+        position:'absolute',
+        top:'50%',
+        left:'50%',
+        backgroundColor:'#ffffff',
+        height:270,
+        width:230,
+        marginTop:-135,
+        marginLeft: - 115
+    },
+    addressTitle :{
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomColor:'#dddddd',
+        borderBottomWidth:1
+    },
+    title: {
+        fontSize:13,
+        color:'#000000',
+        height:30,
+        flex:10,
+        textAlign:'center',
+        paddingTop:10,
+        paddingBottom:10,
+        paddingLeft:17
+    },
+    colse: {
+        fontSize:16,
+        color:'#898989',
+        flex:1
+    },
+    addressList: {
+        height:210,
+    },
+    addressItem: {
+        height:30,
+        fontSize:13,
+        color:'#dddddd',
+        textAlign:'center',
+        lineHeight:30
+    },
+    submitButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderTopColor:'#dddddd',
+        borderTopWidth:1
+    },
+    submitButtonT: {
+        fontSize:15,
+        color:'#000000',
+        width:230,
+        height:30,
+        textAlign:'center',
+        lineHeight:30
+    },
     opacityBg: {
         position:'absolute',
         right:0,
@@ -470,5 +629,8 @@ const photoOptions = {
         width:90,
         height:90,
         marginRight:6
-    }
+    },
+    addressItems:{
+        color:'#000000'
+    },
 });

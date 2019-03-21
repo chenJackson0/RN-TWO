@@ -42,7 +42,13 @@ import Constants from './global.js'
             works : '作品',
             say : '说说',
             time : '',
-            address : ''
+            address : '',
+            onTFlag : false,
+            onTFlagF : true,
+            replyToCommentText : '',
+            replyToCommentMaxFlag : true,
+            // replyToCommentListFlag : true,
+            // replyToCommentListT : '查看'
         }
     }
     //时间戳转时间
@@ -69,17 +75,9 @@ import Constants from './global.js'
         Constants.publishedListStorageF()//加载缓存获取数据
         Constants.getUserNameImgStorageF()
         Constants.getUserNameStorageF()
-        // this.setState({
-        //     itemDetail:[],
-        //     itemImg : [],
-        //     userNameImg : '',
-        //     data : [],
-        //     commentsItem : [],
-        //     commentNim : 0,
-        //     id : -1,
-        //     index : -1,
-        //     authorImg : ''
-        // })
+        this.setState({
+            itemImg : [],
+        })
         setTimeout(()=>{
             this.init()
         },200)
@@ -102,10 +100,21 @@ import Constants from './global.js'
                 this.state.itemDetail = publishedList[i],
                 // this.state.itemImg = publishedList[i].publicHeadImg
                 this.state.index = i
+                this.state.onTFlagF = false
                 break //这里一定要return,否则一个作品多张图时,会执行多次,重复
             }
         }
+        if(this.state.onTFlagF){
+            this.state.onTFlag = true
+        }else{
+            this.state.onTFlag = false
+        }
         let commentsItem = publishedList[this.state.index].data ? publishedList[this.state.index].data : []
+        for(let j = 0;j<commentsItem.length;j++){
+            commentsItem[j].data[0].replyToCommentListFlag = true
+            commentsItem[j].data[0].replyToCommentListT = '查看'
+            commentsItem[j].data[0].replyToCommentMaxFlag = true
+        }
         this.setState({
             id : id,
             data : publishedList,
@@ -121,22 +130,22 @@ import Constants from './global.js'
             text : publishedList[this.state.index].text,
             changeTabNum : changeTabNum,
             time : this.changeTime((newTiem-publishedList[this.state.index].time)/1000),
-            address : publishedList[this.state.index].address
+            address : publishedList[this.state.index].address,
+            onTFlag : this.state.onTFlag,
         })
     }
     //加载图片或视频
     showWokerImg = () => {
         if(this.state.changeTabNum == 0){
-            let wokerImgView = <View style = {styles.wokerImg}>
-            <Swiper style={styles.wrapper} showsButtons={false} showsPagination = {true}
-                autoPlay = {true} loop = {true}
+            let wokerImgView = <View style = {styles.workeImg}>
+            <Swiper style={styles.wrapper} autoplay = {true}
             >
                 {this.workeImg()}
             </Swiper>
             </View>
             return wokerImgView
         }else if(this.state.changeTabNum == 1){
-    
+            
         }
     }
     workeImg = ()=> {
@@ -160,6 +169,9 @@ import Constants from './global.js'
                 img : this.state.userNameImg,
                 name : this.state.user,
                 nameT : this.state.comments,
+                replyToComment : [],
+                replyToCommentMaxFlag : true,
+                replyToCommentListFlag : true
             }
             let commentsItem = 
                 {
@@ -183,6 +195,32 @@ import Constants from './global.js'
            alert("评论不能为空!")
         }
     }
+    //回复评论
+    replyToCommentSaveMsg = (index) => {
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            if(this.state.replyToCommentText){
+                let replyToComment = {
+                    img:this.state.userNameImg,
+                    name : this.state.user,
+                    nameT : this.state.replyToCommentText
+                }
+                this.state.data[this.state.index].data[index-1].data[0].replyToComment.push(replyToComment)
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                    replyToCommentText : ''
+                })
+            }else{
+                alert("回复评论不能为空!")
+            }
+            Constants.storage.save({
+                key : 'publishedLi',
+                data : this.state.data,
+                defaultExpires: true, 
+            })
+        }
+    }
     //评论列表
     addcommentsItem = ({item}) => {
         return(
@@ -194,12 +232,80 @@ import Constants from './global.js'
                     <Text style = {styles.commentRIghtPerName}>
                         {item.name}
                     </Text>
-                    <Text style = {styles.commentRIghtPerText}>
+                    <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
                         {item.nameT}
                     </Text>
+                    <View style = {[styles.eplyToCommentMax,item.replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
+                        <TextInput
+                            ref = "code"
+                            style = {[styles.code,styles.eplyToCommentCode]}
+                            onChangeText={(replyToCommentText) => {
+                                this.setState({
+                                    replyToCommentText : replyToCommentText
+                                })
+                            }}
+                            value={this.state.replyToCommentText}
+                            placeholder = '请输入您想回复的话……'
+                            maxLength = {50}
+                            autoCapitalize = "none"
+                            clearButtonMode = "while-editing"
+                        />
+                        <Text style = {styles.codeLine}></Text>
+                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
+                    </View>
+                    <Text style = {[styles.replyToCommentTitle]} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                    {this.replyToCommentTitleList(item)}
                 </View>
             </View>
         )
+    }
+    //长按评论可回复
+    eplyToCommentT = (index) => {
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            this.setState({
+                commentsItem : this.state.data[this.state.index].data
+            })
+        }
+    }
+    //查看更多回复
+    showReplyToComment = (index) => {
+        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
+            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag){
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                })
+            }else{
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = true
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '查看'
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                })
+            }
+        }
+    }
+    //评论的回复
+    replyToCommentTitleList = (item) => {
+        let array = []
+        for(let i = 0;i<item.replyToComment.length;i++){
+            let view = <View style = {[styles.replyToComment,styles.commentList,item.replyToCommentListFlag ? styles.replyToCommentListStyle : '']} key = {i}>
+                <View style = {styles.commentLeftPerImg}>
+                    <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
+                </View>
+                <View style = {styles.commentRightPerText}>
+                    <Text style = {styles.commentRIghtPerName}>
+                        {item.replyToComment[i].name}
+                    </Text>
+                    <Text style = {styles.commentRIghtPerText}>
+                        {item.replyToComment[i].nameT}
+                    </Text>
+                </View>
+            </View>
+            array.push(view)
+        }
+        return array
     }
     render() {
         return(
@@ -211,7 +317,7 @@ import Constants from './global.js'
                     <Text style = {styles.playName}>该{this.state.changeTabNum == 0 ? this.state.works : this.state.say}由《{this.state.author}》发布</Text>
                 </View>
                 <View style = {styles.detailT}>
-                    <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次</Text>
+                    <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次和{this.state.data[this.state.index] ? this.state.data[this.state.index].giveALike.length : []}人赞了</Text>
                     <Text style = {styles.authorText}>{this.state.text}</Text>
                     <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
                     <Text style = {[styles.time]}>{this.state.time} {this.state.address}</Text>
@@ -264,11 +370,11 @@ import Constants from './global.js'
         width:ScreenWidth,
         height:200
     },
-    wokerImg: {
-        height:200
-    },
     wrapper: {
-        height:200
+        // height:250
+    },
+    workeImgs:{
+        // height:200
     },
     adimatedView: {
         paddingLeft:15,
@@ -287,7 +393,7 @@ import Constants from './global.js'
         marginBottom:20,
         flexDirection:'row',
         justifyContent: 'center',
-        alignItems: 'center',
+        // alignItems: 'center',
     },
     sectList:{
         marginBottom:30
@@ -324,9 +430,11 @@ import Constants from './global.js'
         backgroundColor:"#dddddd"
     },
     commentLeftPerImg:{
-        flex:1
+        flex:1,
+        paddingTop:6
     },
     commentLeftPerListImg:{
+        paddingTop:10,
         width:30,
         height:30,
         borderRadius:15
@@ -378,5 +486,31 @@ import Constants from './global.js'
         color:'#898989',
         marginTop:6
     },
+    eplyToCommentMax:{
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomColor:'#dddddd',
+        borderBottomWidth:1,
 
+    },
+    eplyToCommentMaxB: {
+        display:'none'
+    },
+    replyToCommentTitle: {
+        marginTop:10,
+        fontSize:14,
+        color:'#EED5D2'
+    },
+    replyToComment: {
+        marginTop:10
+    },
+    replyToCommentTitle: {
+        marginTop:10,
+        fontSize:14,
+        color:'#EED5D2'
+    },
+    replyToCommentListStyle: {
+        display:'none'
+    },
 });
