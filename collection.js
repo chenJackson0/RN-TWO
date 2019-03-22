@@ -53,6 +53,7 @@ const photoOptions = {
             data : [],
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
+            widthfadeAnim: new Animated.Value(0),
             commentFlag : true,
             shareFlag : false,
             videoImgFlag : false,
@@ -68,6 +69,7 @@ const photoOptions = {
             onTFlagF : true,
             replyToCommentText : '',
             replyToCommentMaxFlag : true,
+            showShareIndex : 0
         }
     }
     //时间戳转时间
@@ -91,8 +93,6 @@ const photoOptions = {
     }
     addPublised = () => {
         const { navigation } = this.props;
-        // let data = this.state.data
-        // let publisedList = navigation.getParam("publisedList")
         Constants.publishedListStorageF()//加载缓存获取数据
         Constants.getUserNameImgStorageF()
         Constants.getUserNameStorageF()
@@ -106,13 +106,7 @@ const photoOptions = {
         })
         setTimeout(()=>{
             this.init()
-        },800)
-        // if(publisedList){
-        //     data.unshift(publisedList)
-        //     this.setState({
-        //         data:data
-        //     })
-        // }
+        },1000)
     }
      //注册通知
      componentWillMount(){
@@ -134,6 +128,7 @@ const photoOptions = {
         for(let i = 0;i<publishedList.length;i++){
             lastTime = newTiem - publishedList[i].time
             if(publishedList[i].type == 'TellMeAbout'){
+                publishedList[i].showShareFlag = false
                 TellMeAbout.push(publishedList[i])
                 this.state.onTFlagF = false
             }
@@ -196,14 +191,10 @@ const photoOptions = {
                         break //此处的break很重要
                     }else{
                         commentsItem[i].focusOnFlag = true
-                        // newCommentsItem.push(commentsItem[i])
                     }
                 }
             }
         }
-        // this.setState({
-        //     addCommentItem : newCommentsItem
-        // })
     }
     //跳转作者主页
     goPersonCenter = (userName) => {
@@ -212,8 +203,25 @@ const photoOptions = {
             userName : userName
         })
     }
+    //
+    showShare = (j) => {
+        for(let i = 0;i<this.state.data.length;i++){
+            if(i == j){
+                if(this.state.data[i].showShareFlag){
+                    this.state.data[i].showShareFlag = false
+                }else{
+                    this.state.data[i].showShareFlag = true
+                }
+            }
+        }
+        this.setState({
+            data:this.state.data,
+            showShareIndex : this.state.showShareIndex
+        })
+    }
     //加载已关注的用户发布的说说
     addTellMeAbout = ({item,index}) => {
+        let {widthfadeAnim} = this.state
         return (
             <View style = {styles.perListItem} key = {index}>
                 <TouchableOpacity onPress = {this.goPersonCenter.bind(this,item.userName)}>
@@ -222,7 +230,6 @@ const photoOptions = {
                         <Text style = {styles.perName}>
                             {item.userName}
                         </Text>
-                        <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
                     </View>
                 </TouchableOpacity>
                 
@@ -234,18 +241,22 @@ const photoOptions = {
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,index)}>{item.butText}</Text>
                     </View>
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,index)}>共{item.commentsNum}条评论</Text>
-                    <Text style = {styles.commentDay}>{item.timeText} {this.state.data[index].address}</Text>
-                </View>
-                <View style = {styles.shareAndCollection}>
-                    <View style = {styles.left}>
-                        <Entypo name = {item.cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,index)}/>
-                        <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,index)}/>
-                        <EvilIcons name = {'share-google'} size = {30} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
+                    <View style = {styles.removeList}>
+                        <Text style = {styles.commentDay}>{item.timeText} {item.address}</Text>
+                        <Text style = {[styles.removeCommentDay,item.userName == this.state.user ? '' : styles.hideRemove]}>删除</Text>
+                        <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon} onPress={this.showShare.bind(this,index)}/>
                     </View>
+                </View>
+                {/* <View style = {styles.shareAndCollection}> */}
+                    <Animated.View style = {[styles.left,item.showShareFlag ? '' : styles.leftHide]}>
+                        <Entypo name = {item.cllFlag ? 'heart-outlined' : 'heart'} size = {18} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,index)}/>
+                        <EvilIcons name = {'comment'} size = {22} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,index)}/>
+                        <EvilIcons name = {'share-google'} size = {22} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
+                    </Animated.View>
                     {/* <View style = {styles.right}>
                         <FontAwesome name = {'bookmark'} size = {25} color = {'black'} style = {styles.collect}/>
                     </View> */}
-                </View>
+                {/* </View> */}
             </View>
         )
     }
@@ -617,9 +628,13 @@ const photoOptions = {
                     <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.name}
-                    </Text>
+                    <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
                     <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
                         {item.nameT}
                     </Text>
@@ -641,7 +656,7 @@ const photoOptions = {
                         <Text style = {styles.codeLine}></Text>
                         <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
                     </View>
-                    <Text style = {[styles.replyToCommentTitle]} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                    <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
                     {this.replyToCommentTitleList(item)}
                 </View>
             </View>
@@ -650,7 +665,11 @@ const photoOptions = {
     //长按评论可回复
     eplyToCommentT = (index) => {
         if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            }else{
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+            }
             this.setState({
                 commentsItem : this.state.data[this.state.index].data
             })
@@ -683,9 +702,12 @@ const photoOptions = {
                     <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.replyToComment[i].name}
-                    </Text>
+                    <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.replyToComment[i].name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
                     <Text style = {styles.commentRIghtPerText}>
                         {item.replyToComment[i].nameT}
                     </Text>
@@ -865,8 +887,34 @@ const photoOptions = {
         color:'#EED5D2'
     },
     commentRIghtPerName:{
+        flex:6,
         fontSize:14,
         color:'#EE82EE'
+    },
+    replyToCommentTitleHide: {
+        display:'none'
+    },
+    removeAndCall:{
+        flexDirection:'row',
+        justifyContent: 'center',
+    },
+    commentRIghtPerText:{
+        fontSize:14,
+        color:'#999999',
+        marginTop:8
+    },
+    replayToCommentCallBack:{
+        flex:1
+    },
+    replayToCommentRemove:{
+        flex:1
+    },
+    replayToCommentRemoveHide: {
+        display:'none'
+    },
+    callBackMsg:{
+        fontSize:10,
+        color:'#E066FF'
     },
     commentRIghtPerText:{
         fontSize:14,
@@ -1052,9 +1100,23 @@ const photoOptions = {
         marginTop:6,
         marginBottom:4
     },
+    removeList:{
+        flexDirection:'row',
+        // justifyContent:'center',
+        alignItems:'center',
+        position:'relative',
+    },
+    removeCommentDay:{
+        fontSize:10,
+        color:'#E066FF',
+        paddingLeft:20
+    },
     commentDay: {
-        fontSize:12,
+        fontSize:10,
         color:'#898989',
+    },
+    hideRemove: {
+        display:'none'
     },
     max: {
         flex :1
@@ -1112,7 +1174,6 @@ const photoOptions = {
         textAlign:'center'
     },
     perListItem: {
-        
         position:'relative',
         paddingTop:10,
         borderBottomColor:'#EDEDED',
@@ -1145,7 +1206,7 @@ const photoOptions = {
     },
     icon: {
         position:'absolute',
-        top:9,
+        top:-1,
         right:8
     },
     perMaxImg: {
@@ -1160,8 +1221,16 @@ const photoOptions = {
         flexDirection:'row',
     },
     left: {
-        flex:1,
+        width:100,
         flexDirection:'row',
+        alignItems: 'center',
+        position:'absolute',
+        justifyContent:'center',
+        right:30,
+        bottom:4,
+    },
+    leftHide:{
+        display:'none'
     },
     call: {
         

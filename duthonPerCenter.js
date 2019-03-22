@@ -70,7 +70,8 @@ class Row extends Component {
             focusOnTextFlag : true,
             addCommentItem : [],
             perUserName : '',
-            address : '上海'
+            address : '上海',
+            perItemComment : []
         }
     }
     
@@ -80,6 +81,7 @@ class Row extends Component {
         Constants.getUserNameStorageF()
         Constants.getcommentsItemStorageF()
         Constants.getUserNameImgStorageF()
+        Constants.getCollectionItemsStorageF()
         this.setState({
             post : 0,
             fans : 0,
@@ -89,7 +91,8 @@ class Row extends Component {
             publishedList : [],
             saysayItem: [],
             addCommentItem : [],
-            perNameImg : ''
+            perNameImg : '',
+            perItemComment : []
         })
         setTimeout(()=>{
             this.init()
@@ -108,6 +111,7 @@ class Row extends Component {
         let perNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
         let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
         for(let i = 0;i<commentsItem.length;i++){
             //判断改主播是否已经被关注过
             if(userName == commentsItem[i].userName){
@@ -148,10 +152,18 @@ class Row extends Component {
                 }
             }
         }
-        //获取关注人数和粉丝人数
-        // for(let i = 0;commentsItem.length;i++){
-            
-        // }
+        //获取收藏作品
+        for(let i = 0;i<collectionList.length;i++){
+            if(userName == collectionList[i].perUserName){
+                for(let j = 0;j<collectionList[i].img.length;j++){
+                    let data = {
+                        id : collectionList[i].id,
+                        img : collectionList[i].img[j].img
+                    }
+                    this.state.perItemComment.push(data)
+                }
+            }
+        }
         this.setState({
             userName : userName,
             perUserName : perUserName,
@@ -167,7 +179,8 @@ class Row extends Component {
             focusOnText : this.state.focusOnText,
             focusOnTextFlag : this.state.focusOnTextFlag,
             perNameImg : perNameImg,
-            address : this.state.address
+            address : this.state.address,
+            perItemComment : this.state.perItemComment
         })
     }
     //关注主播
@@ -282,8 +295,17 @@ class Row extends Component {
             }
             
         }else if(this.state.changeTabNum == 2){
-            let view = <Text style = {styles.noT} key = {1}>空空如也,还没有收藏任何作品和说说.</Text>
-            data.push(view)
+            if(this.state.perItemComment.length !=0){
+                for(let i = 0;i<this.state.perItemComment.length;i++){
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id)}>
+                                <Image source={{uri : this.state.perItemComment[i].img}} style = {styles.userConter4Img}/>
+                            </TouchableOpacity>
+                    data.push(view)
+                }
+            }else{
+                let view = <Text style = {styles.noT} key = {1}>空空如也,还没有收藏任何作品和说说.</Text>
+                data.push(view)
+            }
         }
         
         return data

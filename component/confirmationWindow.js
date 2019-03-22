@@ -36,6 +36,8 @@ const { ScreenWidth, height } = Dimensions.get('window');
             this.props.noKeep()
         }else if(this.state.data[0].type == 'delImg'){
             this.props.noDeleteImg()
+        }else if(this.state.data[0].type == 'delete'){
+            this.props.noDelete()
         }
     }
     //编辑发布作品时,点击保留按钮没,继续编辑
@@ -44,6 +46,8 @@ const { ScreenWidth, height } = Dimensions.get('window');
             this.props.keep()
         }else if(this.state.data[0].type == 'delImg'){
             this.props.yesDeleteImg()
+        }else if(this.state.data[0].type == 'delete'){
+            this.props.delete()
         }
     }
     render() {

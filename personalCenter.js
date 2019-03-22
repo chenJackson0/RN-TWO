@@ -66,7 +66,8 @@ class Row extends Component {
             saysayItem : [],
             changeTabNum : 0,
             playNum : 4533,
-            address : '上海'
+            address : '上海',
+            perItemComment : []
         }
     }
     
@@ -76,6 +77,7 @@ class Row extends Component {
         Constants.getUserNameStorageF()
         Constants.getcommentsItemStorageF()
         Constants.getUserNameImgStorageF()
+        Constants.getCollectionItemsStorageF()
         this.setState({
             post : 0,
             fans : 0,
@@ -83,7 +85,8 @@ class Row extends Component {
             TellMeAbout : 0,
             perItem : [],
             publishedList : [],
-            saysayItem : []
+            saysayItem : [],
+            perItemComment : []
         })
         setTimeout(()=>{
             this.init()
@@ -100,6 +103,7 @@ class Row extends Component {
         let works = []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
         let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
+        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
         //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
@@ -137,6 +141,18 @@ class Row extends Component {
                 }
             }
         }
+        //获取收藏作品
+        for(let i = 0;i<collectionList.length;i++){
+            if(userName == collectionList[i].perUserName){
+                for(let j = 0;j<collectionList[i].img.length;j++){
+                    let data = {
+                        id : collectionList[i].id,
+                        img : collectionList[i].img[j].img
+                    }
+                    this.state.perItemComment.push(data)
+                }
+            }
+        }
         this.setState({
             userName : userName,
             publishedList : works,
@@ -147,7 +163,8 @@ class Row extends Component {
             perItem : this.state.perItem,
             avatarSource : userNameImg,
             saysayItem : this.state.saysayItem,
-            address : this.state.address
+            address : this.state.address,
+            perItemComment : this.state.perItemComment
         })
     }
     //获取手机相册
@@ -217,7 +234,6 @@ class Row extends Component {
                 let view = <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何作品.</Text>
                 data.push(view)
             }
-            
         }else if(this.state.changeTabNum == 1){
             if(this.state.saysayItem.length != 0){
                 for(let i = 0;i<this.state.saysayItem.length;i++){
@@ -236,12 +252,19 @@ class Row extends Component {
                 let view = <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何说说.</Text>
                 data.push(view)
             }
-            
         }else if(this.state.changeTabNum == 2){
-            let view = <Text style = {styles.noT} key = {1}>空空如也,还没有收藏任何作品和说说.</Text>
-            data.push(view)
+            if(this.state.perItemComment.length !=0){
+                for(let i = 0;i<this.state.perItemComment.length;i++){
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id)}>
+                                <Image source={{uri : this.state.perItemComment[i].img}} style = {styles.userConter4Img}/>
+                            </TouchableOpacity>
+                    data.push(view)
+                }
+            }else{
+                let view = <Text style = {styles.noT} key = {1}>空空如也,还没有收藏任何作品和说说.</Text>
+                data.push(view)
+            }
         }
-        
         return data
     }
     //跳作品想情

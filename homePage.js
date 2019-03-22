@@ -29,6 +29,7 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import ConfirmationWindow from './component/confirmationWindow'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -79,6 +80,17 @@ const options = {
             replyToCommentMaxFlag : true,
             onFFlag : false,
             onFFlagF : true,
+            collectionList :[],
+            deleteCommentItems : [
+                {
+                    title : '确定要删除吗?',
+                    leftT : '取消',
+                    rightT : '确定',
+                    type : 'delete'
+                }
+            ],
+            deleteCommentItemsFlag : false,
+            id : ''
         }
     }
     //时间戳转时间
@@ -108,16 +120,18 @@ const options = {
         Constants.getUserNameImgStorageF()
         Constants.getUserNameStorageF()
         Constants.getcommentsItemStorageF()
+        Constants.getCollectionItemsStorageF()
         this.setState({
             user : '',
             data : [],
             userNameImg : '',
             addCommentItem : [],
             addCommentNum : 0,
+            collectionList : []
         })
         setTimeout(()=>{
             this.init()
-        },800)
+        },1000)
         // if(publisedList){
         //     data.unshift(publisedList)
         //     this.setState({
@@ -134,6 +148,7 @@ const options = {
         let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
         let works = []
         let foucsOnList = []
         let newAddName = []
@@ -170,6 +185,14 @@ const options = {
                 publishedList[i].timeText = getChangeTime
             }else{
                 return
+            }
+        }
+        //不同的用户需要判断,不同的作品是否被收藏
+        for(let i = 0;i<works.length;i++){
+            for(let j = 0;j<collectionList.length;j++){
+                if(collectionList[j].id != works[i].id){
+                    works[i].commentsFlag = true
+                }
             }
         }
         if(this.state.onTFlagF){
@@ -219,6 +242,7 @@ const options = {
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
             commentFlag : true,
+            collectionList : collectionList
          })
     }
     //关注的用户,在没有关注的用户中要是能被关注的
@@ -336,6 +360,100 @@ const options = {
             )
         }
     }
+    //收藏
+    collectionItems = (i,id) => {
+        let collectionList = this.state.collectionList
+        let newCollectionList = []
+        if(this.state.data[i].commentsFlag){
+            let data = {
+                perUserName : this.state.user,
+                name : this.state.data[i].userName,
+                id : this.state.data[i].id,
+                img : this.state.data[i].publicHeadImg
+            }
+            collectionList.push(data)
+            this.state.data[i].commentsFlag = false
+            this.setState({
+                data : this.state.data
+            })
+            Constants.storage.save({
+                key : 'collectionItem',
+                data : collectionList,
+                defaultExpires: true, 
+            })
+            Constants.storage.save({
+                key : 'publishedLi',
+                data : this.state.data,
+                defaultExpires: true, 
+            })
+        }else{
+            for(let j = 0;j<collectionList.length;j++){
+                if(collectionList[j].id == id){
+                    continue
+                }else{
+                    newCollectionList.push(collectionList[j])
+                }
+            }
+            this.state.data[i].commentsFlag = true
+            this.setState({
+                data : this.state.data
+            })
+            Constants.storage.save({
+                key : 'publishedLi',
+                data : this.state.data,
+                defaultExpires: true, 
+            })
+            Constants.storage.save({
+                key : 'collectionItem',
+                data : newCollectionList,
+                defaultExpires: true, 
+            })
+        }
+    }
+    //删除自己发的作品或评论
+    deleteItem = (id) => {
+        this.setState({
+            deleteCommentItemsFlag : true,
+            id : id,
+        })
+    }
+    //不删除
+    noDelete = () => {
+        this.setState({
+            deleteCommentItemsFlag : false,
+        })
+    }
+    //删除
+    delete = () => {
+        let data = []
+        alert(JSON.stringify(this.state.data))
+        for(let i = 0;this.state.data.length;i++){
+            // if(this.state.id == this.state.data[i].id){
+            //     continue
+            // }else{
+            //     data.push(this.state.data[i])
+            // }
+        }
+        this.setState({
+            data : data,
+            deleteCommentItemsFlag : false,
+        })
+        Constants.storage.save({
+            key : 'publishedLi',
+            data : data,
+            defaultExpires: true, 
+        })
+    }
+    //删除作品选择
+   confirmationWindowF = () => {
+    if(this.state.deleteCommentItemsFlag){
+        return(
+            <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} delete = {this.delete.bind(this)}/>
+        )
+    }else{
+        return
+    }
+}
     //加载已关注的用户发布的作品
     saveWorks = () =>{
         let array = {
@@ -362,7 +480,8 @@ const options = {
                         <EvilIcons name = {'share-google'} size = {30} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
                     </View>
                     <View style = {styles.right}>
-                        <FontAwesome name = {'bookmark'} size = {25} color = {'black'} style = {styles.collect}/>
+                        <Text style = {[styles.commentT,this.state.data[i].commentsFlag ? styles.commentTH : '']}>已收藏</Text>
+                        <FontAwesome name = {'bookmark'} size = {25} color = {this.state.data[i].commentsFlag ? '#D3D3D3' : 'black'} style = {styles.collect} onPress= {this.collectionItems.bind(this,i,this.state.data[i].id)}/>
                     </View>
                 </View>
                 <View style = {styles.commentsItem}>
@@ -373,7 +492,11 @@ const options = {
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,i)}>{this.state.data[i].butText}</Text>
                     </View>
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
-                    <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
+                    <View style = {styles.removeList}>
+                        <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
+                        <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this)}>删除</Text>
+                    </View>
+                    
                 </View>
             </View>
             array.works.push(item)
@@ -756,10 +879,14 @@ const options = {
                     <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.name}
-                    </Text>
-                    <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
+                    <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
+                    <Text style = {styles.commentRIghtPerText}>
                         {item.nameT}
                     </Text>
                     <View style = {[styles.eplyToCommentMax,item.replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
@@ -780,7 +907,7 @@ const options = {
                         <Text style = {styles.codeLine}></Text>
                         <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
                     </View>
-                    <Text style = {[styles.replyToCommentTitle]} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                    <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
                     {this.replyToCommentTitleList(item)}
                 </View>
             </View>
@@ -788,7 +915,6 @@ const options = {
     }
     //回复评论
     replyToCommentSaveMsg = (index) => {
-        alert(index)
         if(index == this.state.data[this.state.index].data[index-1].data[0].id){
             if(this.state.replyToCommentText){
                 let replyToComment = {
@@ -814,10 +940,14 @@ const options = {
             })
         }
     }
-    //长按评论可回复
+    //评论可回复
     eplyToCommentT = (index) => {
         if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            }else{
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+            }
             this.setState({
                 commentsItem : this.state.data[this.state.index].data
             })
@@ -850,9 +980,12 @@ const options = {
                     <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.replyToComment[i].name}
-                    </Text>
+                    <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.replyToComment[i].name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
                     <Text style = {styles.commentRIghtPerText}>
                         {item.replyToComment[i].nameT}
                     </Text>
@@ -940,12 +1073,17 @@ const options = {
                     <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
                 {this.showAndHidw()}
+                <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
+                {this.confirmationWindowF()}
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+    replyToCommentTitleHide: {
+        display:'none'
+    },
     goDetail: {
         height:345,
         position:'absolute',
@@ -1006,13 +1144,31 @@ const options = {
         flex:9
     },
     commentRIghtPerName:{
+        flex:6,
         fontSize:14,
         color:'#EE82EE'
+    },
+    removeAndCall:{
+        flexDirection:'row',
+        justifyContent: 'center',
     },
     commentRIghtPerText:{
         fontSize:14,
         color:'#999999',
         marginTop:8
+    },
+    replayToCommentCallBack:{
+        flex:1
+    },
+    replayToCommentRemove:{
+        flex:1
+    },
+    replayToCommentRemoveHide: {
+        display:'none'
+    },
+    callBackMsg:{
+        fontSize:10,
+        color:'#E066FF'
     },
     bindClick: {
         flex:1
@@ -1193,9 +1349,22 @@ const options = {
         marginTop:6,
         marginBottom:4
     },
+    removeList:{
+        flexDirection:'row',
+        // justifyContent:'center',
+        alignItems:'center'
+    },
+    removeCommentDay:{
+        fontSize:10,
+        color:'#E066FF',
+        paddingLeft:20
+    },
     commentDay: {
         fontSize:10,
         color:'#898989',
+    },
+    hideRemove: {
+        display:'none'
     },
     max: {
         flex :1
@@ -1320,6 +1489,9 @@ const options = {
     },
     right: {
         flex:1,
+        flexDirection:'row',
+        justifyContent:'flex-end',
+        alignItems:'center',
     },
     love: {
         position:'absolute',
@@ -1384,4 +1556,12 @@ const options = {
     replyToCommentListStyle: {
         display:'none'
     },
+    commentT:{
+        fontSize:10,
+        color:'#D3D3D3',
+        paddingRight:10
+    },
+    commentTH:{
+        display:'none'
+    }
 });

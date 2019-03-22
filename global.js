@@ -16,25 +16,9 @@ accountList = []//所以注册用户列表
 publishedList = [] //发表的作品
 userNameImg = ''
 userName = ''
-commentsItemFoucsOn = []
-commentsItem = [//评论列表
-    {
-        data: [{img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',nameT : '今天心情大号,你们嗯?'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',nameT : '嗨,朋友,你好'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雪中送腿 / FA',nameT : 'FA'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '春夏秋冬 / SHYUANF',nameT : 'SHYUANF'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '别来无恙 / HAO',nameT : 'HAO'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '换看春秋 / WEI',nameT : 'WEI'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',nameT : 'KAN'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '花样年画 / HARU',nameT : 'HARU'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雾里看花 / HI',nameT : 'HI'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '雪中送腿 / FA',nameT : 'FA'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '春夏秋冬 / SHYUANF',nameT : 'SHYUANF'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '别来无恙 / HAO',nameT : '嗨,朋友,你好,一起王者啊,一起i 开黑啊,以前淀粉放假了就啊发个卡就赶快来撒额经过两个刚放假啦上课'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '换看春秋 / WEI',nameT : 'WEI'},
-        {img : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',name : '人来人往 / KAN',nameT : 'KAN'}]
-    }
-] 
+commentsItemFoucsOn = [] //粉丝和关注粉丝表
+commentsItem = [] //评论列表
+collectionItems = [] //用户作品收藏表
 //登录用户个人图像
 getUserNameImg = () => {
     return this.userNameImg
@@ -66,6 +50,11 @@ getUserNameImgStorageF = () => {
     })
 }
 
+//收藏作品
+getCollectionItems = () => {
+    return this.collectionItems
+}
+
 //发表的作品
 getSublishedList = () => {
     return this.publishedList
@@ -77,6 +66,17 @@ getStorageAccount = () => {
 //粉丝和不关注关联表
 getcommentsItem = () => {
     return this.commentsItemFoucsOn
+}
+//模拟获取收藏作品api
+getCollectionItemsStorageF = () => {
+    storage.load({
+        key : 'collectionItem',
+        autoSync : true
+    }).then(ret => {
+        this.collectionItems = ret
+    }).catch(err => {
+        console.log()
+    })
 }
 
 //模拟获取粉丝和不关注关联表api
@@ -92,7 +92,7 @@ getcommentsItemStorageF = () => {
 }
 
 //清除数据用的,到时候删--------------------
-removeNameList = ['account','commentsItemFoucsOn','publishedLi','userName','userNameImg']
+removeNameList = ['account','commentsItemFoucsOn','publishedLi','userName','userNameImg','collectionItem']
 removeName = () => {
     for(let i = 0;i<this.removeNameList.length;i++){
         storage.remove({
@@ -135,6 +135,8 @@ const storageG = {
   getSublishedList : getSublishedList,
   getcommentsItem : getcommentsItem,
   getUserNameImg : getUserNameImg,
+  getCollectionItems : getCollectionItems,
+  getCollectionItemsStorageF : getCollectionItemsStorageF,
   getUserNameImgStorageF : getUserNameImgStorageF,
   getUserName : getUserName,
   getUserNameStorageF : getUserNameStorageF,

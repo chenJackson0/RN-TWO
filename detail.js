@@ -77,6 +77,7 @@ import Constants from './global.js'
         Constants.getUserNameStorageF()
         this.setState({
             itemImg : [],
+            changeTabNum : ''
         })
         setTimeout(()=>{
             this.init()
@@ -136,7 +137,7 @@ import Constants from './global.js'
     }
     //加载图片或视频
     showWokerImg = () => {
-        if(this.state.changeTabNum == 0){
+        if(this.state.changeTabNum == 0 || this.state.changeTabNum == 2){
             let wokerImgView = <View style = {styles.workeImg}>
             <Swiper style={styles.wrapper} autoplay = {true}
             >
@@ -229,9 +230,13 @@ import Constants from './global.js'
                     <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.name}
-                    </Text>
+                     <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
                     <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
                         {item.nameT}
                     </Text>
@@ -253,7 +258,7 @@ import Constants from './global.js'
                         <Text style = {styles.codeLine}></Text>
                         <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
                     </View>
-                    <Text style = {[styles.replyToCommentTitle]} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                    <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
                     {this.replyToCommentTitleList(item)}
                 </View>
             </View>
@@ -262,7 +267,11 @@ import Constants from './global.js'
     //长按评论可回复
     eplyToCommentT = (index) => {
         if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
+            }else{
+                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+            }
             this.setState({
                 commentsItem : this.state.data[this.state.index].data
             })
@@ -295,9 +304,12 @@ import Constants from './global.js'
                     <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
                 </View>
                 <View style = {styles.commentRightPerText}>
-                    <Text style = {styles.commentRIghtPerName}>
-                        {item.replyToComment[i].name}
-                    </Text>
+                    <View style = {styles.removeAndCall}>
+                        <Text style = {styles.commentRIghtPerName}>
+                            {item.replyToComment[i].name}
+                        </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                    </View>
                     <Text style = {styles.commentRIghtPerText}>
                         {item.replyToComment[i].nameT}
                     </Text>
@@ -444,8 +456,34 @@ import Constants from './global.js'
         flex:9
     },
     commentRIghtPerName:{
+        flex:6,
         fontSize:14,
         color:'#EE82EE'
+    },
+    replyToCommentTitleHide: {
+        display:'none'
+    },
+    removeAndCall:{
+        flexDirection:'row',
+        justifyContent: 'center',
+    },
+    commentRIghtPerText:{
+        fontSize:14,
+        color:'#999999',
+        marginTop:8
+    },
+    replayToCommentCallBack:{
+        flex:1
+    },
+    replayToCommentRemove:{
+        flex:1
+    },
+    replayToCommentRemoveHide: {
+        display:'none'
+    },
+    callBackMsg:{
+        fontSize:10,
+        color:'#E066FF'
     },
     commentRIghtPerText:{
         fontSize:14,
