@@ -82,18 +82,6 @@ class Row extends Component {
         Constants.getcommentsItemStorageF()
         Constants.getUserNameImgStorageF()
         Constants.getCollectionItemsStorageF()
-        this.setState({
-            post : 0,
-            fans : 0,
-            FocusOn : 0,
-            TellMeAbout : 0,
-            perItem : [],
-            publishedList : [],
-            saysayItem: [],
-            addCommentItem : [],
-            perNameImg : '',
-            perItemComment : []
-        })
         setTimeout(()=>{
             this.init()
         },200)
@@ -104,6 +92,11 @@ class Row extends Component {
     }  
     //加载数据
     init = () => {
+        this.state.post = 0
+        this.state.perItem = []
+        this.state.TellMeAbout = 0
+        this.state.saysayItem = []
+        this.state.perItemComment = []
         const { navigation } = this.props;
         let userName = navigation.getParam("userName") ? navigation.getParam("userName") : ''
         let perUserName = Constants.getUserName() ? Constants.getUserName() : ''

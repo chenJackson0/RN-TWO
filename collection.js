@@ -253,15 +253,22 @@ const photoOptions = {
                 data.push(this.state.data[i])
             }
         }
+        if(data.length == 0){
+            this.state.onTFlag = true
+        }else{
+            this.state.onTFlag = false
+        }
         this.setState({
             data : data,
             deleteCommentItemsFlag : false,
+            onTFlag : this.state.onTFlag
         })
         Constants.storage.save({
             key : 'publishedLi',
             data : data,
             defaultExpires: true, 
         })
+        
     }
     //删除作品选择
     confirmationWindowF = () => {

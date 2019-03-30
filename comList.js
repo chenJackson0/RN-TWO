@@ -46,6 +46,8 @@ export default class ComList extends Component{
     }
     //获取数据
     init = () => {
+        this.state.foucsOnList = []
+        this.state.showFensiList = []
         const { navigation } = this.props;
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
         let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
@@ -240,11 +242,11 @@ export default class ComList extends Component{
     let {fadeAnim}  = this.state;
     if(this.state.foncsOn == 0){
         return(
-            <Animated.View style = {[styles.myCommit,styles.myCommitT,{left:fadeAnim}]}>
+            <View style = {styles.myCommit}>
                 <AntDesign name = {'wechat'} size = {40} color = {'black'} style = {styles.addLogo} />
                 <Text style = {styles.titleName}>关注的用户</Text>
                 <Text style = {styles.titleMsg}>这里会显示您关注的所有用户.</Text>
-            </Animated.View>
+            </View>
         )
     }else{
         let array = {
@@ -285,12 +287,11 @@ export default class ComList extends Component{
                 <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
                     {this.showFensi()}
                 </ScrollView>
-                <Animated.View style = {[styles.myCommits,styles.myCommitT,{left:fadeAnim}]}>
-                    <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>
+                <Animated.View style = {[styles.perItems,styles.myCommitT,{left:fadeAnim},this.state.foncsOn == 0 ? styles.perItemc : '']}>
+                    <ScrollView horizontal = {true} showsHorizontalScrollIndicator={false}>
                         {this.showFoucsOn()}
                     </ScrollView>
                 </Animated.View>
-                
            </View>
            
            <View style = {styles.addCommList}>
@@ -314,8 +315,8 @@ export default class ComList extends Component{
 const styles = StyleSheet.create({
     animates: {
         position:'relative',
-        paddingLeft:15,
-        paddingRight:15,
+        // paddingLeft:15,
+        // paddingRight:15,
         // paddingTop:10,
         // paddingBottom:10,
         width:deviceWidth
@@ -411,15 +412,14 @@ const styles = StyleSheet.create({
         fontWeight:'700'
     },
     myCommit: {
-        backgroundColor:'#FFFAFA',
-        paddingBottom:70,
-        paddingTop:50,
+        // paddingBottom:70,
+        // paddingTop:50,
         justifyContent: 'center',
         alignItems: 'center',
         width:deviceWidth
     },
     myCommits: {
-        backgroundColor:'#FFFAFA',
+        // backgroundColor:'#FFFAFA',
         // paddingBottom:70,
         // paddingTop:50,
         width:deviceWidth,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     titleName: {
         fontSize:18,
         color:'#000000',
-        marginTop:20
+        marginTop:20,
     },
     titleMsg: {
         fontSize:12,
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     },
     perName: {
         width:70,
-        fontSize:12,
+        fontSize:10,
         color:'#898989',
         paddingTop:5,
         overflow:'hidden',
@@ -504,5 +504,14 @@ const styles = StyleSheet.create({
     perItem: {
         paddingBottom:70,
         paddingTop:50,
-    }
+        backgroundColor:'#FFFAFA',
+    },
+    perItems: {
+        paddingBottom:50,
+        paddingTop:50,
+        backgroundColor:'#FFFAFA',
+    },
+    perItemc: {
+        paddingBottom:23,
+    },
 });

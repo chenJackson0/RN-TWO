@@ -95,7 +95,7 @@ const options = {
         }
     }
     //时间戳转时间
-
+    type = 'work'
     changeTime = (date) => {
         let day = Math.floor(date / (3600*24));
         let hour =  Math.floor((date % (3600*24)) / 3600);
@@ -245,7 +245,9 @@ const options = {
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
             commentFlag : true,
-            collectionList : collectionList
+            collectionList : collectionList,
+            onFFlag : this.state.onFFlag,
+            onTFlag : this.state.onTFlag
          })
     }
     //关注的用户,在没有关注的用户中要是能被关注的
@@ -414,7 +416,12 @@ const options = {
         }
     }
     //删除自己发的作品或评论
-    deleteItem = (id) => {
+    deleteItem = (id,type) => {
+        if(type == 'work'){
+            this.type = 'work'
+        }else if(type = 'commit'){
+            this.type = 'commit'
+        }
         this.setState({
             deleteCommentItemsFlag : true,
             id : id,
@@ -429,24 +436,46 @@ const options = {
     //删除
     deleteI = () => {
         let data = []
+        let dataA = []
         let commitList = []
-        for(let i = 0;i<this.state.data.length;i++){
-            if(this.state.id == this.state.data[i].id){
-                continue
-            }else{
-                data.push(this.state.data[i])
+        if(this.type == 'work'){
+            for(let i = 0;i<this.state.data.length;i++){
+                if(this.state.id == this.state.data[i].id){
+                    continue
+                }else{
+                    data.push(this.state.data[i])
+                }
             }
-        }
-        for(let i = 0;i<this.state.collectionList.length;i++){
-            if(this.state.id == this.state.collectionList[i].id){
-                continue
-            }else{
-                commitList.push(this.state.collectionList[i])
+            for(let i = 0;i<this.state.collectionList.length;i++){
+                if(this.state.id == this.state.collectionList[i].id){
+                    continue
+                }else{
+                    commitList.push(this.state.collectionList[i])
+                }
             }
+            if(commitList.length == 0){
+                this.state.onTFlag = true
+            }else{
+                this.state.onTFlag = false
+            }
+        }else if(this.type == 'commit'){
+            for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
+                if(this.state.id == this.state.data[this.state.index].data[i].data[0].id){
+                    continue
+                }else{
+                    dataA.push(this.state.data[this.state.index].data[i])
+                }
+            }
+            this.state.data[this.state.index].data = dataA
+            this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum - 1
+            data = this.state.data
         }
         this.setState({
             data : data,
+            commentsItem : this.state.data[this.state.index].data,
             deleteCommentItemsFlag : false,
+            onTFlag : this.state.onTFlag,
+            commentNim : this.state.data[this.state.index].commentsNum,
         })
         Constants.storage.save({
             key : 'publishedLi',
@@ -455,7 +484,7 @@ const options = {
         })
         Constants.storage.save({
             key : 'collectionItem',
-            data : data,
+            data : commitList,
             defaultExpires: true, 
         })
     }
@@ -509,7 +538,7 @@ const options = {
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
                     <View style = {styles.removeList}>
                         <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
-                        <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this,this.state.data[i].id)}>删除</Text>
+                        <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this,this.state.data[i].id,'work')}>删除</Text>
                     </View>
                     
                 </View>
@@ -605,8 +634,15 @@ const options = {
                 }
             }
         }
+        if(this.state.addCommentItem.length == 0){
+            this.state.onFFlag = true
+        }else{
+            this.state.onFFlag = false
+        }
         this.setState({
-            addCommentItem : this.state.addCommentItem
+            addCommentItem : this.state.addCommentItem,
+            onFFlag : this.state.onFFlag,
+            foucsOnList : this.state.addCommentItem[deteleFochsIndex].focusOns
         })
         Constants.storage.save({
             key : 'commentsItemFoucsOn',
@@ -899,7 +935,7 @@ const options = {
                             {item.name}
                         </Text>
                         <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.id,'commit')}>删除</Text>
                     </View>
                     <Text style = {styles.commentRIghtPerText}>
                         {item.nameT}
@@ -957,6 +993,7 @@ const options = {
     }
     //评论可回复
     eplyToCommentT = (index) => {
+        alert(index)
         if(index == this.state.data[this.state.index].data[index-1].data[0].id){
             if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
                 this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
@@ -1010,6 +1047,7 @@ const options = {
         }
         return array
     }
+    
     render() {
         let {fadeAnim}  = this.state;
         let {sharefadeAnim}  = this.state;
@@ -1465,7 +1503,7 @@ const options = {
         marginRight:5,
     },
     perName: {
-        fontSize:12,
+        fontSize:10,
         color:'#333333'
     },
     icon: {
