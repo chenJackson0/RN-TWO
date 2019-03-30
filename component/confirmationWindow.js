@@ -47,7 +47,7 @@ const { ScreenWidth, height } = Dimensions.get('window');
         }else if(this.state.data[0].type == 'delImg'){
             this.props.yesDeleteImg()
         }else if(this.state.data[0].type == 'delete'){
-            this.props.delete()
+            this.props.deleteI()
         }
     }
     render() {

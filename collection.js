@@ -29,6 +29,7 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import ConfirmationWindow from './component/confirmationWindow'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -69,7 +70,17 @@ const photoOptions = {
             onTFlagF : true,
             replyToCommentText : '',
             replyToCommentMaxFlag : true,
-            showShareIndex : 0
+            showShareIndex : 0,
+            deleteCommentItems : [
+                {
+                    title : '确定要删除吗?',
+                    leftT : '取消',
+                    rightT : '确定',
+                    type : 'delete'
+                }
+            ],
+            deleteCommentItemsFlag : false,
+            id : ''
         }
     }
     //时间戳转时间
@@ -219,6 +230,49 @@ const photoOptions = {
             showShareIndex : this.state.showShareIndex
         })
     }
+    //删除自己发的作品或评论
+    deleteItem = (id) => {
+        this.setState({
+            deleteCommentItemsFlag : true,
+            id : id,
+        })
+    }
+    //不删除
+    noDelete = () => {
+        this.setState({
+            deleteCommentItemsFlag : false,
+        })
+    }
+    //删除
+    deleteI = () => {
+        let data = []
+        for(let i = 0;i<this.state.data.length;i++){
+            if(this.state.id == this.state.data[i].id){
+                continue
+            }else{
+                data.push(this.state.data[i])
+            }
+        }
+        this.setState({
+            data : data,
+            deleteCommentItemsFlag : false,
+        })
+        Constants.storage.save({
+            key : 'publishedLi',
+            data : data,
+            defaultExpires: true, 
+        })
+    }
+    //删除作品选择
+    confirmationWindowF = () => {
+        if(this.state.deleteCommentItemsFlag){
+            return(
+                <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} deleteI = {this.deleteI.bind(this)}/>
+            )
+        }else{
+            return
+        }
+    }
     //加载已关注的用户发布的说说
     addTellMeAbout = ({item,index}) => {
         let {widthfadeAnim} = this.state
@@ -243,7 +297,7 @@ const photoOptions = {
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,index)}>共{item.commentsNum}条评论</Text>
                     <View style = {styles.removeList}>
                         <Text style = {styles.commentDay}>{item.timeText} {item.address}</Text>
-                        <Text style = {[styles.removeCommentDay,item.userName == this.state.user ? '' : styles.hideRemove]}>删除</Text>
+                        <Text style = {[styles.removeCommentDay,item.userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this,item.id)}>删除</Text>
                         <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon} onPress={this.showShare.bind(this,index)}/>
                     </View>
                 </View>
@@ -792,6 +846,8 @@ const photoOptions = {
                     <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
                 {/* {this.showAndHidw()} */}
+                <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
+                {this.confirmationWindowF()}
             </View>
         )
     }

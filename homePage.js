@@ -90,7 +90,8 @@ const options = {
                 }
             ],
             deleteCommentItemsFlag : false,
-            id : ''
+            id : '',
+            idArray : []
         }
     }
     //时间戳转时间
@@ -127,7 +128,8 @@ const options = {
             userNameImg : '',
             addCommentItem : [],
             addCommentNum : 0,
-            collectionList : []
+            collectionList : [],
+            idArray : []
         })
         setTimeout(()=>{
             this.init()
@@ -189,9 +191,10 @@ const options = {
         }
         //不同的用户需要判断,不同的作品是否被收藏
         for(let i = 0;i<works.length;i++){
+            works[i].commentsFlag = true
             for(let j = 0;j<collectionList.length;j++){
-                if(collectionList[j].id != works[i].id){
-                    works[i].commentsFlag = true
+                if(user == collectionList[j].perUserName && collectionList[j].id == works[i].id){
+                    works[i].commentsFlag = false
                 }
             }
         }
@@ -424,15 +427,22 @@ const options = {
         })
     }
     //删除
-    delete = () => {
+    deleteI = () => {
         let data = []
-        alert(JSON.stringify(this.state.data))
-        for(let i = 0;this.state.data.length;i++){
-            // if(this.state.id == this.state.data[i].id){
-            //     continue
-            // }else{
-            //     data.push(this.state.data[i])
-            // }
+        let commitList = []
+        for(let i = 0;i<this.state.data.length;i++){
+            if(this.state.id == this.state.data[i].id){
+                continue
+            }else{
+                data.push(this.state.data[i])
+            }
+        }
+        for(let i = 0;i<this.state.collectionList.length;i++){
+            if(this.state.id == this.state.collectionList[i].id){
+                continue
+            }else{
+                commitList.push(this.state.collectionList[i])
+            }
         }
         this.setState({
             data : data,
@@ -443,17 +453,22 @@ const options = {
             data : data,
             defaultExpires: true, 
         })
+        Constants.storage.save({
+            key : 'collectionItem',
+            data : data,
+            defaultExpires: true, 
+        })
     }
     //删除作品选择
    confirmationWindowF = () => {
-    if(this.state.deleteCommentItemsFlag){
-        return(
-            <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} delete = {this.delete.bind(this)}/>
-        )
-    }else{
-        return
+        if(this.state.deleteCommentItemsFlag){
+            return(
+                <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} deleteI = {this.deleteI.bind(this)}/>
+            )
+        }else{
+            return
+        }
     }
-}
     //加载已关注的用户发布的作品
     saveWorks = () =>{
         let array = {
@@ -494,7 +509,7 @@ const options = {
                     <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
                     <View style = {styles.removeList}>
                         <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
-                        <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this)}>删除</Text>
+                        <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this,this.state.data[i].id)}>删除</Text>
                     </View>
                     
                 </View>
