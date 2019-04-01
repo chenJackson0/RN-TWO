@@ -80,7 +80,8 @@ const photoOptions = {
                 }
             ],
             deleteCommentItemsFlag : false,
-            id : ''
+            id : '',
+            loveFlag : true
         }
     }
     //时间戳转时间
@@ -169,6 +170,18 @@ const photoOptions = {
                 }
             }
             commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+        }
+        //收藏
+        for(let i = 0;i<TellMeAbout.length;i++){
+            TellMeAbout[i].cllFlag = true
+            TellMeAbout[i].flag = true
+            TellMeAbout[i].butText = '查看更多点赞'
+            //不同的用户需要判断,不同的作品是否被点赞
+            for(let j = 0;j<TellMeAbout[i].giveALike.length;j++){
+                if(user == TellMeAbout[i].giveALike[j]){
+                    TellMeAbout[i].cllFlag = false
+                }
+            }
         }
         Constants.storage.save({
             key : 'userName',
@@ -435,8 +448,9 @@ const photoOptions = {
             }
         }
         this.setState({
+            loveFlag : false,
             data : this.state.data,
-            loveWidth : 150
+            loveWidth : 150,
         })
         setInterval(() => {
             this.setState({
@@ -444,7 +458,7 @@ const photoOptions = {
             })
         },500)
         Constants.storage.save({
-            key : 'publishedLis',
+            key : 'publishedLi',
             data : this.state.data,
             defaultExpires: true, 
         })
@@ -803,7 +817,7 @@ const photoOptions = {
                 </SectionList>
                 {this.onT()}
                 </ScrollView>
-                <Entypo name = {'heart'} size = {this.state.loveWidth} color = {'red'} style = {styles.love}/>
+                <Entypo name = {'heart'} size = {this.state.loveWidth} color = {'red'} style = {[styles.love,this.state.loveFlag ? styles.loveHide : '']}/>
                 <Animated.View style = {[styles.adimatedView,{height:fadeAnim}]}>
                     <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
                     <Text style = {styles.commerCosle} onPress = {this.closeSaveMsg.bind(this)}>X</Text>
@@ -861,6 +875,9 @@ const photoOptions = {
  }
 
  const styles = StyleSheet.create({
+    loveHide:{
+        display:'none'
+    },
     replyToCommentListStyle: {
         display:'none'
     },

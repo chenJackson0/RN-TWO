@@ -91,7 +91,13 @@ const options = {
             ],
             deleteCommentItemsFlag : false,
             id : '',
-            idArray : []
+            idArray : [],
+            loveFlag : true,
+            commentInputCallFlag:false,
+            commentsCall:'',
+            callId : '',
+            callName : '',
+            addId : 0
         }
     }
     //时间戳转时间
@@ -189,12 +195,22 @@ const options = {
                 return
             }
         }
-        //不同的用户需要判断,不同的作品是否被收藏
+        //收藏
         for(let i = 0;i<works.length;i++){
             works[i].commentsFlag = true
+            works[i].cllFlag = true
+            works[i].flag = true
+            works[i].butText = '查看更多点赞'
+            //不同的用户需要判断,不同的作品是否被收藏
             for(let j = 0;j<collectionList.length;j++){
                 if(user == collectionList[j].perUserName && collectionList[j].id == works[i].id){
                     works[i].commentsFlag = false
+                }
+            }
+            //不同的用户需要判断,不同的作品是否被点赞
+            for(let j = 0;j<works[i].giveALike.length;j++){
+                if(user == works[i].giveALike[j]){
+                    works[i].cllFlag = false
                 }
             }
         }
@@ -520,7 +536,7 @@ const options = {
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i)}/>
-                        <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,i)}/>
+                        <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,i,this.state.data[i].id)}/>
                         <EvilIcons name = {'share-google'} size = {30} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
                     </View>
                     <View style = {styles.right}>
@@ -668,6 +684,7 @@ const options = {
             }
         }
         this.setState({
+            loveFlag : false,
             data : this.state.data,
             loveWidth : 150
         })
@@ -677,7 +694,7 @@ const options = {
             })
         },500)
         Constants.storage.save({
-            key : 'publishedLis',
+            key : 'publishedLi',
             data : this.state.data,
             defaultExpires: true, 
         })
@@ -685,7 +702,7 @@ const options = {
     }
 
     //评论
-    comment = (i) => {
+    comment = (i,id) => {
         let commentsItem = this.state.data[i].data ? this.state.data[i].data : []
         for(let j = 0;j<commentsItem.length;j++){
             commentsItem[j].data[0].replyToCommentListFlag = true
@@ -695,7 +712,8 @@ const options = {
         this.setState({
             commentsItem : commentsItem,
             commentNim : this.state.data[i].commentsNum,
-            index : i
+            index : i,
+            addId : id
         })
         if(this.state.commentFlag){
             Animated.timing(
@@ -736,9 +754,15 @@ const options = {
     }
     //发送评论
     saveMsg = () => {
+        let num = 0
         if(this.state.comments){
+            for(let i = 0;i<this.state.data.length;i++){
+                if(this.state.addId == this.state.data[i].id){
+                    num = this.state.data[i].data.length != 0 ? this.state.data[i].data[this.state.data[i].data.length-1].data[0].id + 1 : num
+                }
+            }
             let data = {
-                id : this.state.data[this.state.index].commentsNum + 1,
+                id : num,
                 img : this.state.userNameImg,
                 name : this.state.user,
                 nameT : this.state.comments,
@@ -795,6 +819,8 @@ const options = {
                 }
               ).start();
               this.setState({
+                shareFlag : false,
+                commentInputCallFlag : false,
                 shareFlag : false
               })
         }
@@ -956,7 +982,7 @@ const options = {
                             clearButtonMode = "while-editing"
                         />
                         <Text style = {styles.codeLine}></Text>
-                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
+                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,true)}>发送</Text>
                     </View>
                     <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
                     {this.replyToCommentTitleList(item)}
@@ -965,63 +991,93 @@ const options = {
         )
     }
     //回复评论
-    replyToCommentSaveMsg = (index) => {
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.replyToCommentText){
-                let replyToComment = {
-                    img:this.state.userNameImg,
-                    name : this.state.user,
-                    nameT : this.state.replyToCommentText
+    replyToCommentSaveMsg = (id,name,callFlag) => {
+        let index = null
+        let itemName = null
+        if(callFlag){
+            index = id
+            itemName = name
+        }else{
+            index = this.state.callId
+            itemName = this.state.callName
+        }
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(index == this.state.data[this.state.index].data[i].data[0].id){
+                if(this.state.replyToCommentText){
+                    let replyToComment = {
+                        id : index,
+                        img:this.state.userNameImg,
+                        name : this.state.user,
+                        itemName : itemName,
+                        nameT : this.state.replyToCommentText
+                    }
+                    this.state.data[this.state.index].data[i].data[0].replyToComment.push(replyToComment)
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                        replyToCommentText : '',
+                        commentInputCallFlag : false,
+                        shareFlag : false,
+                    })
+                }else{
+                    alert("回复评论不能为空!")
                 }
-                this.state.data[this.state.index].data[index-1].data[0].replyToComment.push(replyToComment)
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                    replyToCommentText : ''
+                Constants.storage.save({
+                    key : 'publishedLi',
+                    data : this.state.data,
+                    defaultExpires: true, 
                 })
-            }else{
-                alert("回复评论不能为空!")
             }
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
         }
     }
     //评论可回复
     eplyToCommentT = (index) => {
-        alert(index)
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
-            }else{
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(index == this.state.data[this.state.index].data[i].data[0].id){
+                if(this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag){
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = false
+                }else{
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
+                }
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                    replyToCommentText : ''
+                })
             }
-            this.setState({
-                commentsItem : this.state.data[this.state.index].data
-            })
         }
+        
     }
     //查看更多回复
     showReplyToComment = (index) => {
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag){
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                })
-            }else{
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = true
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '查看'
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                })
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(index == this.state.data[this.state.index].data[i].data[0].id){
+                if(this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag){
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                    })
+                }else{
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = true
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '查看'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                    })
+                }
             }
         }
+    }
+    //多级回复
+    callBackCall = (id,name) => {
+        this.setState({
+            commentInputCallFlag : true,
+            shareFlag : true,
+            callId : id,
+            callName : name,
+            replyToCommentText : ''
+        })
     }
     //评论的回复
     replyToCommentTitleList = (item) => {
@@ -1034,8 +1090,9 @@ const options = {
                 <View style = {styles.commentRightPerText}>
                     <View style = {styles.removeAndCall}>
                         <Text style = {styles.commentRIghtPerName}>
-                            {item.replyToComment[i].name}
+                            {item.replyToComment[i].name}回复了{item.replyToComment[i].itemName}
                         </Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.callBackCall.bind(this,item.replyToComment[i].id,item.replyToComment[i].name)}>回复</Text>
                         <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
                     </View>
                     <Text style = {styles.commentRIghtPerText}>
@@ -1076,7 +1133,7 @@ const options = {
                         </ScrollView>
                     </View>
                 </ScrollView>
-                <Entypo name = {'heart'} size = {this.state.loveWidth} color = {'red'} style = {styles.love}/>
+                <Entypo name = {'heart'} size = {this.state.loveWidth} color = {'red'} style = {[styles.love,this.state.loveFlag ? styles.loveHide : '']}/>
                 <Animated.View style = {[styles.adimatedView,{height:fadeAnim}]}>
                     <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
                     <Text style = {styles.commerCosle} onPress = {this.closeSaveMsg.bind(this)}>X</Text>
@@ -1128,12 +1185,47 @@ const options = {
                 {this.showAndHidw()}
                 <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
                 {this.confirmationWindowF()}
+                <View style = {[styles.commentInputCall,this.state.commentInputCallFlag ? '' : styles.commentInputCallB]}>
+                    <TextInput
+                        ref = "code"
+                        style = {styles.code}
+                        onChangeText={(replyToCommentText) => {
+                            this.setState({
+                                replyToCommentText : replyToCommentText
+                            })
+                        }}
+                        value={this.state.replyToCommentText}
+                        placeholder = '请输入您想说的话……'
+                        maxLength = {50}
+                        autoCapitalize = "none"
+                        clearButtonMode = "while-editing"
+                    />
+                    <Text style = {styles.codeLine}></Text>
+                    <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,this.state.callId,this.state.callName,false)}>发送</Text>
+                    <Text style = {[styles.closeShare,styles.closeShareCall]} onPress = {this.shareHide.bind(this)}>X</Text>
+                </View>
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+
+    commentInputCallB:{
+        display:'none'
+    },
+    commentInputCall:{
+        flexDirection:'row',
+        justifyContent:'center',
+        alignItems:'center',
+        paddingLeft:15,
+        paddingRight:15,
+        height:550,
+        position:'relative'
+    },
+    loveHide:{
+        display:'none'
+    },
     replyToCommentTitleHide: {
         display:'none'
     },
@@ -1555,13 +1647,13 @@ const options = {
     codeLine: {
         height:30,
         width:0,
-        backgroundColor:"#dddddd"
+        backgroundColor:"#ffffff"
     },
     code: {
         fontSize:13,
         color:'#000000',
         flex:10,
-        paddingLeft:5,
+        paddingLeft:0,
         height:40,
         backgroundColor:'#ffffff'
     },
@@ -1572,7 +1664,8 @@ const options = {
         textAlign:'center',
         height:40,
         marginLeft:10,
-        lineHeight:40
+        lineHeight:40,
+        backgroundColor:'#ffffff'
     },
     noT: {
         fontSize:13,
@@ -1616,5 +1709,10 @@ const options = {
     },
     commentTH:{
         display:'none'
-    }
+    },
+    closeShareCall:{
+        color:'#ffffff',
+        top:18,
+        right:18
+    },
 });
