@@ -10,6 +10,7 @@
 import React, {Component} from 'react';
 import {DeviceEventEmitter, StyleSheet, Text, View, Dimensions, Image, TextInput, TouchableOpacity} from 'react-native';
 import Constants from './global.js'
+import getFetch from './service/index.js'
 global.deviceWidth = Dimensions.get('window').width
 
 export default class SetPassWord extends Component{
@@ -142,6 +143,7 @@ export default class SetPassWord extends Component{
         focusOnFlag : true,
         address : this.state.address
     }
+    // getFetch.get_fetch(data)
     this.state.commentsItem.push(data)
     Constants.storage.save({
         key : 'commentsItemFoucsOn',

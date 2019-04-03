@@ -19,6 +19,7 @@ const { ScreenWidth, height } = Dimensions.get('window');
 import Entypo from 'react-native-vector-icons/Entypo'
 import Swiper from 'react-native-swiper';
 import Constants from './global.js'
+import ConfirmationWindow from './component/confirmationWindow'
  export default class Detail extends Component {
   constructor(props) {
    super(props);
@@ -47,8 +48,19 @@ import Constants from './global.js'
             onTFlagF : true,
             replyToCommentText : '',
             replyToCommentMaxFlag : true,
-            // replyToCommentListFlag : true,
-            // replyToCommentListT : '查看'
+            callId : '',
+            callName : '',
+            addId : 0,
+            perId : '',
+            deleteCommentItemsFlag : false,
+            deleteCommentItems : [
+                {
+                    title : '确定要删除吗?',
+                    leftT : '取消',
+                    rightT : '确定',
+                    type : 'delete'
+                }
+            ],
         }
     }
     //时间戳转时间
@@ -115,6 +127,9 @@ import Constants from './global.js'
             commentsItem[j].data[0].replyToCommentListFlag = true
             commentsItem[j].data[0].replyToCommentListT = '查看'
             commentsItem[j].data[0].replyToCommentMaxFlag = true
+            for(let k = 0;k<commentsItem[j].data[0].replyToComment.length;k++){
+                commentsItem[j].data[0].replyToComment[k].replyToCommentMaxFlag = true
+            }
         }
         this.setState({
             id : id,
@@ -162,17 +177,105 @@ import Constants from './global.js'
         const { navigation } = this.props;
         this.props.navigation.goBack()
     }
+    //删除自己发的作品或评论
+    deleteItem = (id,type,perId) => {
+        if(type == 'work'){
+            this.type = 'work'
+        }else if(type == 'commit'){
+            this.type = 'commit'
+        }else if(type == 'commitChild'){
+            this.type = 'commitChild'
+        }
+        this.setState({
+            deleteCommentItemsFlag : true,
+            id : id,
+            perId : perId
+        })
+    }
+    //不删除
+    noDelete = () => {
+        this.setState({
+            deleteCommentItemsFlag : false,
+        })
+    }
+    //删除
+    deleteI = () => {
+        let data = []
+        let dataA = []
+        if(this.type == 'work'){
+            for(let i = 0;i<this.state.data.length;i++){
+                if(this.state.id == this.state.data[i].id){
+                    continue
+                }else{
+                    data.push(this.state.data[i])
+                }
+            }
+        }else if(this.type == 'commit'){
+            for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
+                if(this.state.id == this.state.data[this.state.index].data[i].data[0].id){
+                    continue
+                }else{
+                    dataA.push(this.state.data[this.state.index].data[i])
+                }
+            }
+            this.state.data[this.state.index].data = dataA
+            this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum - 1
+            data = this.state.data
+        }else if(this.type == 'commitChild'){
+            for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
+                if(this.state.perId == this.state.data[this.state.index].data[i].data[0].id){
+                    for(let j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
+                        if(this.state.id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
+                            continue
+                        }else{
+                            dataA.push(this.state.data[this.state.index].data[i].data[0].replyToComment[j])
+                        }
+                    }
+                }
+                this.state.data[this.state.index].data[i].data[0].replyToComment = dataA
+            }
+            data = this.state.data
+        }
+        this.setState({
+            data : data,
+            commentsItem : this.state.data[this.state.index].data,
+            deleteCommentItemsFlag : false,
+            commentNim : this.state.data[this.state.index].commentsNum,
+        })
+        Constants.storage.save({
+            key : 'publishedLi',
+            data : data,
+            defaultExpires: true, 
+        })
+    }
+    //删除作品选择
+   confirmationWindowF = () => {
+        if(this.state.deleteCommentItemsFlag){
+            return(
+                <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} deleteI = {this.deleteI.bind(this)}/>
+            )
+        }else{
+            return
+        }
+    }
     //发送评论
     saveMsg = () => {
+        let num = 0
         if(this.state.comments){
+            for(let i = 0;i<this.state.data.length;i++){
+                if(this.state.id == this.state.data[i].id){
+                    num = this.state.data[i].data.length != 0 ? this.state.data[i].data[this.state.data[i].data.length-1].data[0].id + 1 : num
+                }
+            }
             let data = {
-                id : this.state.data[this.state.index].commentsNum + 1,
+                id : num,
                 img : this.state.userNameImg,
                 name : this.state.user,
                 nameT : this.state.comments,
                 replyToComment : [],
                 replyToCommentMaxFlag : true,
-                replyToCommentListFlag : true
+                replyToCommentListFlag : true,
+                replyToCommentListT : '查看'
             }
             let commentsItem = 
                 {
@@ -193,35 +296,10 @@ import Constants from './global.js'
                 defaultExpires: true, 
             })
         }else{
-           alert("评论不能为空!")
+            alert("评论不能为空!")
         }
     }
-    //回复评论
-    replyToCommentSaveMsg = (index) => {
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.replyToCommentText){
-                let replyToComment = {
-                    img:this.state.userNameImg,
-                    name : this.state.user,
-                    nameT : this.state.replyToCommentText
-                }
-                this.state.data[this.state.index].data[index-1].data[0].replyToComment.push(replyToComment)
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                    replyToCommentText : ''
-                })
-            }else{
-                alert("回复评论不能为空!")
-            }
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
-        }
-    }
+    
     //评论列表
     addcommentsItem = ({item}) => {
         return(
@@ -235,7 +313,7 @@ import Constants from './global.js'
                             {item.name}
                         </Text>
                         <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.id,'commit',item.id)}>删除</Text>
                     </View>
                     <Text style = {styles.commentRIghtPerText} onLongPress = {this.eplyToCommentT.bind(this,item.id)}>
                         {item.nameT}
@@ -256,7 +334,7 @@ import Constants from './global.js'
                             clearButtonMode = "while-editing"
                         />
                         <Text style = {styles.codeLine}></Text>
-                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id)}>发送</Text>
+                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,true,-1)}>发送</Text>
                     </View>
                     <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
                     {this.replyToCommentTitleList(item)}
@@ -264,36 +342,112 @@ import Constants from './global.js'
             </View>
         )
     }
-    //长按评论可回复
-    eplyToCommentT = (index) => {
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag){
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = false
-            }else{
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentMaxFlag = true
-            }
-            this.setState({
-                commentsItem : this.state.data[this.state.index].data
-            })
+    //回复评论
+    replyToCommentSaveMsg = (id,name,callFlag,childId) => {
+        let itemName = null
+        if(callFlag){
+            itemName = name
+        }else{
+            itemName = this.state.callName
         }
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(id == this.state.data[this.state.index].data[i].data[0].id){
+                let replyToCommentId = this.state.data[this.state.index].data[i].data[0].replyToComment.length == 0 ? 0 : this.state.data[this.state.index].data[i].data[0].replyToComment[this.state.data[this.state.index].data[i].data[0].replyToComment.length-1].id + 1
+                if(this.state.replyToCommentText){
+                    let replyToComment = {
+                        id : replyToCommentId,
+                        img:this.state.userNameImg,
+                        name : this.state.user,
+                        itemName : itemName,
+                        nameT : this.state.replyToCommentText,
+                        replyToCommentMaxFlag : true
+                    }
+                    this.state.data[this.state.index].data[i].data[0].replyToComment.push(replyToComment)
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
+                    if(childId != -1){
+                        this.state.data[this.state.index].data[i].data[0].replyToComment[childId].replyToCommentMaxFlag = true
+                    }
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                        replyToCommentText : '',
+                        commentInputCallFlag : false,
+                        shareFlag : false,
+                    })
+                }else{
+                    alert("回复评论不能为空!")
+                }
+                Constants.storage.save({
+                    key : 'publishedLi',
+                    data : this.state.data,
+                    defaultExpires: true, 
+                })
+            }
+        }
+    }
+    //评论可回复
+    eplyToCommentT = (index) => {
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
+            if(index == this.state.data[this.state.index].data[i].data[0].id){
+                if(this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag){
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = false
+                }else{
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
+                }
+                this.setState({
+                    commentsItem : this.state.data[this.state.index].data,
+                    replyToCommentText : ''
+                })
+            }
+        }
+        
     }
     //查看更多回复
     showReplyToComment = (index) => {
-        if(index == this.state.data[this.state.index].data[index-1].data[0].id){
-            if(this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag){
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = false
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '收起'
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                })
-            }else{
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListFlag = true
-                this.state.data[this.state.index].data[index-1].data[0].replyToCommentListT = '查看'
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                })
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(index == this.state.data[this.state.index].data[i].data[0].id){
+                if(this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag){
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                    })
+                }else{
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = true
+                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '查看'
+                    this.setState({
+                        commentsItem : this.state.data[this.state.index].data,
+                    })
+                }
             }
         }
+    }
+    //多级回复
+    callBackCall = (id,name,perId) => {
+        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
+            if(perId == this.state.data[this.state.index].data[i].data[0].id){
+                for(j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
+                    this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
+                    if(id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
+                        if(this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag){
+                            this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = false
+                        }else{
+                            this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
+                        }
+                        this.setState({
+                            commentsItem : this.state.data[this.state.index].data,
+                            replyToCommentText : ''
+                        })
+                    }
+                }
+            }
+        }
+        this.setState({
+            callName : name,
+            replyToCommentText : ''
+        })
     }
     //评论的回复
     replyToCommentTitleList = (item) => {
@@ -306,13 +460,32 @@ import Constants from './global.js'
                 <View style = {styles.commentRightPerText}>
                     <View style = {styles.removeAndCall}>
                         <Text style = {styles.commentRIghtPerName}>
-                            {item.replyToComment[i].name}
+                            {item.replyToComment[i].name}回复了{item.replyToComment[i].itemName}
                         </Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]}>删除</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.callBackCall.bind(this,item.replyToComment[i].id,item.replyToComment[i].name,item.id)}>回复</Text>
+                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.replyToComment[i].id,'commitChild',item.id)}>删除</Text>
                     </View>
                     <Text style = {styles.commentRIghtPerText}>
                         {item.replyToComment[i].nameT}
                     </Text>
+                    <View style = {[styles.eplyToCommentMax,item.replyToComment[i].replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
+                        <TextInput
+                            ref = "code"
+                            style = {[styles.code,styles.eplyToCommentCode]}
+                            onChangeText={(replyToCommentText) => {
+                                this.setState({
+                                    replyToCommentText : replyToCommentText
+                                })
+                            }}
+                            value={this.state.replyToCommentText}
+                            placeholder = '请输入您想回复的话……'
+                            maxLength = {50}
+                            autoCapitalize = "none"
+                            clearButtonMode = "while-editing"
+                        />
+                        <Text style = {styles.codeLine}></Text>
+                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,false,item.replyToComment[i].id)}>发送</Text>
+                    </View>
                 </View>
             </View>
             array.push(view)
@@ -364,12 +537,25 @@ import Constants from './global.js'
                     <Text style = {styles.codeLine}></Text>
                     <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
                 </View>
+                <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
+                {this.confirmationWindowF()}
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+    opacityBg: {
+        position:'absolute',
+        right:0,
+        top:-20,
+        left:0,
+        backgroundColor:'#000000',
+        opacity:0.5
+    },
+    showopacityBg: {
+        bottom:0,
+    },
     time: {
         fontSize:11,
         color:'#898989',
