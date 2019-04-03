@@ -14,6 +14,8 @@ import ComList from "./comList";
 import Published from "./published";
 import Detail from "./detail";
 import DuthonPerCenter from "./duthonPerCenter"
+import chatListPage from './chatListPage'
+import dialogPage from './dialogPage'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -28,6 +30,42 @@ export default class App extends Component {
         );
     }
 }
+const chatNavigator = createBottomTabNavigator({
+      chatListPage:chatListPage
+    },{
+      tabBarOptions: {
+        //当前选中的tab bar的文本颜色和图标颜色
+        activeTintColor: '#B23AEE',
+        //当前未选中的tab bar的文本颜色和图标颜色
+        inactiveTintColor: 'black',
+        //是否显示tab bar的图标，默认是false
+        showIcon: true,
+        //showLabel - 是否显示tab bar的文本，默认是true
+        showLabel: true,
+        //tab bar的样式
+        style: {
+            backgroundColor: '#f8f8f8',
+            height:47
+        },
+        //tab bar的文本样式
+        labelStyle: {
+            fontSize: 11,
+            margin: 0
+        },
+        //tab 页指示符的样式 (tab页下面的一条线).
+        indicatorStyle: {height: 0},
+    },
+    //tab bar的位置, 可选值： 'top' or 'bottom'
+    tabBarPosition: 'bottom',
+    //是否允许滑动切换tab页
+    swipeEnabled: true,
+    //是否在切换tab页时使用动画
+    animationEnabled: false,
+    //是否懒加载
+    lazy: true,
+    //返回按钮是否会导致tab切换到初始tab页？ 如果是，则设置为initialRoute，否则为none。 缺省为initialRoute。
+    backBehavior: 'none',
+});
 const TabNavigator = createBottomTabNavigator({
   HomePage:{screen:HomePage,navigationOptions :({navigation})=>({
     tabBarLabel: '首页',
@@ -159,9 +197,17 @@ const RootStack = createStackNavigator(
       // headerTitle:"首页",
       header:null
     })},
+    chatNavigator:{screen:chatNavigator,navigationOptions :({navigation})=>({
+      // headerTitle:"聊天功能块",
+      header:null
+    })},
+    dialogPage:{screen:dialogPage,navigationOptions :({navigation})=>({
+      // headerTitle:"聊天界面",
+      header:null
+    })},
   },
   {
-    initialRouteName:'Login' //默认入口
+    initialRouteName:'chatNavigator' //默认入口
   }
 )
 
