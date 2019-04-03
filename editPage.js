@@ -17,6 +17,8 @@ import Header from './component/editPageHeads'
 const { ScreenWidth, height } = Dimensions.get('window');
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import getFetch from './service/index.js'
+import ConfirmationWindow from './component/confirmationWindow'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -43,22 +45,41 @@ const photoOptions = {
             email : '',
             phone : '',
             sex : '',
+            confirmationWindowFlag : false,
+            confirmationWindowFlagData : [
+                {
+                    title : '保存此次编辑?',
+                    leftT : '不保存',
+                    rightT : '保存',
+                    type : 'cancel'
+                }
+            ],
         }
     }
-    componentWillMount = () => {
-        Constants.getUserNameImgStorageF()
-        Constants.publishedListStorageF()//加载缓存获取数据
-        Constants.getUserNameStorageF()
-        setTimeout(()=>{
-            this.init()
-        },300)
-    }
+    getUserEdit = async () => {
+        const { navigation } = this.props;
+        let account = navigation.getParam("account")
+        let getFetchData = await getFetch.selectPerUser({userName : account})
+        if(getFetchData.code == 200){
+            this.setState({
+                avatarSource : getFetchData.userMessage.img,
+                userName:getFetchData.userMessage.nickName,
+                account : getFetchData.userMessage.userName,
+                webSite : getFetchData.userMessage.webSite,
+                personalResume : getFetchData.userMessage.personalResume,
+                email : getFetchData.userMessage.email,
+                phone : getFetchData.userMessage.phone,
+                sex : getFetchData.userMessage.sex,
+            })
+        }else if(getFetchData.code == 400){
 
-    init = () => {
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
-        this.setState({
-            avatarSource:userNameImg
-        })
+        }else{
+            
+        }
+    }
+    //注册通知
+    componentWillMount(){
+        this.Is_GoodsRefreshed = [this.props.navigation.addListener('willFocus', () => this.getUserEdit())]; //BottomTab路由改变时增加读取数据的监听事件 
     }
     //获取手机相册
     choosePicker=()=>{
@@ -73,48 +94,62 @@ const photoOptions = {
                 
             }
             else {
-                let source = response.uri;
-                let userName = Constants.getUserName() ? Constants.getUserName() : ''
-                let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
+                let source = response.uri;            
                 this.setState({
                     avatarSource: source
                 });
-                for(let i = 0;i<publishedList.length;i++){
-                    if(userName == publishedList[i].userName){
-                        publishedList[i].perImg = source
-                    }
-                }
-                Constants.storage.save({
-                    key : 'userNameImg',
-                    data : source,
-                    defaultExpires: true, 
-                })
-                Constants.storage.save({
-                    key : 'publishedLi',
-                    data : publishedList,
-                    defaultExpires: true, 
-                })
             }
         });
     }
     //返回
     goBackPage = () =>{
+        this.setState({
+            confirmationWindowFlag : true
+        })
+    }
+    //编辑时,点击不保留按钮
+    noKeep = () => {
         const { navigation } = this.props;
         this.props.navigation.goBack()
     }
-    //编辑完成提交
-    successSet = () =>{
-        let data = {
-            userImg : this.state.avatarSource,
-            userName:this.state.userName,
-            account : this.state.account,
-            webSite : this.state.webSite,
-            personalResume : this.state.personalResume,
-            email : this.state.email,
-            phone : this.state.phone,
-            sex : this.state.sex
+    //编辑发时,点击保留按钮没,继续编辑
+    keep = () => {
+        this.setState({
+            confirmationWindowFlag : false,
+        })
+    }
+    //个人信息退出编辑时确定
+    confirmationWindowF = () => {
+        if(this.state.confirmationWindowFlag){
+            return(
+                <ConfirmationWindow confirmationWindowFlagData = {this.state.confirmationWindowFlagData} noKeep = {this.noKeep.bind(this)} keep = {this.keep.bind(this)}/>
+            )
+        }else{
+            return
         }
-        alert(JSON.stringify(data))
+    }
+    //编辑完成提交
+    successSet = async () =>{
+        let data = {
+            userName : this.state.account,
+            nickName : this.state.userName ? this.state.userName : '',
+            img : this.state.avatarSource,
+            webSite : this.state.webSite ? this.state.webSite : '',
+            personalResume : this.state.personalResume ? this.state.personalResume : '',
+            email : this.state.email ? this.state.email : '',
+            phone : this.state.phone ? this.state.phone : '',
+            sex : this.state.sex ? this.state.sex : ''
+        }
+        var editPerUser = await getFetch.editPerUser(data)
+        let updataPublishList = await getFetch.workPerImg({userName : this.state.account,img:this.state.avatarSource,nickName:this.state.userName})
+        if(editPerUser.code == 200 || updataPublishList.code == 200){
+            const { navigation } = this.props;
+            this.props.navigation.goBack()
+        }else if(editPerUser.code == 400 || updataPublishList.code == 400){
+            alert(editPerUser.message)
+        }else{
+            alert(editPerUser.message)
+        }
     }
     render() {
         return(
@@ -127,7 +162,7 @@ const photoOptions = {
                 <View style = {styles.inputMsg}>
                     <View style = {styles.perInput}>
                         <View style = {styles.inputLeft}>
-                            <Text style = {styles.leftT}>姓名</Text>
+                            <Text style = {styles.leftT}>昵称</Text>
                         </View>
                         <View style = {styles.inputRight}>
                             <TextInput
@@ -151,6 +186,7 @@ const photoOptions = {
                         <View style = {styles.inputRight}>
                             <TextInput
                                 style = {styles.inputText}
+                                editable = {false}
                                 onChangeText={(account) => {
                                     this.setState({
                                         account : account
@@ -197,6 +233,7 @@ const photoOptions = {
                                 value={this.state.personalResume}
                                 autoCapitalize = "none"
                                 placeholder = "个人简介"
+                                maxLength = {50}
                                 clearButtonMode = "while-editing"
                             />
                         </View>
@@ -233,6 +270,7 @@ const photoOptions = {
                                     })
                                 }}
                                 value={this.state.phone}
+                                maxLength = {11}
                                 autoCapitalize = "none"
                                 placeholder = "电话"
                                 clearButtonMode = "while-editing"
@@ -252,6 +290,7 @@ const photoOptions = {
                                     })
                                 }}
                                 value={this.state.sex}
+                                maxLength = {1}
                                 autoCapitalize = "none"
                                 placeholder = "性别"
                                 clearButtonMode = "while-editing"
@@ -259,12 +298,25 @@ const photoOptions = {
                         </View>
                     </View>
                 </View>
+                <View style = {[styles.opacityBg,this.state.confirmationWindowFlag ? styles.showopacityBg : '']} ></View>
+                {this.confirmationWindowF()}
             </View>
         )
     }
  }
 
  const styles = StyleSheet.create({
+    opacityBg: {
+        position:'absolute',
+        right:0,
+        top:-20,
+        left:0,
+        backgroundColor:'#000000',
+        opacity:0.5
+    },
+    showopacityBg: {
+        bottom:0,
+    },
     inputMsg: {
         paddingLeft:13,
         paddingRight:13,

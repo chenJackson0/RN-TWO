@@ -11,7 +11,8 @@ import {
     Animated,
     Share,
     SectionList,
-    TouchableOpacity
+    TouchableOpacity,
+    DeviceEventEmitter
 } from 'react-native';
 
  //引用插件
@@ -28,7 +29,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
-import Constants from './global.js'
+import getFetch from './service/index.js'
 import ConfirmationWindow from './component/confirmationWindow'
 const photoOptions = {
     title:'请选择',
@@ -72,7 +73,6 @@ const options = {
             commentNim : 0,
             userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             addCommentNum : 0,
-            oldcommentsItem : [],
             foucsOnList : [],
             onTFlag : false,
             onTFlagF : true,
@@ -119,15 +119,8 @@ const options = {
             return '刚刚' 
         }
     }
-    addPublised = () => {
+    addPublised = async () => {
         const { navigation } = this.props;
-        // let data = this.state.data
-        // let publisedList = navigation.getParam("publisedList")
-        Constants.publishedListStorageF()//加载缓存获取数据
-        Constants.getUserNameImgStorageF()
-        Constants.getUserNameStorageF()
-        Constants.getcommentsItemStorageF()
-        Constants.getCollectionItemsStorageF()
         this.setState({
             user : '',
             data : [],
@@ -137,26 +130,26 @@ const options = {
             collectionList : [],
             idArray : []
         })
-        setTimeout(()=>{
-            this.init()
-        },1000)
-        // if(publisedList){
-        //     data.unshift(publisedList)
-        //     this.setState({
-        //         data:data
-        //     })
-        // }
+        let publishedList = await getFetch.selectPublished()
+        let collectionList = await getFetch.findCollection()
+        if(publishedList.code == 200 && collectionList.code == 200){
+            this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
+        }else if(publishedList.code == 400 || collectionList.code == 400){
+
+        }else{
+
+        }
+    }
+    componentDidMount = () => {
+       
     }
      //注册通知
      componentWillMount(){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
     }   
     //处理业务逻辑
-    init = () => {
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
-        let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
+    init = async (publishedList,commentsItem,collectionList) => {
+        let userNameImg = 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         let works = []
         let foucsOnList = []
         let newAddName = []
@@ -168,34 +161,31 @@ const options = {
         //获取作品列表
         for(let i = 0;i<publishedList.length;i++){
             lastTime = newTiem - publishedList[i].time
-            if(publishedList[i].typeNum == 0){
-                if(publishedList[i].type == 'works'){
-                    works.push(publishedList[i])
-                    this.state.onTFlagF = false
-                }
-            }else if(publishedList[i].typeNum == 1){
-                //私密的
-
-            }else if(publishedList[i].typeNum == 2){
-                for(let i = 0;i<commentsItem.length;i++){
-                    if(user == commentsItem[i].userName){
-                        for(let j = 0;j<commentsItem[i].focusOns.length;j++){
-                            if(publishedList[i].userName == commentsItem[i].focusOns[j].name){
-                                works.push(publishedList[i])
+            if(lastTime>=0){
+                if(publishedList[i].typeNum == 0){
+                    if(publishedList[i].type == 'works'){
+                        works.push(publishedList[i])
+                        this.state.onTFlagF = false
+                    }
+                }else if(publishedList[i].typeNum == 1){
+                    //私密的
+    
+                }else if(publishedList[i].typeNum == 2){
+                    for(let i = 0;i<commentsItem.length;i++){
+                        if(user == commentsItem[i].userName){
+                            for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                                if(publishedList[i].userName == commentsItem[i].focusOns[j].name){
+                                    works.push(publishedList[i])
+                                }
                             }
                         }
                     }
                 }
-            }
-            
-            if(lastTime>0){
-                getChangeTime = this.changeTime(lastTime/1000)
-                publishedList[i].timeText = getChangeTime
             }else{
-                return
-            }
+                continue
+            } 
         }
-        //收藏
+        //收藏和点赞初始化
         for(let i = 0;i<works.length;i++){
             works[i].commentsFlag = true
             works[i].cllFlag = true
@@ -246,17 +236,11 @@ const options = {
         }else{
             this.state.onFFlag = false
         }
-        Constants.storage.save({
-            key : 'userName',
-            data : user,
-            defaultExpires: true,
-        })
         this.setState({
             data : works,
             user:user,
             userNameImg : userNameImg,
             addCommentItem : commentsItem,
-            oldcommentsItem : commentsItem,
             foucsOnList : foucsOnList,
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
@@ -299,9 +283,9 @@ const options = {
             user:[]
         }
         for(let i = 0;i<this.state.foucsOnList.length;i++){
-           let item =  <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
+           let item =  <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name,this.state.foucsOnList[i].img)}>
                 <View style = {styles.radius}>
-                    <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                    <Image source={{uri:this.state.foucsOnList[i].img}} style = {styles.perImg} />
                 </View> 
                 <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
             </TouchableOpacity>
@@ -315,8 +299,8 @@ const options = {
             perItem:[]
         }
         for(let i = 0;i<this.state.addCommentItem.length;i++){
-           let item =  <TouchableOpacity style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.addCommentItem[i].userName)}>
-                <Image source={{uri:this.state.addCommentItem[i].img?this.state.addCommentItem[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addPerListImg} />
+           let item =  <TouchableOpacity style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>
+                <Image source={{uri:this.state.addCommentItem[i].img}} style = {styles.addPerListImg} />
                 <Text style = {styles.addPerName}>{this.state.addCommentItem[i].userName}</Text>
                 <Text style = {styles.addPerMsg}>{this.state.addCommentItem[i].commeName}和其他{this.state.addCommentItem[i].addCommentNum}位用户关注了</Text>
                 <Text style = {[styles.addPerButton,this.state.addCommentItem[i].focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,i,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>{this.state.addCommentItem[i].focusOn}</Text>
@@ -359,10 +343,10 @@ const options = {
         })
     }
     //跳转作者主页
-    goPersonCenter = (userName) => {
+    goPersonCenter = (userName,perNameImg) => {
         const { navigation } = this.props;
         this.props.navigation.navigate('DuthonPerCenter',{
-            userName : userName
+            userName : userName,perNameImg:perNameImg
         })
     }
     //没有说说的时候ui
@@ -382,53 +366,33 @@ const options = {
         }
     }
     //收藏
-    collectionItems = (i,id) => {
-        let newCollectionList = []
+    collectionItems = async (i,id) => {
         if(this.state.data[i].commentsFlag){
             let data = {
+                id : this.state.data[i].id,
                 perUserName : this.state.user,
                 name : this.state.data[i].userName,
-                id : this.state.data[i].id,
                 img : this.state.data[i].publicHeadImg
             }
-            this.state.collectionList.push(data)
-            this.setState({
-                // data : this.state.data
-            })
-            Constants.storage.save({
-                key : 'collectionItem',
-                data : this.state.collectionList,
-                defaultExpires: true, 
-            })
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
-            this.state.data[i].commentsFlag = false
+            let collectionL = await getFetch.collection(data) //收藏
+            if(collectionL.code == 200){
+                this.state.data[i].commentsFlag = false
+                this.state.collectionList.push(data)
+            }
         }else{
             for(let j = 0;j<this.state.collectionList.length;j++){
                 if(this.state.collectionList[j].id == id){
-                    continue
-                }else{
-                    newCollectionList.push(this.state.collectionList[j])
+                    let collectionD = await getFetch.deleteCollection({id : id}) //取消
+                    if(collectionD.code == 200){
+                        this.state.data[i].commentsFlag = true
+                    }
+                    break
                 }
             }
-            this.setState({
-                // data : this.state.data
-            })
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
-            Constants.storage.save({
-                key : 'collectionItem',
-                data : newCollectionList,
-                defaultExpires: true, 
-            })
-            this.state.data[i].commentsFlag = true
         }
+        this.setState({
+            data : this.state.data
+        })
     }
     //删除自己发的作品或评论
     deleteItem = (id,type,perId) => {
@@ -452,10 +416,13 @@ const options = {
         })
     }
     //删除
-    deleteI = () => {
+    deleteI = async () => {
         let data = []
         let dataA = []
         let commitList = []
+        let deteleCommit = {code : 0}
+        let publishedD = {code : 0}
+        let deteleCommitChild = {code : 0}
         if(this.type == 'work'){
             for(let i = 0;i<this.state.data.length;i++){
                 if(this.state.id == this.state.data[i].id){
@@ -469,6 +436,7 @@ const options = {
             }else{
                 this.state.onTFlag = false
             }
+            publishedD = await getFetch.deletePublished({id : this.state.id}) //删除作品
         }else if(this.type == 'commit'){
             for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
                 if(this.state.id == this.state.data[this.state.index].data[i].data[0].id){
@@ -480,6 +448,7 @@ const options = {
             this.state.data[this.state.index].data = dataA
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum - 1
             data = this.state.data
+            deteleCommit = await getFetch.commentsWork({id:this.state.addId,data:dataA,commentsNum:this.state.data[this.state.index].commentsNum}) //删除评论
         }else if(this.type == 'commitChild'){
             for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
                 if(this.state.perId == this.state.data[this.state.index].data[i].data[0].id){
@@ -491,22 +460,33 @@ const options = {
                         }
                     }
                     this.state.data[this.state.index].data[i].data[0].replyToComment = dataA
+                    deteleCommitChild = await getFetch.eveyComments({id:this.state.addId,index:this.state.perId,
+                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
+                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
+                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
+                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
+                    }) //删除多级评论
                 }
             }
             data = this.state.data
         }
-        this.setState({
-            data : data,
-            commentsItem : this.state.data[this.state.index].data,
-            deleteCommentItemsFlag : false,
-            onTFlag : this.state.onTFlag,
-            commentNim : this.state.data[this.state.index].commentsNum,
-        })
-        Constants.storage.save({
-            key : 'publishedLi',
-            data : data,
-            defaultExpires: true, 
-        })
+        
+        if(publishedD.code == 200 || deteleCommit.code == 200 || deteleCommitChild.code == 200){
+            if(this.type == 'work'){
+                await getFetch.deleteCollection({id : this.state.id}) //取消
+            }
+            this.setState({
+                data : data,
+                commentsItem : this.state.data[this.state.index].data,
+                deleteCommentItemsFlag : false,
+                onTFlag : this.state.onTFlag,
+                commentNim : this.state.data[this.state.index].commentsNum,
+            })
+        }else if(publishedD.code == 400 || deteleCommit.code == 400 || deteleCommitChild.code == 400){
+
+        }else{
+
+        }
     }
     //删除作品选择
    confirmationWindowF = () => {
@@ -525,11 +505,11 @@ const options = {
         }
         for(let i = 0;i<this.state.data.length;i++){
            let item =   <View style = {styles.perListItem} key = {i} ref = {i}>
-                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.data[i].userName)}>
+                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.data[i].userName,this.state.data[i].perImg)}>
                     <View style = {styles.perTitle}>
-                        <Image source={{uri:this.state.data[i].perImg ? this.state.data[i].perImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perListImg} />
+                        <Image source={{uri:this.state.data[i].perImg}} style = {styles.perListImg} />
                         <Text style = {styles.perName}>
-                            {this.state.data[i].userName}
+                            {this.state.data[i].nickName}
                         </Text>
                         <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
                     </View>
@@ -539,7 +519,7 @@ const options = {
                 </TouchableOpacity>
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
-                        <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i)}/>
+                        <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i,this.state.data[i].id)}/>
                         <EvilIcons name = {'comment'} size = {30} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,i,this.state.data[i].id)}/>
                         <EvilIcons name = {'share-google'} size = {30} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
                     </View>
@@ -555,7 +535,7 @@ const options = {
                         {this.moreCall(this.state.data[i].giveALike,this.state.data[i].flag)}
                         <Text style = {styles.leftButton} onPress = {this.showContent.bind(this,i)}>{this.state.data[i].butText}</Text>
                     </View>
-                    <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i)}>共{this.state.data[i].commentsNum}条评论</Text>
+                    <Text style = {styles.commentNum} onPress = {this.comment.bind(this,i,this.state.data[i].id)}>共{this.state.data[i].commentsNum}条评论</Text>
                     <View style = {styles.removeList}>
                         <Text style = {styles.commentDay}>{this.state.data[i].timeText} {this.state.data[i].address}</Text>
                         <Text style = {[styles.removeCommentDay,this.state.data[i].userName == this.state.user ? '' : styles.hideRemove]} onPress = {this.deleteItem.bind(this,this.state.data[i].id,'work',this.state.data[i].id)}>删除</Text>
@@ -602,7 +582,7 @@ const options = {
         })
     }
     //点击关注
-    focusOn = (j,name,img) => {
+    focusOn = async (j,name,img) => {
         let deteleFochs = []
         let deteleFensi = []
         let deteleFochsIndex = 0
@@ -659,49 +639,52 @@ const options = {
         }else{
             this.state.onFFlag = false
         }
-        this.setState({
-            addCommentItem : this.state.addCommentItem,
-            onFFlag : this.state.onFFlag,
-            foucsOnList : this.state.addCommentItem[deteleFochsIndex].focusOns
-        })
-        Constants.storage.save({
-            key : 'commentsItemFoucsOn',
-            data : this.state.addCommentItem,
-            defaultExpires: true, 
-        })
+        let focusOnIn = await getFetch.focusOn({userName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
+        let fensi = await getFetch.fensi({userName : name,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+        if(focusOnIn.code == 200 && fensi.code == 200){
+            this.setState({
+                addCommentItem : this.state.addCommentItem,
+                onFFlag : this.state.onFFlag,
+                foucsOnList : this.state.addCommentItem[deteleFochsIndex].focusOns
+            })
+        }else if(focusOnIn.code == 400 || fensi.code == 400){
+
+        }else{
+            
+        }
     }
     //点赞
-    clickCall = (j) => {
+    clickCall = async (j,id) => {
+        let clickCallUpdata
         for(let i = 0;i<this.state.data.length;i++){
             if(this.state.data[i].cllFlag){
                 if( i == j){
                     this.state.data[i].cllFlag = false
                     this.state.data[i].perUser = this.state.user
                     this.state.data[i].giveALike.push(this.state.user)
+                    clickCallUpdata = await getFetch.updateOnePublished({id:id,giveALike:this.state.data[i].giveALike})
                 }
             }else{
                 if( i == j){
                     this.state.data[i].cllFlag = true
                     this.state.data[i].perUser = this.state.user + '取消'
                     this.state.data[i].giveALike.pop(this.state.user)
+                    clickCallUpdata = await getFetch.updateOnePublished({id:id,giveALike:this.state.data[i].giveALike})
                 }
             }
         }
-        this.setState({
-            loveFlag : false,
-            data : this.state.data,
-            loveWidth : 150
-        })
+        if(clickCallUpdata.code == 200){
+            this.setState({
+                loveFlag : false,
+                data : this.state.data,
+                loveWidth : 150
+            })
+        }
         setInterval(() => {
             this.setState({
                 loveWidth : -100
             })
         },500)
-        Constants.storage.save({
-            key : 'publishedLi',
-            data : this.state.data,
-            defaultExpires: true, 
-        })
         {this.showContent()}
     }
 
@@ -760,7 +743,7 @@ const options = {
           })
     }
     //发送评论
-    saveMsg = () => {
+    saveMsg = async () => {
         let num = 0
         if(this.state.comments){
             for(let i = 0;i<this.state.data.length;i++){
@@ -780,22 +763,25 @@ const options = {
             }
             let commentsItem = 
                 {
+                    id : num,
                     data : []
                 }
             
             commentsItem.data.unshift(data)
             this.state.data[this.state.index].data.push(commentsItem)
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            this.setState({
-                comments : '',
-                commentsItem : this.state.data[this.state.index].data,
-                commentNim : this.state.data[this.state.index].commentsNum
-            })
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
+            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum + 1})
+            if(commentsSave.code == 200){
+                this.setState({
+                    comments : '',
+                    commentsItem : this.state.data[this.state.index].data,
+                    commentNim : this.state.data[this.state.index].commentsNum
+                })
+            }else if(commentsSave.code == 400){
+
+            }else{
+
+            }
         }else{
             alert("评论不能为空!")
         }
@@ -998,7 +984,7 @@ const options = {
         )
     }
     //回复评论
-    replyToCommentSaveMsg = (id,name,callFlag,childId) => {
+    replyToCommentSaveMsg = async (id,name,callFlag,childId) => {
         let itemName = null
         if(callFlag){
             itemName = name
@@ -1024,27 +1010,33 @@ const options = {
                     }
                     this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
                     this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
-                    this.setState({
-                        commentsItem : this.state.data[this.state.index].data,
-                        replyToCommentText : '',
-                        commentInputCallFlag : false,
-                        shareFlag : false,
+                    let eveyComments = await getFetch.eveyComments({id:this.state.addId,index:id,
+                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
+                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
+                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
+                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
                     })
+                    if(eveyComments.code == 200){
+                        this.setState({
+                            commentsItem : this.state.data[this.state.index].data,
+                            replyToCommentText : '',
+                            commentInputCallFlag : false,
+                            shareFlag : false,
+                        })
+                    }else if(eveyComments.code == 400){
+
+                    }else{
+
+                    }
                 }else{
                     alert("回复评论不能为空!")
                 }
-                Constants.storage.save({
-                    key : 'publishedLi',
-                    data : this.state.data,
-                    defaultExpires: true, 
-                })
             }
         }
     }
     //评论可回复
     eplyToCommentT = (index) => {
         for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
             if(index == this.state.data[this.state.index].data[i].data[0].id){
                 if(this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag){
                     this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = false
@@ -1053,8 +1045,10 @@ const options = {
                 }
                 this.setState({
                     commentsItem : this.state.data[this.state.index].data,
-                    replyToCommentText : ''
+                    replyToCommentText : '',
                 })
+            }else{
+                this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
             }
         }
         
@@ -1084,7 +1078,6 @@ const options = {
         for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
             if(perId == this.state.data[this.state.index].data[i].data[0].id){
                 for(j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
-                    this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
                     if(id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
                         if(this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag){
                             this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = false
@@ -1095,6 +1088,8 @@ const options = {
                             commentsItem : this.state.data[this.state.index].data,
                             replyToCommentText : ''
                         })
+                    }else{
+                        this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
                     }
                 }
             }
