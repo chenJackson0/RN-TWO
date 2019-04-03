@@ -12,7 +12,7 @@ import {DeviceEventEmitter, StyleSheet, Text, View, Dimensions, Image, TextInput
 import Constants from './global.js'
 import {strings} from './language/index'
 global.deviceWidth = Dimensions.get('window').width
-
+import getFetch from './service/index.js'
 export default class App extends Component{
 
   constructor(props){
@@ -22,39 +22,23 @@ export default class App extends Component{
         passWord : '',
         flag : false,
         accountFlag : true,
+        message : '用户名或密码不能为空'
       }
   }
   accountList = [];
-  //页面加载时执行
-  componentWillMount = () => {
-    Constants.storageF()//加载缓存获取数据
-    //删除所以数据
-  }
   //获取前一个page传来的值
   getAccount = () => {
     const { navigation } = this.props;
-    Constants.storageF()//加载缓存获取数据
+    // Constants.storageF()//加载缓存获取数据
     let user = navigation.getParam("account")
     this.setState({
         userName : user
     })
   };
   //注册通知
-  componentDidMount(){
-//     DeviceEventEmitter.addListener('ChangeUI',(dic)=>{
-//         //接收到详情页发送的通知，刷新首页的数据
-//         this.setState({
-//             userName:dic.account,
-//             accountFlag : false
-//         });
-//         this.accountList = dic.accountList
-//    });
+  componentWillMount(){
     this.Is_GoodsRefreshed = [this.props.navigation.addListener('willFocus', () => this.getAccount())]; //BottomTab路由改变时增加读取数据的监听事件 
-}   
-//页面将要离开的是时候发送通知
-//   componentWillUnmount(){
-//     DeviceEventEmitter.emit('accountList', {accountList:this.accountList});
-//   }
+ }   
   //点击注册按钮
   registered = () =>{
     const { navigation } = this.props;
@@ -65,34 +49,26 @@ export default class App extends Component{
     this.props.navigation.navigate('Registered')
   };
   //校验
-  checkAccount = () => {
-    if(this.state.accountFlag){
-        this.accountList = Constants.getStorageAccount() ? Constants.getStorageAccount() : []
-    }else{
-        this.accountList = this.accountList
-    }
+  checkAccount = async () => {
     if(this.state.userName != '' && this.state.passWord != ''){
-        for(let i = 0;i<this.accountList.length;i++){
-            if(this.state.userName == this.accountList[i].userName){
-                if(this.state.passWord == this.accountList[i].passWord){
-                    return true
-                }else{
-                    alert("用户名或密码不正确!")
-                    return false
-                }
-            }
+        let accountList = await getFetch.login({userName:this.state.userName,passWord:this.state.passWord})
+        if(accountList.code == 200){
+            return true
+        }else if(accountList.code == 400){
+            this.state.message = accountList.message
+            return false
+        }else if(accountList.code == 500){
+            this.state.message = accountList.message
+            return false
         }
-        alert("用户名或密码不正确!")
-        return false
     }else{
-        alert("用户名或密码不能为空!")
-        return
+        return false
     }
   };
   //登录
-  loginCheckAccount = () => {
+  loginCheckAccount = async () => {
     const { navigation } = this.props;
-    if(this.checkAccount()){
+    if(await this.checkAccount()){
         this.props.navigation.navigate('HomePage',{
             perUser : this.state.userName
         })
@@ -100,6 +76,8 @@ export default class App extends Component{
             userName : '',
             passWord : ''
         })
+    }else{
+        alert(this.state.message)
     }
   }
   render() {

@@ -30,7 +30,8 @@ export default class SetPassWord extends Component{
   user = ''; //用户名
   passWord = ''; //密码
   newPassWord = ''; //确认密码
-  accountList = []
+  accountListLength = 0
+  message = ''
   
   //页面将要离开的是时候发送通知
 //   componentWillUnmount(){
@@ -48,29 +49,22 @@ export default class SetPassWord extends Component{
 //    });
 //  }
   //注册的事件
-   getAccount = () => {
-        Constants.storageF()//加载缓存获取数据
-        Constants.getcommentsItemStorageF()
+   getAccount = async () => {
+        const { navigation } = this.props;
         this.setState({
-            account : '',
-            commentsItem : [],
-            id : 0
-        },()=>{
-            setTimeout(()=>{
-                this.init()
-            },500)
+            account : navigation.getParam("account"), //页面加载获取前一个页面传来的手机号码
+            // commentsItem : commentsItem
         })
-        
   };
   //加载数据
-  init = () => {
-    const { navigation } = this.props;
-    let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-    this.setState({
-        account : navigation.getParam("account"), //页面加载获取前一个页面传来的手机号码
-        commentsItem : commentsItem
-    })
-  }
+//   init = () => {
+//     const { navigation } = this.props;
+//     let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
+//     this.setState({
+//         account : navigation.getParam("account"), //页面加载获取前一个页面传来的手机号码
+//         commentsItem : commentsItem
+//     })
+//   }
   //注册通知
   componentDidMount(){
 //     DeviceEventEmitter.addListener('ChangeUI',(dic)=>{
@@ -85,39 +79,27 @@ export default class SetPassWord extends Component{
 } 
 
   //校验新注册的账号和是否重复
-  checkAccount = () => {
-    if(this.state.accountFlag){
-        this.accountList = Constants.getStorageAccount() ? Constants.getStorageAccount() : []
-    }else{
-        this.accountList = this.accountList
+  checkAccount = async () => {
+    let commentsItem = await getFetch.getUser({userName:this.state.account})
+    if(commentsItem.code == 200){
+        this.accountListLength = commentsItem.count
+        return true;
+    }else if(commentsItem.code == 400){
+        this.message = commentsItem.message
+        return false;
+    }else if(commentsItem.code == 500){
+        return false;
     }
-    for(let i = 0;i<this.accountList.length;i++){
-        if(this.state.account == this.accountList[i].userName){
-            return false;
-        }
-    }
-    return true;
+    
   };
   //注册
-  submit = () =>{
+  submit = async () =>{
     const { navigation } = this.props;
     //将用户名存入全局缓存
-    if(!this.checkAccount()){
-        alert("账号已经被注册")
-        return
-    }
-    if(this.state.account != '' && this.passWord != '' && this.newPassWord != ''){
+    if(!await this.checkAccount()){
+        alert(this.message)
+    }else if(this.state.account != '' && this.passWord != '' && this.newPassWord != ''){
         if(this.passWord == this.newPassWord ){
-            let data = {
-                userName : this.state.account,
-                passWord : this.passWord
-            }
-            this.accountList = this.accountList.concat(data)
-            Constants.storage.save({
-                key : 'account',
-                data : this.accountList,
-                defaultExpires: true, 
-            })
             this.commentsItemBind()
             this.props.navigation.navigate('Login',{
                 account : this.state.account
@@ -132,8 +114,9 @@ export default class SetPassWord extends Component{
   //创建粉丝和关注绑定关系
   commentsItemBind = () => {
     let data = {
-        id : this.state.commentsItem.length + 1,
+        id : this.accountListLength + 1,
         userName : this.state.account,
+        passWord : this.passWord,
         fensi : [], //关注主播的人
         focusOns : [], //主播关注的人
         img : this.state.userNameImg,
@@ -143,13 +126,7 @@ export default class SetPassWord extends Component{
         focusOnFlag : true,
         address : this.state.address
     }
-    // getFetch.get_fetch(data)
-    this.state.commentsItem.push(data)
-    Constants.storage.save({
-        key : 'commentsItemFoucsOn',
-        data : this.state.commentsItem,
-        defaultExpires: true, 
-    })
+    getFetch.registered(data)
   }
   render() {
     return (

@@ -20,6 +20,7 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
 import AddressJsonData from './addressJson.json'
+import getFetch from './service/index.js'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -76,23 +77,8 @@ const photoOptions = {
         }
     }
     num = -1
-    addPublised = () => {
-        Constants.publishedListStorageF()//加载缓存获取数据
-        Constants.getcommentsItemStorageF()
-        this.setState({
-            publishedList: [],
-        })
-        setTimeout(()=>{
-            this.init()
-        },300)
-        
-    }
-    componentWillMount = () => {
-        
-    }
-    //处理业务
-    init = () => {
-        let published = Constants.getSublishedList() ? Constants.getSublishedList() : []
+    addPublised = async () => {
+        let published = await getFetch.selectPublished()
         const { navigation } = this.props;
         let itemData = []
         let itemList = {}
@@ -292,7 +278,7 @@ const photoOptions = {
         let date = Date.parse(new Date());
         const { navigation } = this.props;
         let data = {
-            id : this.state.publishedList.length + 1,
+            id : this.state.publishedList.count + 1,
             perImg : this.state.userNameImg,
             userName : this.state.user,
             publicHeadImg : [{img : this.state.item[0].img}],
@@ -320,12 +306,7 @@ const photoOptions = {
             data.type = 'TellMeAbout'
         }
         data.publicHeadImg = this.state.item
-        publishedList.unshift(data)
-        Constants.storage.save({
-            key : 'publishedLi',
-            data : publishedList,
-            defaultExpires: true, 
-        })
+        getFetch.published(data)
         if(this.state.imgFlag){
             pageName = 'HomePage'//跳首页
         }else{
