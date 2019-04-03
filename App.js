@@ -207,7 +207,7 @@ const RootStack = createStackNavigator(
     })},
   },
   {
-    initialRouteName:'chatNavigator' //默认入口
+    initialRouteName:'Login' //默认入口
   }
 )
 
