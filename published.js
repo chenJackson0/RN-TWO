@@ -39,46 +39,63 @@ const photoOptions = {
   constructor(props) {
    super(props);
     this.state = {
-            title : '发布作品',
-            avatarSource: 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
-            typeNameChange : false,
-            typeNum : 0,//0 公开 1 私密 2 对粉丝可见
-            text : '公开',
-            imgFlag : false,
-            item:[],
-            data : [],
-            publisedText : '',
-            confirmationWindowFlag : false,
-            deleteImgLastFlag : false,
-            num : -1,
-            userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
-            publishedList: [],
-            id : 0,
-            address : '上海',
-            addCommentNum : 0,
-            changeAddessHide : true,
-            offsetYNum : 3,
-            confirmationWindowFlagData : [
-                {
-                    title : '保存此次编辑?',
-                    leftT : '不保存',
-                    rightT : '保存',
-                    type : 'cancel'
-                }
-            ],
-            deleteImgLastFlagData : [
-                {
-                    title : '确定要删除次照片吗?',
-                    leftT : '取消',
-                    rightT : '确定',
-                    type : 'delImg'
-                }
-            ]
+        title : '发布作品',
+        avatarSource: 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
+        typeNameChange : false,
+        typeNum : 0,//0 公开 1 私密 2 对粉丝可见
+        text : '公开',
+        imgFlag : false,
+        item:[],
+        data : [],
+        publisedText : '',
+        confirmationWindowFlag : false,
+        deleteImgLastFlag : false,
+        num : -1,
+        userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
+        publishedList: [],
+        id : 0,
+        address : '上海',
+        addCommentNum : 0,
+        changeAddessHide : true,
+        offsetYNum : 3,
+        confirmationWindowFlagData : [
+            {
+                title : '保存此次编辑?',
+                leftT : '不保存',
+                rightT : '保存',
+                type : 'cancel'
+            }
+        ],
+        deleteImgLastFlagData : [
+            {
+                title : '确定要删除次照片吗?',
+                leftT : '取消',
+                rightT : '确定',
+                type : 'delImg'
+            }
+        ]
         }
     }
     num = -1
+    id = 0
     addPublised = async () => {
         let published = await getFetch.selectPublished()
+        if(published.code == 200){
+            this.id = published.list.length!=0 ? published.list[published.list.length-1].id + 1 : 0
+            this.init()
+        }else if(published.code == 400){
+            
+        }else{
+
+        }
+        
+    }
+    componentWillMount = () => {
+        //注册监听事件
+        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
+    }
+    
+    init = () => {
         const { navigation } = this.props;
         let itemData = []
         let itemList = {}
@@ -97,12 +114,6 @@ const photoOptions = {
             publishedList : published
         })
     }
-    componentWillMount = () => {
-        //注册监听事件
-        this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
-    }
-    
-
     //编辑发布作品时,点击不保留按钮
     noKeep = () => {
         const { navigation } = this.props;
@@ -265,7 +276,7 @@ const photoOptions = {
         })
     }
     //发布提交
-    publishedF = () => {
+    publishedF = async () => {
         let pageName = 'HomePage'
         if(!this.state.imgFlag&&!this.state.publisedText){
             alert("发布说说文字不能为空!")
@@ -273,48 +284,55 @@ const photoOptions = {
         }else if(!this.state.publisedText){
             alert("发布作品文字不能为空!")
             return
-        }
-        let publishedList = this.state.publishedList
-        let date = Date.parse(new Date());
-        const { navigation } = this.props;
-        let data = {
-            id : this.state.publishedList.count + 1,
-            perImg : this.state.userNameImg,
-            userName : this.state.user,
-            publicHeadImg : [{img : this.state.item[0].img}],
-            text : this.state.publisedText,
-            flag : true,
-            butText : '查看更多点赞',
-            cllFlag : true,
-            perUser : this.state.user,
-            playNum : 1508124,
-            commentsNum : 0,
-            time : date,
-            timeText : '刚刚',
-            giveALike : ['jackson','chanmeg','maxmain'],
-            data : [],
-            address : this.state.address,
-            type : '',
-            commentsFlag : true,
-            focusOnFlag : true,
-            focusOn :'关注',
-            typeNum : this.state.typeNum
-        }
-        if(this.state.imgFlag){
-            data.type = 'works'
         }else{
-            data.type = 'TellMeAbout'
+            let date = Date.parse(new Date());
+            const { navigation } = this.props;
+            let data = {
+                id : this.id,
+                perImg : this.state.userNameImg,
+                userName : this.state.user,
+                nickName : his.state.user,
+                publicHeadImg : [{img : this.state.item[0].img}],
+                text : this.state.publisedText,
+                flag : true,
+                butText : '查看更多点赞',
+                cllFlag : true,
+                perUser : this.state.user,
+                playNum : 1508124,
+                commentsNum : 0,
+                time : date,
+                timeText : '刚刚',
+                giveALike : ['jackson','chanmeg','maxmain'],
+                data : [],
+                address : this.state.address,
+                type : '',
+                commentsFlag : true,
+                focusOnFlag : true,
+                focusOn :'关注',
+                typeNum : this.state.typeNum
+            }
+            if(this.state.imgFlag){
+                data.type = 'works'
+            }else{
+                data.type = 'TellMeAbout'
+            }
+            data.publicHeadImg = this.state.item
+            let setPublic = await getFetch.published(data)
+            if(this.state.imgFlag){
+                pageName = 'HomePage'//跳首页
+            }else{
+                pageName = 'Collection'//跳说说
+            }
+            if(setPublic.code == 200){
+                this.props.navigation.navigate(pageName,{
+                    publisedList : data
+                })
+            }else if(setPublic.code == 400){
+                alert(setPublic.message)
+            }else{
+                alert(setPublic.message)
+            }
         }
-        data.publicHeadImg = this.state.item
-        getFetch.published(data)
-        if(this.state.imgFlag){
-            pageName = 'HomePage'//跳首页
-        }else{
-            pageName = 'Collection'//跳说说
-        }
-        this.props.navigation.navigate(pageName,{
-            publisedList : data
-        })
     }
     //发布作品时选择地址--------
     changeAddess = () => {

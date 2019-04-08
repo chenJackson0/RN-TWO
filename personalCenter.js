@@ -10,7 +10,8 @@ import {
     Animated,
     ScrollView,
     TouchableOpacity,
-    SectionList
+    SectionList,
+    DeviceEventEmitter
 } from 'react-native';
 
  //引用插件
@@ -24,6 +25,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import getFetch from './service/index.js'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -71,13 +73,9 @@ class Row extends Component {
         }
     }
     
+    
     //注册监听事件
-    showData = () => {
-        Constants.publishedListStorageF()//加载缓存获取数据
-        Constants.getUserNameStorageF()
-        Constants.getcommentsItemStorageF()
-        Constants.getUserNameImgStorageF()
-        Constants.getCollectionItemsStorageF()
+    showData = async () => {
         this.setState({
             post : 0,
             fans : 0,
@@ -88,38 +86,37 @@ class Row extends Component {
             saysayItem : [],
             perItemComment : []
         })
-        setTimeout(()=>{
-            this.init()
-        },200)
+        Constants.getUserNameStorageF()
+        let publishedList = await getFetch.selectPublished()
+        let collectionList = await getFetch.findCollection()
+        if(publishedList.code == 200 && collectionList.code == 200){
+            this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
+        }else if(publishedList.code == 400){
+
+        }else{
+
+        }
+
     }
      //注册通知
      componentWillMount (){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.showData())]; //BottomTab路由改变时增加读取数据的监听事件 
     }  
     //加载数据
-    init = () => {
+    init = (publishedList,commentsItem,collectionList) => {
         let userName = Constants.getUserName() ? Constants.getUserName() : ''
-        let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
         let works = []
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
-        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
         //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
-                commentsItem[i].img = userNameImg
+                this.state.avatarSource = commentsItem[i].img
                 this.state.address = commentsItem[i].address
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
             }
         }
-        //主播编辑图片修改时返回个人中心保存
-        Constants.storage.save({
-            key : 'commentsItemFoucsOn',
-            data : commentsItem,
-            defaultExpires: true, 
-        })
+        
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
             if(userName == publishedList[i].userName){
@@ -161,36 +158,18 @@ class Row extends Component {
             TellMeAbout : this.state.TellMeAbout,
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem,
-            avatarSource : userNameImg,
+            avatarSource : this.state.avatarSource,
             saysayItem : this.state.saysayItem,
             address : this.state.address,
             perItemComment : this.state.perItemComment
         })
     }
-    //获取手机相册
-    choosePicker=()=>{
-        ImagePicker.showImagePicker(photoOptions, (response) => {
-            if (response.didCancel) {
-               
-            }
-            else if (response.error) {
-                
-            }
-            else if (response.customButton) {
-                
-            }
-            else {
-                let source = response.uri;
-                this.setState({
-                    avatarSource: source
-                  });
-            }
-        });
-    }
     //编辑主页跳转
     editPage = () => {
         const { navigation } = this.props;
-        this.props.navigation.navigate('EditPage')
+        this.props.navigation.navigate('EditPage',{
+            account : this.state.userName
+        })
     }
 
     //展开菜单兰
@@ -306,7 +285,7 @@ class Row extends Component {
         let {fadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title} choosePicker = {this.choosePicker.bind(this)} showMenuBar = {this.showMenuBar.bind(this)}/>
+                <Header title = {this.state.title} showMenuBar = {this.showMenuBar.bind(this)}/>
                 <View style = {styles.userConter1}>
                     <View style = {styles.userConter1Left}>
                         <Image source={{uri :this.state.avatarSource}} style = {styles.userImg} />
@@ -372,7 +351,9 @@ class Row extends Component {
                     </View>
                 </ScrollView>
 
-                <View style = {this.state.menuFlag ? styles.menuBarBg : ''}></View>
+                <View style = {this.state.menuFlag ? styles.menuBarBg : ''}>
+                    <Text style = {styles.bindClick} onPress = {this.closeMenu.bind(this)}></Text>
+                </View>
                 <Animated.View style = {[styles.perMenuBar,{right:fadeAnim}]}>
                     <View style = {styles.menuBar}>
                         <View style = {styles.menuBarLeft}>
@@ -412,6 +393,9 @@ class Row extends Component {
  }
 
  const styles = StyleSheet.create({
+    bindClick: {
+        flex:1
+    },
     noT: {
         fontSize:13,
         color:'#898989',

@@ -24,6 +24,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import getFetch from './service/index.js'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -59,7 +60,7 @@ class Row extends Component {
             userName : '',
             publishedList : [],
             post : 0,
-            fans : 0,
+            fens : 0,
             FocusOn : 0,
             TellMeAbout : 0,
             perItem : [],
@@ -76,35 +77,29 @@ class Row extends Component {
     }
     
     //注册监听事件
-    showData = () => {
-        Constants.publishedListStorageF()//加载缓存获取数据
+    showData = async () => {
         Constants.getUserNameStorageF()
-        Constants.getcommentsItemStorageF()
-        Constants.getUserNameImgStorageF()
-        Constants.getCollectionItemsStorageF()
-        setTimeout(()=>{
-            this.init()
-        },200)
+        let publishedList = await getFetch.selectPublished()
+        let collectionList = await getFetch.findCollection()
+        if(publishedList.code == 200 && collectionList.code == 200){
+            this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
+        }else if(publishedList.code == 400){
+
+        }else{
+
+        }
     }
      //注册通知
      componentWillMount (){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.showData())]; //BottomTab路由改变时增加读取数据的监听事件 
     }  
     //加载数据
-    init = () => {
-        this.state.post = 0
-        this.state.perItem = []
-        this.state.TellMeAbout = 0
-        this.state.saysayItem = []
-        this.state.perItemComment = []
+    init = (publishedList,commentsItem,collectionList) => {
         const { navigation } = this.props;
         let userName = navigation.getParam("userName") ? navigation.getParam("userName") : ''
         let perUserName = Constants.getUserName() ? Constants.getUserName() : ''
-        let publishedList= Constants.getSublishedList() ? Constants.getSublishedList() : []
-        let perNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : ''
+        let perNameImg = navigation.getParam("perNameImg")
         let works = []
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let collectionList = Constants.getCollectionItems() ? Constants.getCollectionItems() : []
         for(let i = 0;i<commentsItem.length;i++){
             //判断改主播是否已经被关注过
             if(userName == commentsItem[i].userName){
@@ -117,8 +112,7 @@ class Row extends Component {
                 }
             }
             if(userName == commentsItem[i].userName){
-                this.state.avatarSource = commentsItem[i].img
-                this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
+                this.state.fens = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
             }
@@ -163,11 +157,11 @@ class Row extends Component {
             publishedList : works,
             addCommentItem : commentsItem,
             post : this.state.post,
-            fans : this.state.fans,
+            fens : this.state.fens,
             TellMeAbout : this.state.TellMeAbout,
             FocusOn : this.state.FocusOn,
             perItem : this.state.perItem,
-            avatarSource : this.state.avatarSource,
+            avatarSource : perNameImg,
             saysayItem : this.state.saysayItem,
             focusOnText : this.state.focusOnText,
             focusOnTextFlag : this.state.focusOnTextFlag,
@@ -177,7 +171,7 @@ class Row extends Component {
         })
     }
     //关注主播
-    focusOn = () => {
+    focusOn = async () => {
         let deteleFochs = []
         let deteleFensi = []
         let deteleFochsIndex = 0
@@ -207,7 +201,6 @@ class Row extends Component {
             this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
             this.state.focusOnText = '取消关注'
             this.state.focusOnTextFlag = false
-            
         }else{
             this.state.addCommentItem[deteleFensiIndex].focusOn = '关注'
             this.state.addCommentItem[deteleFensiIndex].focusOnFlag = true
@@ -232,12 +225,46 @@ class Row extends Component {
             focusOnText : this.state.focusOnText,
             focusOnTextFlag : this.state.focusOnTextFlag
         })
-        this.init()
-        Constants.storage.save({
-            key : 'commentsItemFoucsOn',
-            data : this.state.addCommentItem,
-            defaultExpires: true, 
-        })
+
+        let focusOnIn = await getFetch.focusOn({userName : this.state.perUserName,focusOnFlag:this.state.addCommentItem[deteleFensiIndex].focusOnFlag,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
+        let fensi = await getFetch.fensi({userName : this.state.userName,focusOnFlag : this.state.addCommentItem[deteleFensiIndex].focusOnFlag,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+        if(focusOnIn.code == 200 && fensi.code == 200){
+            if(!this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
+                if(this.state.perUserName == this.state.userName){
+                    this.state.FocusOn = this.state.FocusOn + 1
+                    this.state.fens = this.state.fens + 1
+                }else{
+                    this.state.fens = this.state.fens + 1
+                }
+            }else{
+                if(this.state.perUserName == this.state.userName){
+                    this.state.FocusOn = this.state.FocusOn - 1
+                    this.state.fens = this.state.fens - 1
+                }else{
+                    this.state.fens = this.state.fens - 1
+                }
+            }
+            this.setState({
+                addCommentItem : this.state.addCommentItem,
+                focusOnText : this.state.focusOnText,
+                focusOnTextFlag : this.state.focusOnTextFlag,
+                FocusOn : this.state.FocusOn,
+                fens : this.state.fens
+            })
+        }else if(focusOnIn.code == 400 || fensi.code == 400){
+
+        }else{
+
+        }
+    }
+    //点击关注实时更新ui
+    changeFocusOn = (perName,name) => {
+        if(perName == name){
+            this.state.FocusOn = this.state.FocusOn - 1
+            this.state.fens = this.state.fens - 1
+        }else{
+            this.state.fens = this.state.fens - 1
+        }
     }
     //收起菜单兰
     closeMenu = () => {
@@ -350,7 +377,7 @@ class Row extends Component {
                         <View style = {styles.userConter1RightTop}>
                             <Text style = {styles.userConter1RightTop1}>{this.state.post}</Text>
                             <Text style = {styles.userConter1RightTop1}>{this.state.TellMeAbout}</Text>
-                            <Text style = {styles.userConter1RightTop1}>{this.state.fans}</Text>
+                            <Text style = {styles.userConter1RightTop1}>{this.state.fens}</Text>
                             <Text style = {styles.userConter1RightTop1}>{this.state.FocusOn}</Text>
                         </View>
                         <View style = {styles.userConter1RightMidd}>
