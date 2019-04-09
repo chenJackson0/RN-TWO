@@ -14,7 +14,12 @@ export default class PublicHeads extends Component{
   };
   //发视频或者图文作品
     getImg = () => {
-        this.props.getImg()
+        if(this.props.open){
+            this.props.getImg()
+        }else{
+            this.props.getNoImg()
+        }
+        
     }
 
     //长按事件,发说说,全文字

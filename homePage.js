@@ -31,6 +31,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
 import getFetch from './service/index.js'
 import ConfirmationWindow from './component/confirmationWindow'
+// import AdComments from './component/publicCommit'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -97,7 +98,8 @@ const options = {
             callId : '',
             callName : '',
             addId : 0,
-            perId : ''
+            perId : '',
+            nickName :''
         }
     }
     //时间戳转时间
@@ -149,7 +151,6 @@ const options = {
     }   
     //处理业务逻辑
     init = async (publishedList,commentsItem,collectionList) => {
-        let userNameImg = 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         let works = []
         let foucsOnList = []
         let newAddName = []
@@ -157,11 +158,12 @@ const options = {
         let newTiem = Date.parse(new Date())
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
         let lastTime
-        let getChangeTime
         //获取作品列表
         for(let i = 0;i<publishedList.length;i++){
             lastTime = newTiem - publishedList[i].time
             if(lastTime>=0){
+                getChangeTime = this.changeTime(lastTime/1000)
+                publishedList[i].timeText = getChangeTime
                 if(publishedList[i].typeNum == 0){
                     if(publishedList[i].type == 'works'){
                         works.push(publishedList[i])
@@ -185,6 +187,29 @@ const options = {
                 continue
             } 
         }
+        //获取推荐的用户
+        for(let i = 0;i<commentsItem.length;i++){
+            //关注用户不包括自己,需要时放开
+            // if(user != commentsItem[i].userName){
+            //     // commentsItemList.push(commentsItem[i])
+            //     commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+            // }
+            if(user == commentsItem[i].userName){
+                this.state.userNameImg = commentsItem[i].img
+                this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : user
+                if(commentsItem[i].focusOns.length == 0){
+                    this.changFocusOnFlag(commentsItem,newAddName)
+                }else{
+                    for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                        newAddName.push(commentsItem[i].focusOns[j].name)
+                        foucsOnList.push(commentsItem[i].focusOns[j])
+                        this.changFocusOnFlag(commentsItem,newAddName)
+                        this.state.onFFlagF = false
+                    }
+                }
+            }
+            commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
+        }
         //收藏和点赞初始化
         for(let i = 0;i<works.length;i++){
             works[i].commentsFlag = true
@@ -199,7 +224,7 @@ const options = {
             }
             //不同的用户需要判断,不同的作品是否被点赞
             for(let j = 0;j<works[i].giveALike.length;j++){
-                if(user == works[i].giveALike[j]){
+                if(user == works[i].giveALike[j] || this.state.nickName == works[i].giveALike[j]){
                     works[i].cllFlag = false
                 }
             }
@@ -210,27 +235,6 @@ const options = {
             this.state.onTFlag = false
         }
         
-        //获取推荐的用户
-        for(let i = 0;i<commentsItem.length;i++){
-            //关注用户不包括自己,需要时放开
-            // if(user != commentsItem[i].userName){
-            //     // commentsItemList.push(commentsItem[i])
-            //     commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
-            // }
-            if(user == commentsItem[i].userName){
-                if(commentsItem[i].focusOns.length == 0){
-                    this.changFocusOnFlag(commentsItem,newAddName)
-                }else{
-                    for(let j = 0;j<commentsItem[i].focusOns.length;j++){
-                        newAddName.push(commentsItem[i].focusOns[j].name)
-                        foucsOnList.push(commentsItem[i].focusOns[j])
-                        this.changFocusOnFlag(commentsItem,newAddName)
-                        this.state.onFFlagF = false
-                    }
-                }
-            }
-            commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
-        }
         if(this.state.onFFlagF){
             this.state.onFFlag = true
         }else{
@@ -238,8 +242,9 @@ const options = {
         }
         this.setState({
             data : works,
+            nickName : this.state.nickName,
             user:user,
-            userNameImg : userNameImg,
+            userNameImg : this.state.userNameImg,
             addCommentItem : commentsItem,
             foucsOnList : foucsOnList,
             fadeAnim: new Animated.Value(0),
@@ -287,7 +292,7 @@ const options = {
                 <View style = {styles.radius}>
                     <Image source={{uri:this.state.foucsOnList[i].img}} style = {styles.perImg} />
                 </View> 
-                <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
+                <Text style = {styles.perName} numberOfLines={1} ellipsizeMode={'tail'}>{this.state.foucsOnList[i].nickName?this.state.foucsOnList[i].nickName:this.state.foucsOnList[i].name}</Text>
             </TouchableOpacity>
             array.user.push(item)
         }
@@ -301,8 +306,8 @@ const options = {
         for(let i = 0;i<this.state.addCommentItem.length;i++){
            let item =  <TouchableOpacity style = {[styles.childItem,i == this.state.addCommentItem.length ? styles.childItemR : '']} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>
                 <Image source={{uri:this.state.addCommentItem[i].img}} style = {styles.addPerListImg} />
-                <Text style = {styles.addPerName}>{this.state.addCommentItem[i].userName}</Text>
-                <Text style = {styles.addPerMsg}>{this.state.addCommentItem[i].commeName}和其他{this.state.addCommentItem[i].addCommentNum}位用户关注了</Text>
+                <Text style = {styles.addPerName} numberOfLines={1} ellipsizeMode={'tail'}>{this.state.addCommentItem[i].nickName?this.state.addCommentItem[i].nickName:this.state.addCommentItem[i].userName}</Text>
+                <Text style = {styles.addPerMsg} numberOfLines={1} ellipsizeMode={'tail'}>{this.state.addCommentItem[i].nickName?this.state.addCommentItem[i].nickName:this.state.addCommentItem[i].commeName}和其他{this.state.addCommentItem[i].addCommentNum}位用户关注了</Text>
                 <Text style = {[styles.addPerButton,this.state.addCommentItem[i].focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,i,this.state.addCommentItem[i].userName,this.state.addCommentItem[i].img)}>{this.state.addCommentItem[i].focusOn}</Text>
                 <Text style = {styles.addPerColse} onPress = {this.closeCommentItem.bind(this,i)}>X</Text>
             </TouchableOpacity>
@@ -394,7 +399,7 @@ const options = {
             data : this.state.data
         })
     }
-    //删除自己发的作品或评论
+    // //删除自己发的作品或评论
     deleteItem = (id,type,perId) => {
         if(type == 'work'){
             this.type = 'work'
@@ -509,7 +514,7 @@ const options = {
                     <View style = {styles.perTitle}>
                         <Image source={{uri:this.state.data[i].perImg}} style = {styles.perListImg} />
                         <Text style = {styles.perName}>
-                            {this.state.data[i].nickName}
+                            {this.state.data[i].nickName ? this.state.data[i].nickName : this.state.data[i].userName}
                         </Text>
                         <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
                     </View>
@@ -529,7 +534,7 @@ const options = {
                     </View>
                 </View>
                 <View style = {styles.commentsItem}>
-                    <Text style = {styles.playNum}>{this.state.data[i].playNum}次播放 · {this.state.data[i].giveALike[this.state.data[i].giveALike.length-1]}赞了</Text>
+                    <Text style = {styles.playNum}>{this.state.data[i].playNum}次播放 · {this.state.data[i].giveALike[this.state.data[i].giveALike.length-1]}刚刚点赞了😊</Text>
                     <Text style = {styles.playText}>{this.state.data[i].text}</Text>
                     <View style = {styles.playCont}>
                         {this.moreCall(this.state.data[i].giveALike,this.state.data[i].flag)}
@@ -603,12 +608,14 @@ const options = {
                     let data = {
                         id : this.state.addCommentItem[i].id,
                         name : name,
+                        nickName : this.state.addCommentItem[deteleFensiIndex].nickName,
                         img : img
                     }
                     this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
                     let dataT = {
                         id : this.state.addCommentItem[i].id,
                         name : this.state.user,
+                        nickName : this.state.addCommentItem[deteleFochsIndex].nickName,
                         img : this.state.userNameImg
                     }
                     this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
@@ -660,15 +667,15 @@ const options = {
             if(this.state.data[i].cllFlag){
                 if( i == j){
                     this.state.data[i].cllFlag = false
-                    this.state.data[i].perUser = this.state.user
-                    this.state.data[i].giveALike.push(this.state.user)
+                    this.state.data[i].perUser = this.state.nickName
+                    this.state.data[i].giveALike.push(this.state.nickName)
                     clickCallUpdata = await getFetch.updateOnePublished({id:id,giveALike:this.state.data[i].giveALike})
                 }
             }else{
                 if( i == j){
                     this.state.data[i].cllFlag = true
-                    this.state.data[i].perUser = this.state.user + '取消'
-                    this.state.data[i].giveALike.pop(this.state.user)
+                    this.state.data[i].perUser = this.state.nickName + '取消'
+                    this.state.data[i].giveALike.pop(this.state.nickName)
                     clickCallUpdata = await getFetch.updateOnePublished({id:id,giveALike:this.state.data[i].giveALike})
                 }
             }
@@ -687,7 +694,6 @@ const options = {
         },500)
         {this.showContent()}
     }
-
     //评论
     comment = (i,id) => {
         let commentsItem = this.state.data[i].data ? this.state.data[i].data : []
@@ -729,6 +735,16 @@ const options = {
               })
         }
     }
+    //加载评论组件
+    addComments = () => {
+        if(this.state.commentFlag){
+            // return (
+            //     <AdComments fadeAnim = {this.state.fadeAnim} commentsItem = {this.state.commentsItem}/>
+            // )
+        }else{
+            return
+        }
+    }
     //关闭发送评论
     closeSaveMsg = () => {
         Animated.timing(   
@@ -754,7 +770,7 @@ const options = {
             let data = {
                 id : num,
                 img : this.state.userNameImg,
-                name : this.state.user,
+                name : this.state.nickName,
                 nameT : this.state.comments,
                 replyToComment : [],
                 replyToCommentMaxFlag : true,
@@ -770,7 +786,7 @@ const options = {
             commentsItem.data.unshift(data)
             this.state.data[this.state.index].data.push(commentsItem)
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum + 1})
+            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum})
             if(commentsSave.code == 200){
                 this.setState({
                     comments : '',
@@ -786,7 +802,7 @@ const options = {
             alert("评论不能为空!")
         }
     }
-    //拉取分享面板
+    // //拉取分享面板
     share = () => {
         if(!this.state.shareFlag){
             Animated.timing(
@@ -998,7 +1014,7 @@ const options = {
                     let replyToComment = {
                         id : replyToCommentId,
                         img:this.state.userNameImg,
-                        name : this.state.user,
+                        name : this.state.nickName,
                         itemName : itemName,
                         nameT : this.state.replyToCommentText,
                         replyToCommentMaxFlag : true
@@ -1148,7 +1164,7 @@ const options = {
         let {sharefadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} getImg = {this.getImg.bind(this)}/>
+                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} open = {true} getImg = {this.getImg.bind(this)}/>
                 <ScrollView style = {styles.items}>
                     <View style = {styles.listItem}>
                     {this.onF()}
@@ -1221,27 +1237,9 @@ const options = {
                     <Text style = {styles.closeShare} onPress = {this.shareHide.bind(this)}>X</Text>
                 </Animated.View>
                 {this.showAndHidw()}
+                {this.addComments()}
                 <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
                 {this.confirmationWindowF()}
-                {/* <View style = {[styles.commentInputCall,this.state.commentInputCallFlag ? '' : styles.commentInputCallB]}>
-                    <TextInput
-                        ref = "code"
-                        style = {styles.code}
-                        onChangeText={(replyToCommentText) => {
-                            this.setState({
-                                replyToCommentText : replyToCommentText
-                            })
-                        }}
-                        value={this.state.replyToCommentText}
-                        placeholder = '请输入您想说的话……'
-                        maxLength = {50}
-                        autoCapitalize = "none"
-                        clearButtonMode = "while-editing"
-                    />
-                    <Text style = {styles.codeLine}></Text>
-                    <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,this.state.callId,this.state.callName,false,this.state.id)}>发送</Text>
-                    <Text style = {[styles.closeShare,styles.closeShareCall]} onPress = {this.shareHide.bind(this)}>X</Text>
-                </View> */}
             </View>
         )
     }

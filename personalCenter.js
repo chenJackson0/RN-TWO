@@ -59,6 +59,7 @@ class Row extends Component {
             fadeAnim: new Animated.Value(-200),
             menuFlag : false,
             userName : '',
+            nickName : '',
             publishedList : [],
             post : 0,
             fans : 0,
@@ -92,9 +93,9 @@ class Row extends Component {
         if(publishedList.code == 200 && collectionList.code == 200){
             this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
         }else if(publishedList.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
 
     }
@@ -113,6 +114,7 @@ class Row extends Component {
                 this.state.address = commentsItem[i].address
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
+                this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : userName
                 break
             }
         }
@@ -152,6 +154,7 @@ class Row extends Component {
         }
         this.setState({
             userName : userName,
+            nickName : this.state.nickName,
             publishedList : works,
             post : this.state.post,
             fans : this.state.fans,
@@ -218,7 +221,7 @@ class Row extends Component {
                 for(let i = 0;i<this.state.saysayItem.length;i++){
                     let view =<TouchableOpacity style = {styles.saysayBg} key = {i} onPress = {this.goDetail.bind(this,this.state.saysayItem[i].id)}><View style = {styles.detailMsg}>
                     <Image source={{uri : this.state.saysayItem[i].perImg}} style = {styles.authorImg} />
-                    <Text style = {styles.playName} >该作品由《{this.state.saysayItem[i].userName}》发布</Text>
+                    <Text style = {styles.playName} >该作品由《{this.state.saysayItem[i].nickName ? this.state.saysayItem[i].nickName : this.state.saysayItem[i].userName}》发布</Text>
                     </View>
                     <View style = {styles.detailT}>
                         <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次</Text>
@@ -309,7 +312,7 @@ class Row extends Component {
                     </View>
                 </View>
                 <View style = {styles.userConter2}>
-                    <Text style = {styles.userConterName}>{this.state.userName}  {this.state.address}</Text>
+                    <Text style = {styles.userConterName}>{this.state.nickName}  {this.state.address}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />

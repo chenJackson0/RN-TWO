@@ -82,7 +82,7 @@ const photoOptions = {
         let published = await getFetch.selectPublished()
         if(published.code == 200){
             this.id = published.list.length!=0 ? published.list[published.list.length-1].id + 1 : 0
-            this.init()
+            this.init(published.userList)
         }else if(published.code == 400){
             
         }else{
@@ -95,22 +95,28 @@ const photoOptions = {
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
     }
     
-    init = () => {
+    init = (commentsItem) => {
         const { navigation } = this.props;
         let itemData = []
         let itemList = {}
         let imgFlag = navigation.getParam("imgFlag")
         let avatarSource = navigation.getParam("avatarSource")
         let user = navigation.getParam("user")
-        let userNameImg = navigation.getParam("userNameImg")
         itemList.img = avatarSource
         itemData.push(itemList)
+        for(let i = 0;i<commentsItem.length;i++){
+            if(user == commentsItem[i].userName){
+                this.state.userNameImg = commentsItem[i].img
+                user = commentsItem[i].nickName ? commentsItem[i].nickName : user
+                break
+            }
+        }
         this.setState({
             imgFlag : imgFlag,
             item : itemData,
             avatarSource : avatarSource,
             user: user,
-            userNameImg : userNameImg,
+            userNameImg : this.state.userNameImg,
             publishedList : published
         })
     }
@@ -291,7 +297,7 @@ const photoOptions = {
                 id : this.id,
                 perImg : this.state.userNameImg,
                 userName : this.state.user,
-                nickName : his.state.user,
+                nickName : this.state.user,
                 publicHeadImg : [{img : this.state.item[0].img}],
                 text : this.state.publisedText,
                 flag : true,
@@ -302,7 +308,7 @@ const photoOptions = {
                 commentsNum : 0,
                 time : date,
                 timeText : '刚刚',
-                giveALike : ['jackson','chanmeg','maxmain'],
+                giveALike : [],
                 data : [],
                 address : this.state.address,
                 type : '',

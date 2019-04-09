@@ -9,7 +9,8 @@ import {
     Dimensions,
     SectionList,
     ScrollView,
-    TextInput
+    TextInput,
+    TouchableOpacity
 } from 'react-native';
 
  //引用插件
@@ -37,8 +38,6 @@ import ConfirmationWindow from './component/confirmationWindow'
             comments : '',
             index : -1,
             playNum : 23453,
-            author:'',
-            authorImg :'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             text : '',
             changeTabNum : 0,
             works : '作品',
@@ -62,6 +61,7 @@ import ConfirmationWindow from './component/confirmationWindow'
                     type : 'delete'
                 }
             ],
+            nickName : ''
         }
     }
     //时间戳转时间
@@ -76,7 +76,7 @@ import ConfirmationWindow from './component/confirmationWindow'
         }else if(day>0){
             return day + '天前'
         }else if(hour>1){
-            return hour + '时前'
+            return hour + '小时前'
         }else if(minute>1){
             return minute + '分钟前'
         }else{
@@ -85,8 +85,6 @@ import ConfirmationWindow from './component/confirmationWindow'
     }
     //绑定监听事件
     showDataImg = async () => {
-        Constants.getUserNameImgStorageF()
-        Constants.getUserNameStorageF()
         this.setState({
             itemImg : [],
             changeTabNum : ''
@@ -95,9 +93,9 @@ import ConfirmationWindow from './component/confirmationWindow'
         if(publishedList.code == 200){
             this.init(publishedList.list)
         }else if(publishedList.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
     //注册通知
@@ -110,8 +108,6 @@ import ConfirmationWindow from './component/confirmationWindow'
         const { navigation } = this.props;
         let id = navigation.getParam("id")
         let changeTabNum = navigation.getParam("changeTabNum")
-        let userName = Constants.getUserName() ? Constants.getUserName() : ''
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
         for(let i = 0;i<publishedList.length;i++){
             if(publishedList[i].id == id){
                 this.state.itemDetail = publishedList[i],
@@ -141,11 +137,10 @@ import ConfirmationWindow from './component/confirmationWindow'
             itemImg : publishedList[this.state.index].publicHeadImg,
             commentsItem : commentsItem,
             commentNim : publishedList[this.state.index].commentsNum,
-            userNameImg : userNameImg,
-            user : userName,
+            userNameImg : publishedList[this.state.index].perImg,
+            user : publishedList[this.state.index].userName,
+            nickName : publishedList[this.state.index].nickName?publishedList[this.state.index].nickName:publishedList[this.state.index].userName,
             index: this.state.index,
-            authorImg : publishedList[this.state.index].perImg,
-            author : publishedList[this.state.index].userName,
             text : publishedList[this.state.index].text,
             changeTabNum : changeTabNum,
             time : this.changeTime((newTiem-publishedList[this.state.index].time)/1000),
@@ -269,9 +264,9 @@ import ConfirmationWindow from './component/confirmationWindow'
                 commentNim : this.state.data[this.state.index].commentsNum,
             })
         }else if(publishedD.code == 400 || deteleCommit.code == 400 || deteleCommitChild.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
     //删除作品选择
@@ -296,7 +291,7 @@ import ConfirmationWindow from './component/confirmationWindow'
             let data = {
                 id : num,
                 img : this.state.userNameImg,
-                name : this.state.user,
+                name : this.state.nickName,
                 nameT : this.state.comments,
                 replyToComment : [],
                 replyToCommentMaxFlag : true,
@@ -312,7 +307,7 @@ import ConfirmationWindow from './component/confirmationWindow'
             commentsItem.data.unshift(data)
             this.state.data[this.state.index].data.push(commentsItem)
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum + 1})
+            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum})
             if(commentsSave.code == 200){
                 this.setState({
                     comments : '',
@@ -320,9 +315,9 @@ import ConfirmationWindow from './component/confirmationWindow'
                     commentNim : this.state.data[this.state.index].commentsNum
                 })
             }else if(commentsSave.code == 400){
-
+                alert(message)
             }else{
-
+                alert(message)
             }
         }else{
             alert("评论不能为空!")
@@ -386,7 +381,7 @@ import ConfirmationWindow from './component/confirmationWindow'
                     let replyToComment = {
                         id : replyToCommentId,
                         img:this.state.userNameImg,
-                        name : this.state.user,
+                        name : this.state.nickName,
                         itemName : itemName,
                         nameT : this.state.replyToCommentText,
                         replyToCommentMaxFlag : true
@@ -412,9 +407,9 @@ import ConfirmationWindow from './component/confirmationWindow'
                             shareFlag : false,
                         })
                     }else if(eveyComments.code == 400){
-
+                        alert(message)
                     }else{
-
+                        alert(message)
                     }
                 }else{
                     alert("回复评论不能为空!")
@@ -530,15 +525,24 @@ import ConfirmationWindow from './component/confirmationWindow'
         }
         return array
     }
+    //跳转作者主页
+    goPersonCenter = (userName,perNameImg) => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('DuthonPerCenter',{
+            userName : userName,perNameImg:perNameImg
+        })
+    }
     render() {
         return(
             <View style = {styles.max}>
                 <Header title = {this.state.title} goBackPage = {this.goBackPage.bind(this)}/>
                 {this.showWokerImg()}
-                <View style = {styles.detailMsg}>
-                    <Image source={{uri : this.state.authorImg}} style = {styles.authorImg} />
-                    <Text style = {styles.playName}>该{this.state.changeTabNum == 0 ? this.state.works : this.state.say}由《{this.state.author}》发布</Text>
-                </View>
+                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.user,this.state.userNameImg)}>
+                    <View style = {styles.detailMsg}>
+                        <Image source={{uri : this.state.userNameImg}} style = {styles.authorImg}/>
+                        <Text style = {styles.playName}>该{this.state.changeTabNum == 0 ? this.state.works : this.state.say}由《{this.state.nickName}》发布</Text>
+                    </View>
+                </TouchableOpacity>
                 <View style = {styles.detailT}>
                     <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次和{this.state.data[this.state.index] ? this.state.data[this.state.index].giveALike.length : []}人赞了</Text>
                     <Text style = {styles.authorText}>{this.state.text}</Text>
@@ -740,7 +744,7 @@ import ConfirmationWindow from './component/confirmationWindow'
     },
     playNum: {
         fontSize:14,
-        color:'#898989',
+        color:'#FF00FF',
         marginTop:10
     },
     authorText: {

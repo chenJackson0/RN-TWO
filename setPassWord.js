@@ -125,7 +125,7 @@ export default class SetPassWord extends Component{
         focusOn :'关注',
         focusOnFlag : true,
         address : this.state.address,
-        nickName : this.state.account,
+        nickName : '',
         webSite : '',
         personalResume : '',
         email : '',

@@ -66,7 +66,6 @@ const photoOptions = {
             commentNim : 0,
             userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
             addCommentNum : 0,
-            oldcommentsItem : [],
             onTFlag : false,
             onTFlagF : true,
             replyToCommentText : '',
@@ -89,6 +88,7 @@ const photoOptions = {
             callName : '',
             addId : 0,
             perId : '',
+            nickName : ''
         }
     }
     //时间戳转时间
@@ -121,11 +121,11 @@ const photoOptions = {
         })
         let publishedList = await getFetch.selectPublished()
         if(publishedList.code == 200){
-            this.init(publishedList.list)
+            this.init(publishedList.list,publishedList.userList)
         }else if(publishedList.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
      //注册通知
@@ -133,8 +133,7 @@ const photoOptions = {
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.addPublised())]; //BottomTab路由改变时增加读取数据的监听事件 
     }   
     //处理业务逻辑
-    init = (publishedList) => {
-        let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
+    init = (publishedList,commentsItem) => {
         let TellMeAbout = []
         const { navigation } = this.props;
         let newTiem = Date.parse(new Date())
@@ -156,6 +155,27 @@ const photoOptions = {
                 break
             }
         }
+        for(let i = 0;i<commentsItem.length;i++){
+            if(user == commentsItem[i].userName){
+                this.state.userNameImg = commentsItem[i].img
+                this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : user
+                break
+            }
+        }
+        //收藏和点赞初始化
+        for(let i = 0;i<TellMeAbout.length;i++){
+            TellMeAbout[i].commentsFlag = true
+            TellMeAbout[i].cllFlag = true
+            TellMeAbout[i].flag = true
+            TellMeAbout[i].butText = '查看更多点赞'
+            //不同的用户需要判断,不同的作品是否被点赞
+            for(let j = 0;j<TellMeAbout[i].giveALike.length;j++){
+                if(user == TellMeAbout[i].giveALike[j] || this.state.nickName == TellMeAbout[i].giveALike[j]){
+                    TellMeAbout[i].cllFlag = false
+                }
+            }
+        }
+        
         if(this.state.onTFlagF){
             this.state.onTFlag = true
         }else{
@@ -164,9 +184,9 @@ const photoOptions = {
         this.setState({
             data : TellMeAbout,
             user:user,
-            userNameImg : userNameImg,
+            nickName : this.state.nickName,
+            userNameImg : this.state.userNameImg,
             addCommentItem : commentsItem,
-            oldcommentsItem : commentsItem,
             onTFlag : this.state.onTFlag,
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
@@ -174,10 +194,10 @@ const photoOptions = {
          })
     }
     //跳转作者主页
-    goPersonCenter = (userName) => {
+    goPersonCenter = (userName,perNameImg) => {
         const { navigation } = this.props;
         this.props.navigation.navigate('DuthonPerCenter',{
-            userName : userName
+            userName : userName,perNameImg:perNameImg
         })
     }
     //
@@ -221,7 +241,6 @@ const photoOptions = {
     deleteI = async () => {
         let data = []
         let dataA = []
-        let commitList = []
         let deteleCommit = {code : 0}
         let publishedD = {code : 0}
         let deteleCommitChild = {code : 0}
@@ -305,17 +324,17 @@ const photoOptions = {
         let {widthfadeAnim} = this.state
         return (
             <View style = {styles.perListItem} key = {index}>
-                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,item.userName)}>
+                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,item.userName,item.perImg)}>
                     <View style = {styles.perTitle}>
                         <Image source={{uri:item.perImg}} style = {styles.perListImg} />
                         <Text style = {styles.perName}>
-                            {item.nickName}
+                            {item.nickName ? item.nickName : item.userName}
                         </Text>
                     </View>
                 </TouchableOpacity>
                 
                 <View style = {styles.commentsItem}>
-                    <Text style = {styles.playNum}>{item.playNum}次播放 · {item.giveALike[item.giveALike.length-1]}赞了</Text>
+                    <Text style = {styles.playNum}>{item.playNum}次播放 · {item.giveALike[item.giveALike.length-1]}刚刚点赞了😊</Text>
                     <Text style = {styles.playText}>{item.text}</Text>
                     <View style = {styles.playCont}>
                         {this.moreCall(item.giveALike,item.flag)}
@@ -330,7 +349,7 @@ const photoOptions = {
                 </View>
                 {/* <View style = {styles.shareAndCollection}> */}
                     <Animated.View style = {[styles.left,item.showShareFlag ? '' : styles.leftHide]}>
-                        <Entypo name = {item.cllFlag ? 'heart-outlined' : 'heart'} size = {18} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,index)}/>
+                        <Entypo name = {item.cllFlag ? 'heart-outlined' : 'heart'} size = {18} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,index,item.id)}/>
                         <EvilIcons name = {'comment'} size = {22} color = {'black'} style = {styles.mas} onPress = {this.comment.bind(this,index,item.id)}/>
                         <EvilIcons name = {'share-google'} size = {22} color = {'black'} style = {styles.share} onPress = {this.share.bind(this)}/>
                     </Animated.View>
@@ -382,8 +401,8 @@ const photoOptions = {
             if(this.state.data[i].cllFlag){
                 if( i == j){
                     this.state.data[i].cllFlag = false
-                    this.state.data[i].perUser = this.state.user
-                    this.state.data[i].giveALike.push(this.state.user)
+                    this.state.data[i].perUser = this.state.nickName
+                    this.state.data[i].giveALike.push(this.state.nickName)
                     clickCallUpdata = await getFetch.updateOnePublished({id:id,giveALike:this.state.data[i].giveALike})
                 }
             }else{
@@ -476,7 +495,7 @@ const photoOptions = {
             let data = {
                 id : num,
                 img : this.state.userNameImg,
-                name : this.state.user,
+                name : this.state.nickName,
                 nameT : this.state.comments,
                 replyToComment : [],
                 replyToCommentMaxFlag : true,
@@ -492,7 +511,7 @@ const photoOptions = {
             commentsItem.data.unshift(data)
             this.state.data[this.state.index].data.push(commentsItem)
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum + 1})
+            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum})
             if(commentsSave.code == 200){
                 this.setState({
                     comments : '',
@@ -523,7 +542,7 @@ const photoOptions = {
                     let replyToComment = {
                         id : replyToCommentId,
                         img:this.state.userNameImg,
-                        name : this.state.user,
+                        name : this.state.nickName,
                         itemName : itemName,
                         nameT : this.state.replyToCommentText,
                         replyToCommentMaxFlag : true
@@ -636,22 +655,24 @@ const photoOptions = {
     }
     //发布作品带图片
     getImg = () => {
-        ImagePicker.showImagePicker(photoOptions, (response) => {
-            if (response.didCancel) {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg : this.state.userNameImg})
+        // ImagePicker.showImagePicker(photoOptions, (response) => {
+        //     if (response.didCancel) {
             
-            }
-            else if (response.error) {
+        //     }
+        //     else if (response.error) {
                 
-            }
-            else if (response.customButton) {
+        //     }
+        //     else if (response.customButton) {
                 
-            }
-            else {
-                let source = response.uri;
-                const { navigation } = this.props;
-                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
-            }
-        });
+        //     }
+        //     else {
+        //         let source = response.uri;
+        //         const { navigation } = this.props;
+        //         this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
+        //     }
+        // });
     }
     //加载发布选择组件
     showAndHidw = () => {
@@ -831,7 +852,7 @@ const photoOptions = {
     onT = () => {
         if(this.state.onTFlag){
             return(
-                <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何说说,快《长按》左上角的相机图标,发布您的第一条说说吧.</Text>
+                <Text style = {styles.noT} key = {1}>空空如也,还没有发布任何说说,快点击左上角的相机图标,发布您的第一条说说吧.</Text>
             )
         }
     }
@@ -840,7 +861,7 @@ const photoOptions = {
         let {sharefadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} getImg = {this.getImg.bind(this)}/>
+                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} open = {false} getNoImg = {this.getImg.bind(this)}/>
                 <ScrollView style = {styles.items}>
                    {/* {this.saveWorks()} */}
                 <SectionList style = {styles.sectList}
@@ -1188,7 +1209,7 @@ const photoOptions = {
     },
     playNum: {
         fontSize:12,
-        color:'#333333'
+        color:'#121212'
     },
     playText: {
         fontSize:12,

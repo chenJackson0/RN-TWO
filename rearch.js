@@ -50,23 +50,23 @@ import getFetch from './service';
         })
     }
     //跳转作者主页
-    goPersonCenter = (userName) => {
+    goPersonCenter = (userName,perNameImg) => {
         const { navigation } = this.props;
         this.props.navigation.navigate('DuthonPerCenter',{
-            userName : userName
+            userName : userName,perNameImg:perNameImg
         })
     }
     //加载推荐用户
     addPerItem = ({item,index}) =>{
         return (
-            <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName)}>
+            <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName,item.img)}>
                 <View style = {styles.addOne}>
-                    <Image source={{uri:item.img?item.img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addListImg} />
+                    <Image source={{uri:item.img}} style = {styles.addListImg} />
                 </View>
                 <View style = {styles.addTwo}>
-                    <Text style = {styles.lNameO}>{item.userName}</Text>
+                    <Text style = {styles.lNameO}>{item.nickName?item.nickName:item.userName}</Text>
                     {/* <Text style = {styles.lNameT}>{item.commeName}</Text> */}
-                    <Text style = {styles.lNameS}>{item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
+                    <Text style = {styles.lNameS}>{item.nickName?item.nickName:item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
                 </View>
                 <View style = {styles.addThree}>
                     <Text style = {[styles.guanzhu,item.focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,index,item.userName,item.img)}>{item.focusOn}</Text>
@@ -135,9 +135,9 @@ import getFetch from './service';
                 addCommentItem : this.state.addCommentItem,
             })
         }else if(focusOnIn.code == 400 || fensi.code == 400){
-
+            alert(message)
         }else{
-            
+            alert(message)
         }
     }
     //没有关注主播的时候ui

@@ -39,9 +39,9 @@ export default class ComList extends Component{
         if(publishedList.code == 200){
             this.init(publishedList.userList)
         }else if(publishedList.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
     //注册通知
@@ -60,9 +60,6 @@ export default class ComList extends Component{
             if(user == commentsItem[i].userName){
                 this.state.fensi = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.foncsOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
-                for(let j = 0;j<commentsItem[i].focusOns.length;j++){
-                    this.state.foucsOnList.push(commentsItem[i].focusOns[j])
-                }
                 for(let k = 0;k<commentsItem[i].fensi.length;k++){
                     this.state.showFensiList.push(commentsItem[i].fensi[k])
                 }
@@ -127,12 +124,12 @@ export default class ComList extends Component{
     return (
         <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName,item.img)}>
             <View style = {styles.addOne}>
-                <Image source={{uri:item.img?item.img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addListImg} />
+                <Image source={{uri:item.img}} style = {styles.addListImg} />
             </View>
             <View style = {styles.addTwo}>
-                <Text style = {styles.lNameO}>{item.userName}</Text>
+                <Text style = {styles.lNameO} numberOfLines={1} ellipsizeMode={'tail'}>{item.nickName?item.nickName:item.userName}</Text>
                 {/* <Text style = {styles.lNameT}>{item.commeName}</Text> */}
-                <Text style = {styles.lNameS}>{item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
+                <Text style = {styles.lNameS} numberOfLines={1} ellipsizeMode={'tail'}>{item.nickName?item.nickName:item.commeName}和其他{item.addCommentNum}位用户关注了</Text>
             </View>
             <View style = {styles.addThree}>
                 <Text style = {[styles.guanzhu,item.focusOnFlag ? '' : styles.changeaddPerButtonBg]} onPress = {this.focusOn.bind(this,index,item.userName,item.img)}>{item.focusOn}</Text>
@@ -180,12 +177,14 @@ export default class ComList extends Component{
                 let data = {
                     id : this.state.addCommentItem[i].id,
                     name : name,
+                    nickName : this.state.addCommentItem[deteleFensiIndex].nickName,
                     img : img
                 }
                 this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
                 let dataT = {
                     id : this.state.addCommentItem[i].id,
                     name : this.state.user,
+                    nickName : this.state.addCommentItem[deteleFochsIndex].nickName,
                     img : this.state.userNameImg
                 }
                 this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
@@ -240,9 +239,9 @@ export default class ComList extends Component{
             fens : this.state.fens
         })
     }else if(focusOnIn.code == 400 || fensi.code == 400){
-
+        alert(message)
     }else{
-        
+        alert(message)
     }
   }
   //点击tab切换
@@ -293,9 +292,9 @@ export default class ComList extends Component{
         for(let i = 0;i<this.state.showFensiList.length;i++){
             let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name,this.state.showFensiList[i].img)}>
                     <View style = {styles.radius}>
-                        <Image source={{uri:this.state.showFensiList[i].img?this.state.showFensiList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                        <Image source={{uri:this.state.showFensiList[i].img}} style = {styles.perImg} />
                     </View> 
-                    <Text style = {styles.perName}>{this.state.showFensiList[i].name}</Text>
+                    <Text style = {styles.perName} numberOfLines={1} ellipsizeMode={'tail'}>{this.state.showFensiList[i].nickName?this.state.showFensiList[i].nickName:this.state.showFensiList[i].name}</Text>
                 </TouchableOpacity>
             array.fensi.push(item)
         }
@@ -320,9 +319,9 @@ export default class ComList extends Component{
         for(let i = 0;i<this.state.foucsOnList.length;i++){
             let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name,this.state.foucsOnList[i].img)}>
                         <View style = {styles.radius}>
-                            <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
+                            <Image source={{uri:this.state.foucsOnList[i].img}} style = {styles.perImg} />
                         </View> 
-                        <Text style = {styles.perName}>{this.state.foucsOnList[i].name}</Text>
+                        <Text style = {styles.perName} numberOfLines={1} ellipsizeMode={'tail'}>{this.state.foucsOnList[i].nickName?this.state.foucsOnList[i].nickName:this.state.foucsOnList[i].name}</Text>
                     </TouchableOpacity>
             array.foncsOn.push(item)
         }

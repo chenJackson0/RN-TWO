@@ -23,6 +23,14 @@ focusOn = async (data) => {
 fensi = async (data) => {
   return await get_fetch(part+'registered/fensi',data,'application/json')
 }
+//编辑个人信息时修改关注和主播的呢称
+changeFocus = async (data) => {
+  return await get_fetch(part+'registered/changeFocus',data,'application/json')
+}
+//编辑个人信息时修粉丝的呢称
+changeFensi = async (data) => {
+  return await get_fetch(part+'registered/changeFensi',data,'application/json')
+}
 //发布作品
 published = async (data) => {
   return await get_fetch(part+'published/published',data,'application/json')
@@ -107,6 +115,8 @@ get_fetch = async (url,data,type) => {
     eveyComments : eveyComments,
     selectPerUser : selectPerUser,
     editPerUser : editPerUser,
-    workPerImg : workPerImg
+    workPerImg : workPerImg,
+    changeFocus : changeFocus,
+    changeFensi : changeFensi
   }
   export default getFetch

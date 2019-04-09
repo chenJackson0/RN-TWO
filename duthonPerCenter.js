@@ -58,6 +58,7 @@ class Row extends Component {
             fadeAnim: new Animated.Value(-200),
             menuFlag : false,
             userName : '',
+            nickName : '',
             publishedList : [],
             post : 0,
             fens : 0,
@@ -78,15 +79,25 @@ class Row extends Component {
     
     //注册监听事件
     showData = async () => {
+        this.setState({
+            post : 0,
+            fans : 0,
+            FocusOn : 0,
+            TellMeAbout : 0,
+            perItem : [],
+            publishedList : [],
+            saysayItem : [],
+            perItemComment : []
+        })
         Constants.getUserNameStorageF()
         let publishedList = await getFetch.selectPublished()
         let collectionList = await getFetch.findCollection()
         if(publishedList.code == 200 && collectionList.code == 200){
             this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
         }else if(publishedList.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
      //注册通知
@@ -102,8 +113,9 @@ class Row extends Component {
         let works = []
         for(let i = 0;i<commentsItem.length;i++){
             //判断改主播是否已经被关注过
-            if(userName == commentsItem[i].userName){
+            if(userName == commentsItem[i].userName || userName == commentsItem[i].nickName){
                 this.state.address = commentsItem[i].address
+                this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : userName
                 for(let j = 0;j<commentsItem[i].fensi.length;j++){
                     if(commentsItem[i].fensi[j].name == perUserName){
                         this.state.focusOnText = '取消关注'
@@ -111,7 +123,7 @@ class Row extends Component {
                     }
                 }
             }
-            if(userName == commentsItem[i].userName){
+            if(userName == commentsItem[i].userName || userName == commentsItem[i].nickName){
                 this.state.fens = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 break
@@ -120,7 +132,9 @@ class Row extends Component {
         
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
-            if(userName == publishedList[i].userName){
+            alert(userName)
+            alert(publishedList[i].nickName)
+            if(userName == publishedList[i].userName || userName == publishedList[i].nickName){
                 if(publishedList[i].type == 'works'){
                     this.state.post = this.state.post + 1
                     works.push(publishedList[i])
@@ -153,6 +167,7 @@ class Row extends Component {
         }
         this.setState({
             userName : userName,
+            nickName : this.state.nickName,
             perUserName : perUserName,
             publishedList : works,
             addCommentItem : commentsItem,
@@ -190,12 +205,14 @@ class Row extends Component {
             let data = {
                 id : this.state.addCommentItem[deteleFensiIndex].id,
                 name : this.state.userName,
+                nickName : this.state.addCommentItem[deteleFensiIndex].nickName,
                 img : this.state.avatarSource
             }
             this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
             let dataT = {
                 id : this.state.addCommentItem[deteleFochsIndex].id,
                 name : this.state.perUserName,
+                nickName : this.state.addCommentItem[deteleFochsIndex].nickName,
                 img : this.state.perNameImg
             }
             this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
@@ -252,9 +269,9 @@ class Row extends Component {
                 fens : this.state.fens
             })
         }else if(focusOnIn.code == 400 || fensi.code == 400){
-
+            alert(message)
         }else{
-
+            alert(message)
         }
     }
     //点击关注实时更新ui
@@ -300,7 +317,7 @@ class Row extends Component {
                 for(let i = 0;i<this.state.saysayItem.length;i++){
                     let view =<TouchableOpacity style = {styles.saysayBg} key = {i} onPress = {this.goDetail.bind(this,this.state.saysayItem[i].id)}><View style = {styles.detailMsg}>
                     <Image source={{uri : this.state.saysayItem[i].perImg}} style = {styles.authorImg} />
-                    <Text style = {styles.playName} >该作品由《{this.state.saysayItem[i].userName}》发布</Text>
+                    <Text style = {styles.playName} >该作品由《{this.state.saysayItem[i].nickName?this.state.saysayItem[i].nickName:this.state.saysayItem[i].userName}》发布</Text>
                     </View>
                     <View style = {styles.detailT}>
                         <Text style = {styles.playNum}>最近浏览了{this.state.playNum}次</Text>
@@ -392,7 +409,7 @@ class Row extends Component {
                     </View>
                 </View>
                 <View style = {styles.userConter2}>
-                    <Text style = {styles.userConterName}>{this.state.userName} {this.state.address}</Text>
+                    <Text style = {styles.userConterName}>{this.state.nickName} {this.state.address}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />
