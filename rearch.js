@@ -30,6 +30,7 @@ import getFetch from './service';
             addCommentItem : [],
             user : '',
             onTFlag : false,
+            foucsOnList : []
         }
     }
     //绑定事件
@@ -128,16 +129,15 @@ import getFetch from './service';
                 }
             }
         }
-        let focusOnIn = await getFetch.focusOn({userName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
-        let fensi = await getFetch.fensi({userName : name,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
-        if(focusOnIn.code == 200 && fensi.code == 200){
+        let focusOnIn = await getFetch.focusOn({focusOnUserName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns,fensiUserName : name,focusOnFlag : this.state.addCommentItem[deteleFensiIndex].focusOnFlag,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+        if(focusOnIn.code == 200){
             this.setState({
                 addCommentItem : this.state.addCommentItem,
             })
-        }else if(focusOnIn.code == 400 || fensi.code == 400){
-            alert(message)
+        }else if(focusOnIn.code == 400){
+            alert(focusOnIn.message)
         }else{
-            alert(message)
+            alert(focusOnIn.message)
         }
     }
     //没有关注主播的时候ui
@@ -151,25 +151,66 @@ import getFetch from './service';
     //搜索
     goToRearch = async () => {
         this.state.addCommentItem = []
+        let foucsOnList = []
+        let newAddName = []
         if(this.state.reactInputT){
             let commentsItem = await getFetch.rearch({userName : this.state.reactInputT})
             if(commentsItem.code == 200 && commentsItem.commitList.length!=0){
                 this.state.reactInputT = ''
                 this.state.onTFlag = false
-                this.setState({
-                    addCommentItem : commentsItem.commitList,
-                    reactInputT : this.state.reactInputT
-                })
+                this.state.addCommentItem = commentsItem.commitList
+                for(let i = 0;i<commentsItem.commitList.length;i++){
+                    if(this.state.user == commentsItem.commitList[i].userName){
+                        this.state.userNameImg = commentsItem.commitList[i].img
+                        this.state.nickName = commentsItem.commitList[i].nickName ? commentsItem.commitList[i].nickName : user
+                        if(commentsItem.commitList[i].focusOns.length == 0){
+                            this.changFocusOnFlag(commentsItem.commitList,newAddName)
+                        }else{
+                            for(let j = 0;j<commentsItem.commitList[i].focusOns.length;j++){
+                                newAddName.push(commentsItem.commitList[i].focusOns[j].name)
+                                foucsOnList.push(commentsItem.commitList[i].focusOns[j])
+                                this.changFocusOnFlag(commentsItem.commitList,newAddName)
+                                this.state.onFFlagF = false
+                            }
+                        }
+                    }
+                    commentsItem.commitList[i].addCommentNum = commentsItem.commitList[i].focusOns.length
+                }
             }else if(commentsItem.code == 400){
                 this.state.onTFlag = true
             }else{
                 this.state.onTFlag = true
             }
             this.setState({
-                onTFlag : this.state.onTFlag
+                onTFlag : this.state.onTFlag,
+                addCommentItem : this.state.addCommentItem,
+                reactInputT : this.state.reactInputT,
+                foucsOnList : foucsOnList,
             })
         }else{
             alert('搜索内容不能为空!')
+        }
+    }
+    //关注的用户,在没有关注的用户中要是能被关注的
+    changFocusOnFlag = (commentsItem,newAddName) => {
+        if(newAddName.length == 0){
+            for(let i = 0;i<commentsItem.length;i++){
+                commentsItem[i].focusOnFlag = true
+                commentsItem[i].focusOn = '关注'
+            }
+        }else{
+            for(let i = 0;i<commentsItem.length;i++){
+                for(let j = 0;j<newAddName.length;j++){
+                    if(commentsItem[i].userName == newAddName[j]){
+                        commentsItem[i].focusOnFlag = false
+                        commentsItem[i].focusOn = '取消关注'
+                        break //此处的break很重要
+                    }else{
+                        commentsItem[i].focusOnFlag = true
+                        commentsItem[i].focusOn = '关注'
+                    }
+                }
+            }
         }
     }
     render() {

@@ -26,7 +26,8 @@ export default class ComList extends Component{
         fensi : 0,
         foncsOn : 0,
         showFensiList : [],
-        foucsOnList : []
+        foucsOnList : [],
+        userNameImg :''
       }
   }
   //绑定事件
@@ -39,9 +40,9 @@ export default class ComList extends Component{
         if(publishedList.code == 200){
             this.init(publishedList.userList)
         }else if(publishedList.code == 400){
-            alert(message)
+            alert(publishedList.message)
         }else{
-            alert(message)
+            alert(publishedList.message)
         }
     }
     //注册通知
@@ -60,6 +61,7 @@ export default class ComList extends Component{
             if(user == commentsItem[i].userName){
                 this.state.fensi = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.foncsOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
+                this.state.userNameImg = commentsItem[i].img
                 for(let k = 0;k<commentsItem[i].fensi.length;k++){
                     this.state.showFensiList.push(commentsItem[i].fensi[k])
                 }
@@ -75,10 +77,12 @@ export default class ComList extends Component{
                 }
                 break
             }
+            commentsItem[i].addCommentNum = commentsItem[i].focusOns.length
         }
         this.setState({
             user : user,
             addCommentItem : commentsItem,
+            userNameImg : this.state.userNameImg,
             fensi : this.state.fensi,
             foncsOn : this.state.foncsOn,
             foucsOnList : this.state.foucsOnList,
@@ -87,7 +91,6 @@ export default class ComList extends Component{
     }
     //关注的用户,在没有关注的用户中要是能被关注的
     changFocusOnFlag = (commentsItem,newAddName) => {
-        let newCommentsItemIndex = []
         if(newAddName.length == 0){
             for(let i = 0;i<commentsItem.length;i++){
                 commentsItem[i].focusOnFlag = true
@@ -103,14 +106,10 @@ export default class ComList extends Component{
                     }else{
                         commentsItem[i].focusOnFlag = true
                         commentsItem[i].focusOn = '关注'
-                        // newCommentsItem.push(commentsItem[i])
                     }
                 }
             }
         }
-        // this.setState({
-        //     addCommentItem : newCommentsItem
-        // })
     }
     //跳转作者主页
     goPersonCenter = (userName,perNameImg) => {
@@ -215,22 +214,14 @@ export default class ComList extends Component{
     })
 
 
-    let focusOnIn = await getFetch.focusOn({userName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
-    let fensi = await getFetch.fensi({userName : name,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
-    if(focusOnIn.code == 200 && fensi.code == 200){
+    let focusOnIn = await getFetch.focusOn({focusOnUserName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns,fensiUserName : name,focusOnFlag : this.state.addCommentItem[deteleFensiIndex].focusOnFlag,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+    if(focusOnIn.code == 200){
         if(!this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
-            if(this.state.perUserName == this.state.userName){
+            if(this.state.user == this.state.userName){
                 this.state.FocusOn = this.state.FocusOn + 1
                 this.state.fens = this.state.fens + 1
             }else{
                 this.state.fens = this.state.fens + 1
-            }
-        }else{
-            if(this.state.perUserName == this.state.userName){
-                this.state.FocusOn = this.state.FocusOn - 1
-                this.state.fens = this.state.fens - 1
-            }else{
-                this.state.fens = this.state.fens - 1
             }
         }
         this.setState({
@@ -238,10 +229,10 @@ export default class ComList extends Component{
             FocusOn : this.state.FocusOn,
             fens : this.state.fens
         })
-    }else if(focusOnIn.code == 400 || fensi.code == 400){
-        alert(message)
+    }else if(focusOnIn.code == 400){
+        alert(focusOnIn.message)
     }else{
-        alert(message)
+        alert(focusOnIn.message)
     }
   }
   //点击tab切换

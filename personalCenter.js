@@ -89,13 +89,12 @@ class Row extends Component {
         })
         Constants.getUserNameStorageF()
         let publishedList = await getFetch.selectPublished()
-        let collectionList = await getFetch.findCollection()
-        if(publishedList.code == 200 && collectionList.code == 200){
-            this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
+        if(publishedList.code == 200){
+            this.init(publishedList.list,publishedList.userList,publishedList.collectionList)
         }else if(publishedList.code == 400){
-            alert(message)
+            alert(publishedList.message)
         }else{
-            alert(message)
+            alert(publishedList.message)
         }
 
     }

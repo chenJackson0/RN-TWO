@@ -91,13 +91,12 @@ class Row extends Component {
         })
         Constants.getUserNameStorageF()
         let publishedList = await getFetch.selectPublished()
-        let collectionList = await getFetch.findCollection()
-        if(publishedList.code == 200 && collectionList.code == 200){
-            this.init(publishedList.list,publishedList.userList,collectionList.collectionList)
+        if(publishedList.code == 200){
+            this.init(publishedList.list,publishedList.userList,publishedList.collectionList)
         }else if(publishedList.code == 400){
-            alert(message)
+            alert(publishedList.message)
         }else{
-            alert(message)
+            alert(publishedList.message)
         }
     }
      //注册通知
@@ -132,8 +131,6 @@ class Row extends Component {
         
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
-            alert(userName)
-            alert(publishedList[i].nickName)
             if(userName == publishedList[i].userName || userName == publishedList[i].nickName){
                 if(publishedList[i].type == 'works'){
                     this.state.post = this.state.post + 1
@@ -243,9 +240,8 @@ class Row extends Component {
             focusOnTextFlag : this.state.focusOnTextFlag
         })
 
-        let focusOnIn = await getFetch.focusOn({userName : this.state.perUserName,focusOnFlag:this.state.addCommentItem[deteleFensiIndex].focusOnFlag,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
-        let fensi = await getFetch.fensi({userName : this.state.userName,focusOnFlag : this.state.addCommentItem[deteleFensiIndex].focusOnFlag,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
-        if(focusOnIn.code == 200 && fensi.code == 200){
+        let focusOnIn = await getFetch.focusOn({focusOnUserName : this.state.perUserName,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns,fensiUserName : this.state.userName,focusOnFlag : this.state.addCommentItem[deteleFensiIndex].focusOnFlag,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+        if(focusOnIn.code == 200){
             if(!this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
                 if(this.state.perUserName == this.state.userName){
                     this.state.FocusOn = this.state.FocusOn + 1
@@ -268,10 +264,10 @@ class Row extends Component {
                 FocusOn : this.state.FocusOn,
                 fens : this.state.fens
             })
-        }else if(focusOnIn.code == 400 || fensi.code == 400){
-            alert(message)
+        }else if(focusOnIn.code == 400){
+            alert(focusOnIn.message)
         }else{
-            alert(message)
+            alert(focusOnIn.message)
         }
     }
     //点击关注实时更新ui

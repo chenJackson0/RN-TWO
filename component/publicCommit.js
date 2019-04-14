@@ -1,477 +1,275 @@
-//czg data 2019-02-19
-import React, { Component } from 'react';
-import {
-    StyleSheet,
-    Text,
-    View,
-    Image,
-    Dimensions,
-    TextInput,
-    ScrollView,
-    Animated,
-    Share,
-    SectionList,
-    TouchableOpacity,
-    DeviceEventEmitter
-} from 'react-native';
-
-// 取得屏幕的宽高Dimensions
-let windowsSize = {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get("window").height
-};
+import React, {Component} from 'react';
+import {Animated, StyleSheet, Text, View, Dimensions, Image, TextInput, SectionList,TouchableOpacity} from 'react-native';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import AntDesign from 'react-native-vector-icons/AntDesign'
+global.deviceWidth = Dimensions.get('window').width
 import getFetch from '../service/index.js'
-import ConfirmationWindow from './component/confirmationWindow'
-export default class PublicCommit extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            title : '首页',
-            butText : '展开',
-            userName : '',
-            user : '',
-            data : [],
-            fadeAnim: this.props.fadeAnim,
-            commentFlag : true,
-            shareFlag : false,
-            videoImgFlag : false,
-            comments : '',
-            addCommentItem : [],
-            commentsItem : this.props.commentsItem,
-            index : 0,
-            commentNim : 0,
-            userNameImg : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg',
-            addCommentNum : 0,
-            foucsOnList : [],
-            onTFlag : false,
-            onTFlagF : true,
-            replyToCommentText : '',
-            replyToCommentMaxFlag : true,
-            onFFlag : false,
-            onFFlagF : true,
-            collectionList :[],
-            deleteCommentItems : [
-                {
-                    title : '确定要删除吗?',
-                    leftT : '取消',
-                    rightT : '确定',
-                    type : 'delete'
-                }
-            ],
-            deleteCommentItemsFlag : false,
-            id : '',
-            idArray : [],
-            loveFlag : true,
-            commentInputCallFlag:false,
-            callId : '',
-            callName : '',
-            addId : 0,
-            perId : '',
-            nickName :''
-        }
-    }
-    //关闭发送评论
-    closeSaveMsg = () => {
-        Animated.timing(   
-            this.state.fadeAnim,
-            {
-            toValue:0,
-            duration: 500,
-            }
-        ).start();
-        this.setState({
-            commentFlag : true
-        })
-    }
-    //发送评论
-    saveMsg = async () => {
-        let num = 0
-        if(this.state.comments){
-            for(let i = 0;i<this.state.data.length;i++){
-                if(this.state.addId == this.state.data[i].id){
-                    num = this.state.data[i].data.length != 0 ? this.state.data[i].data[this.state.data[i].data.length-1].data[0].id + 1 : num
-                }
-            }
-            let data = {
-                id : num,
-                img : this.state.userNameImg,
-                name : this.state.nickName,
-                nameT : this.state.comments,
-                replyToComment : [],
-                replyToCommentMaxFlag : true,
-                replyToCommentListFlag : true,
-                replyToCommentListT : '查看'
-            }
-            let commentsItem = 
-                {
-                    id : num,
-                    data : []
-                }
-            
-            commentsItem.data.unshift(data)
-            this.state.data[this.state.index].data.push(commentsItem)
-            this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum})
-            if(commentsSave.code == 200){
-                this.setState({
-                    comments : '',
-                    commentsItem : this.state.data[this.state.index].data,
-                    commentNim : this.state.data[this.state.index].commentsNum
-                })
-            }else if(commentsSave.code == 400){
+export default class PublicCommit extends Component{
 
-            }else{
-
-            }
-        }else{
-            alert("评论不能为空!")
-        }
-    }
-    //评论列表
-    addcommentsItem = ({item}) => {
-        return(
-            <View style = {styles.commentList}>
-                <View style = {styles.commentLeftPerImg}>
-                    <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
-                </View>
-                <View style = {styles.commentRightPerText}>
-                    <View style = {styles.removeAndCall}>
-                        <Text style = {styles.commentRIghtPerName}>
-                            {item.name}
-                        </Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.state.user ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.id,'commit',item.id)}>删除</Text>
-                    </View>
-                    <Text style = {styles.commentRIghtPerText}>
-                        {item.nameT}
-                    </Text>
-                    <View style = {[styles.eplyToCommentMax,item.replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
-                        <TextInput
-                            ref = "code"
-                            style = {[styles.code,styles.eplyToCommentCode]}
-                            onChangeText={(replyToCommentText) => {
-                                this.setState({
-                                    replyToCommentText : replyToCommentText
-                                })
-                            }}
-                            value={this.state.replyToCommentText}
-                            placeholder = '请输入您想回复的话……'
-                            maxLength = {50}
-                            autoCapitalize = "none"
-                            clearButtonMode = "while-editing"
-                        />
-                        <Text style = {styles.codeLine}></Text>
-                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,true,-1)}>发送</Text>
-                    </View>
-                    <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
-                    {this.replyToCommentTitleList(item)}
-                </View>
+  constructor(props){
+      super(props)
+      this.state = {
+        fadeAnim: new Animated.Value(0),
+        callName : '',
+        comments : '',
+        replyToCommentText : '',
+        commentNim : '',
+      }
+  };
+  type = 'work'
+  //关闭发送评论
+  closeSaveMsg = () => {
+    this.props.closeSaveMsg()
+  }
+  //发送评论
+  saveMsg = async () => {
+    this.props.saveMsg(this.state.comments)
+    this.setState({
+        comments : ''
+    })
+  }
+//评论列表
+addcommentsItem = ({item}) => {
+    return(
+        <View style = {styles.commentList}>
+            <View style = {styles.commentLeftPerImg}>
+                <Image source={{uri:item.img}} style = {styles.commentLeftPerListImg} />
             </View>
-        )
-    }
-    //回复评论
-    replyToCommentSaveMsg = async (id,name,callFlag,childId) => {
-        let itemName = null
-        if(callFlag){
-            itemName = name
-        }else{
-            itemName = this.state.callName
-        }
-        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            if(id == this.state.data[this.state.index].data[i].data[0].id){
-                let replyToCommentId = this.state.data[this.state.index].data[i].data[0].replyToComment.length == 0 ? 0 : this.state.data[this.state.index].data[i].data[0].replyToComment[this.state.data[this.state.index].data[i].data[0].replyToComment.length-1].id + 1
-                if(this.state.replyToCommentText){
-                    let replyToComment = {
-                        id : replyToCommentId,
-                        img:this.state.userNameImg,
-                        name : this.state.nickName,
-                        itemName : itemName,
-                        nameT : this.state.replyToCommentText,
-                        replyToCommentMaxFlag : true
-                    }
-                    this.state.data[this.state.index].data[i].data[0].replyToComment.push(replyToComment)
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
-                    if(childId != -1){
-                        this.state.data[this.state.index].data[i].data[0].replyToComment[childId].replyToCommentMaxFlag = true
-                    }
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
-                    let eveyComments = await getFetch.eveyComments({id:this.state.addId,index:id,
-                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
-                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
-                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
-                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
-                    })
-                    if(eveyComments.code == 200){
-                        this.setState({
-                            commentsItem : this.state.data[this.state.index].data,
-                            replyToCommentText : '',
-                            commentInputCallFlag : false,
-                            shareFlag : false,
-                        })
-                    }else if(eveyComments.code == 400){
-
-                    }else{
-
-                    }
-                }else{
-                    alert("回复评论不能为空!")
-                }
-            }
-        }
-    }
-    //评论可回复
-    eplyToCommentT = (index) => {
-        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            if(index == this.state.data[this.state.index].data[i].data[0].id){
-                if(this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag){
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = false
-                }else{
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
-                }
-                this.setState({
-                    commentsItem : this.state.data[this.state.index].data,
-                    replyToCommentText : '',
-                })
-            }else{
-                this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
-            }
-        }
-        
-    }
-    //查看更多回复
-    showReplyToComment = (index) => {
-        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            if(index == this.state.data[this.state.index].data[i].data[0].id){
-                if(this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag){
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
-                    this.setState({
-                        commentsItem : this.state.data[this.state.index].data,
-                    })
-                }else{
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = true
-                    this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '查看'
-                    this.setState({
-                        commentsItem : this.state.data[this.state.index].data,
-                    })
-                }
-            }
-        }
-    }
-    //多级回复
-    callBackCall = (id,name,perId) => {
-        for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            if(perId == this.state.data[this.state.index].data[i].data[0].id){
-                for(j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
-                    if(id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
-                        if(this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag){
-                            this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = false
-                        }else{
-                            this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
-                        }
-                        this.setState({
-                            commentsItem : this.state.data[this.state.index].data,
-                            replyToCommentText : ''
-                        })
-                    }else{
-                        this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
-                    }
-                }
-            }
-        }
-        this.setState({
-            callName : name,
-            replyToCommentText : ''
-        })
-    }
-    //评论的回复
-    replyToCommentTitleList = (item) => {
-        let array = []
-        for(let i = 0;i<item.replyToComment.length;i++){
-            let view = <View style = {[styles.replyToComment,styles.commentList,item.replyToCommentListFlag ? styles.replyToCommentListStyle : '']} key = {i}>
-                <View style = {styles.commentLeftPerImg}>
-                    <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
-                </View>
-                <View style = {styles.commentRightPerText}>
-                    <View style = {styles.removeAndCall}>
-                        <Text style = {styles.commentRIghtPerName}>
-                            {item.replyToComment[i].name}回复了{item.replyToComment[i].itemName}
-                        </Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.callBackCall.bind(this,item.replyToComment[i].id,item.replyToComment[i].name,item.id)}>回复</Text>
-                        <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.state.user ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.replyToComment[i].id,'commitChild',item.id)}>删除</Text>
-                    </View>
-                    <Text style = {styles.commentRIghtPerText}>
-                        {item.replyToComment[i].nameT}
+            <View style = {styles.commentRightPerText}>
+                <View style = {styles.removeAndCall}>
+                    <Text style = {styles.commentRIghtPerName}>
+                        {item.name}
                     </Text>
-                    <View style = {[styles.eplyToCommentMax,item.replyToComment[i].replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
-                        <TextInput
-                            ref = "code"
-                            style = {[styles.code,styles.eplyToCommentCode]}
-                            onChangeText={(replyToCommentText) => {
-                                this.setState({
-                                    replyToCommentText : replyToCommentText
-                                })
-                            }}
-                            value={this.state.replyToCommentText}
-                            placeholder = '请输入您想回复的话……'
-                            maxLength = {50}
-                            autoCapitalize = "none"
-                            clearButtonMode = "while-editing"
-                        />
-                        <Text style = {styles.codeLine}></Text>
-                        <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,false,item.replyToComment[i].id)}>发送</Text>
-                    </View>
+                    <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.eplyToCommentT.bind(this,item.id)}>回复</Text>
+                    <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.name == this.props.user || item.name == this.props.nickName ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.id,'commit',item.id)}>删除</Text>
                 </View>
+                <Text style = {styles.commentRIghtPerText}>
+                    {item.nameT}
+                </Text>
+                <View style = {[styles.eplyToCommentMax,item.replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
+                    <TextInput
+                        ref = "code"
+                        style = {[styles.code,styles.eplyToCommentCode]}
+                        onChangeText={(replyToCommentText) => {
+                            this.setState({
+                                replyToCommentText : replyToCommentText
+                            })
+                        }}
+                        value={this.state.replyToCommentText}
+                        placeholder = '请输入您想回复的话……'
+                        maxLength = {50}
+                        autoCapitalize = "none"
+                        clearButtonMode = "while-editing"
+                    />
+                    <Text style = {styles.codeLine}></Text>
+                    <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,true,-1)}>发送</Text>
+                </View>
+                <Text style = {[styles.replyToCommentTitle,item.replyToComment.length == 0 ? styles.replyToCommentTitleHide : '']} onPress = {this.showReplyToComment.bind(this,item.id)}>{item.replyToCommentListT}{item.replyToComment.length}条回复</Text>
+                {this.replyToCommentTitleList(item)}
             </View>
-            array.push(view)
-        }
-        return array
-    }
-    //删除哦评论选择
-    confirmationWindowF = () => {
-        if(this.state.deleteCommentItemsFlag){
-            return(
-                <ConfirmationWindow confirmationWindowFlagData = {this.state.deleteCommentItems} noDelete = {this.noDelete.bind(this)} deleteI = {this.deleteI.bind(this)}/>
-            )
-        }else{
-            return
-        }
-    }
-    //删除自己发的作品或评论
-    deleteItem = (id,type,perId) => {
-        if(type == 'work'){
-            this.type = 'work'
-        }else if(type == 'commit'){
-            this.type = 'commit'
-        }else if(type == 'commitChild'){
-            this.type = 'commitChild'
-        }
-        this.setState({
-            deleteCommentItemsFlag : true,
-            id : id,
-            perId : perId
-        })
-    }
-    //不删除
-    noDelete = () => {
-        this.setState({
-            deleteCommentItemsFlag : false,
-        })
-    }
-    //删除
-    deleteI = async () => {
-        let data = []
-        let dataA = []
-        let commitList = []
-        let deteleCommit = {code : 0}
-        let publishedD = {code : 0}
-        let deteleCommitChild = {code : 0}
-        if(this.type == 'work'){
-            for(let i = 0;i<this.state.data.length;i++){
-                if(this.state.id == this.state.data[i].id){
-                    continue
-                }else{
-                    data.push(this.state.data[i])
-                }
-            }
-            if(data.length == 0){
-                this.state.onTFlag = true
+        </View>
+    )
+}
+//评论可回复
+eplyToCommentT = (index) => {
+    for(let i = 0;i<this.props.data[this.props.index].data.length;i++){
+        if(index == this.props.data[this.props.index].data[i].data[0].id){
+            if(this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag){
+                this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag = false
             }else{
-                this.state.onTFlag = false
-            }
-            publishedD = await getFetch.deletePublished({id : this.state.id}) //删除作品
-        }else if(this.type == 'commit'){
-            for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
-                if(this.state.id == this.state.data[this.state.index].data[i].data[0].id){
-                    continue
-                }else{
-                    dataA.push(this.state.data[this.state.index].data[i])
-                }
-            }
-            this.state.data[this.state.index].data = dataA
-            this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum - 1
-            data = this.state.data
-            deteleCommit = await getFetch.commentsWork({id:this.state.addId,data:dataA,commentsNum:this.state.data[this.state.index].commentsNum}) //删除评论
-        }else if(this.type == 'commitChild'){
-            for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
-                if(this.state.perId == this.state.data[this.state.index].data[i].data[0].id){
-                    for(let j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
-                        if(this.state.id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
-                            continue
-                        }else{
-                            dataA.push(this.state.data[this.state.index].data[i].data[0].replyToComment[j])
-                        }
-                    }
-                    this.state.data[this.state.index].data[i].data[0].replyToComment = dataA
-                    deteleCommitChild = await getFetch.eveyComments({id:this.state.addId,index:this.state.perId,
-                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
-                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
-                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
-                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
-                    }) //删除多级评论
-                }
-            }
-            data = this.state.data
-        }
-        
-        if(publishedD.code == 200 || deteleCommit.code == 200 || deteleCommitChild.code == 200){
-            if(this.type == 'work'){
-                await getFetch.deleteCollection({id : this.state.id}) //取消
+                this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag = true
             }
             this.setState({
-                data : data,
-                commentsItem : this.state.data[this.state.index].data,
-                deleteCommentItemsFlag : false,
-                onTFlag : this.state.onTFlag,
-                commentNim : this.state.data[this.state.index].commentsNum,
+                commentsItem : this.props.data[this.props.index].data,
+                replyToCommentText : '',
             })
-        }else if(publishedD.code == 400 || deteleCommit.code == 400 || deteleCommitChild.code == 400){
-
         }else{
-
+            this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag = true
         }
     }
-    render() {
-        let {fadeAnim}  = this.state;
-        return(
-            <View style = {styles.max}>
-                <Animated.View style = {[styles.adimatedView,{height:fadeAnim}]}>
-                    <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
-                    <Text style = {styles.commerCosle} onPress = {this.closeSaveMsg.bind(this)}>X</Text>
-                    <SectionList style = {styles.sectList}
-                        renderItem={this.addcommentsItem}
-                        showsVerticalScrollIndicator={false}
-                        keyExtractor = {(item,index) => item + index}
-                        sections={
-                            this.state.commentsItem
-                        }>
-                    </SectionList>
-                    <View style = {[styles.commentInput,this.state.commentFlag ? '' : styles.commentInputB]}>
-                        <TextInput
-                            ref = "code"
-                            style = {styles.code}
-                            onChangeText={(comments) => {
-                                this.setState({
-                                    comments : comments
-                                })
-                            }}
-                            value={this.state.comments}
-                            placeholder = '请输入您想说的话……'
-                            maxLength = {50}
-                            autoCapitalize = "none"
-                            clearButtonMode = "while-editing"
-                        />
-                        <Text style = {styles.codeLine}></Text>
-                        <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
-                    </View>
-                </Animated.View>
-                <View style = {[styles.opacityBg,this.state.deleteCommentItemsFlag ? styles.showopacityBg : '']} ></View>
-                {this.confirmationWindowF()}
-            </View>
-        )
+    
+}
+//删除自己发的作品或评论
+deleteItem = (id,type,perId) => {
+    this.props.deleteItem(id,type,perId)
+}
+//回复评论
+replyToCommentSaveMsg = async (id,name,callFlag,childId) => {
+    let itemName = null
+    if(callFlag){
+        itemName = name
+    }else{
+        itemName = this.state.callName
+    }
+    for(let i = 0;i<this.props.data[this.props.index].data.length;i++){
+        if(id == this.props.data[this.props.index].data[i].data[0].id){
+            let replyToCommentId = this.props.data[this.props.index].data[i].data[0].replyToComment.length == 0 ? 0 : this.props.data[this.props.index].data[i].data[0].replyToComment[this.props.data[this.props.index].data[i].data[0].replyToComment.length-1].id + 1
+            if(this.state.replyToCommentText){
+                let replyToComment = {
+                    id : replyToCommentId,
+                    img:this.props.userNameImg,
+                    name : this.props.nickName,
+                    itemName : itemName,
+                    nameT : this.state.replyToCommentText,
+                    replyToCommentMaxFlag : true
+                }
+                this.props.data[this.props.index].data[i].data[0].replyToComment.push(replyToComment)
+                this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag = true
+                if(childId != -1){
+                    this.props.data[this.props.index].data[i].data[0].replyToComment[childId].replyToCommentMaxFlag = true
+                }
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListFlag = false
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListT = '收起'
+                let eveyComments = await getFetch.eveyComments({id:this.props.addId,index:id,
+                    data:this.props.data[this.props.index].data[i].data[0].replyToComment,
+                    replyToCommentMaxFlag:this.props.data[this.props.index].data[i].data[0].replyToCommentMaxFlag,
+                    replyToCommentListFlag:this.props.data[this.props.index].data[i].data[0].replyToCommentListFlag,
+                    replyToCommentListT : this.props.data[this.props.index].data[i].data[0].replyToCommentListT,
+                })
+                if(eveyComments.code == 200){
+                    this.setState({
+                        commentsItem : this.props.data[this.props.index].data,
+                        replyToCommentText : '',
+                        commentInputCallFlag : false,
+                        shareFlag : false,
+                    })
+                }else if(eveyComments.code == 400){
+
+                }else{
+
+                }
+            }else{
+                alert("回复评论不能为空!")
+            }
+        }
     }
 }
+//查看更多回复
+showReplyToComment = (index) => {
+    for(let i = 0;i<this.props.data[this.props.index].data.length;i++){
+        if(index == this.props.data[this.props.index].data[i].data[0].id){
+            if(this.props.data[this.props.index].data[i].data[0].replyToCommentListFlag){
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListFlag = false
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListT = '收起'
+                this.setState({
+                    commentsItem : this.props.data[this.props.index].data,
+                })
+            }else{
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListFlag = true
+                this.props.data[this.props.index].data[i].data[0].replyToCommentListT = '查看'
+                this.setState({
+                    commentsItem : this.props.data[this.props.index].data,
+                })
+            }
+        }
+    }
+}
+//评论的回复
+replyToCommentTitleList = (item) => {
+    let array = []
+    for(let i = 0;i<item.replyToComment.length;i++){
+        let view = <View style = {[styles.replyToComment,styles.commentList,item.replyToCommentListFlag ? styles.replyToCommentListStyle : '']} key = {i}>
+            <View style = {styles.commentLeftPerImg}>
+                <Image source={{uri:item.replyToComment[i].img}} style = {styles.commentLeftPerListImg} />
+            </View>
+            <View style = {styles.commentRightPerText}>
+                <View style = {styles.removeAndCall}>
+                    <Text style = {styles.commentRIghtPerName}>
+                        {item.replyToComment[i].name}回复了{item.replyToComment[i].itemName}
+                    </Text>
+                    <Text style = {[styles.callBackMsg,styles.replayToCommentCallBack]} onPress = {this.callBackCall.bind(this,item.replyToComment[i].id,item.replyToComment[i].name,item.id)}>回复</Text>
+                    <Text style = {[styles.callBackMsg,styles.replayToCommentRemove,item.replyToComment[i].name == this.props.user || item.replyToComment[i].name == this.props.nickName ? '' : styles.replayToCommentRemoveHide]} onPress = {this.deleteItem.bind(this,item.replyToComment[i].id,'commitChild',item.id)}>删除</Text>
+                </View>
+                <Text style = {styles.commentRIghtPerText}>
+                    {item.replyToComment[i].nameT}
+                </Text>
+                <View style = {[styles.eplyToCommentMax,item.replyToComment[i].replyToCommentMaxFlag ? styles.eplyToCommentMaxB : '']}>
+                    <TextInput
+                        ref = "code"
+                        style = {[styles.code,styles.eplyToCommentCode]}
+                        onChangeText={(replyToCommentText) => {
+                            this.setState({
+                                replyToCommentText : replyToCommentText
+                            })
+                        }}
+                        value={this.state.replyToCommentText}
+                        placeholder = '请输入您想回复的话……'
+                        maxLength = {50}
+                        autoCapitalize = "none"
+                        clearButtonMode = "while-editing"
+                    />
+                    <Text style = {styles.codeLine}></Text>
+                    <Text style = {styles.getCode} onPress = {this.replyToCommentSaveMsg.bind(this,item.id,item.name,false,item.replyToComment[i].id)}>发送</Text>
+                </View>
+            </View>
+        </View>
+        array.push(view)
+    }
+    return array
+}
+//多级回复
+callBackCall = (id,name,perId) => {
+    for(let i = 0;i<this.props.data[this.props.index].data.length;i++){
+        if(perId == this.props.data[this.props.index].data[i].data[0].id){
+            for(j = 0;j<this.props.data[this.props.index].data[i].data[0].replyToComment.length;j++){
+                if(id == this.props.data[this.props.index].data[i].data[0].replyToComment[j].id){
+                    if(this.props.data[this.props.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag){
+                        this.props.data[this.props.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = false
+                    }else{
+                        this.props.data[this.props.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
+                    }
+                    this.setState({
+                        commentsItem : this.props.data[this.props.index].data,
+                        replyToCommentText : ''
+                    })
+                }else{
+                    this.props.data[this.props.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
+                }
+            }
+        }
+    }
+    this.setState({
+        callName : name,
+        replyToCommentText : ''
+    })
+}
+render() {
+    return (
+        <Animated.View style = {[styles.adimatedView,{height:this.props.fadeAnim}]}>
+            <Text style = {styles.commentsTitle}>{this.props.commentNim}条评论</Text>
+            <Text style = {styles.commerCosle} onPress = {this.closeSaveMsg.bind(this)}>X</Text>
+            <SectionList style = {styles.sectList}
+                renderItem={this.addcommentsItem}
+                showsVerticalScrollIndicator={false}
+                keyExtractor = {(item,index) => item + index}
+                sections={
+                    this.props.commentsItem
+                }>
+            </SectionList>
+            <View style = {[styles.commentInput,this.props.commentFlag ? '' : styles.commentInputB]}>
+                <TextInput
+                    ref = "code"
+                    style = {styles.code}
+                    onChangeText={(comments) => {
+                        this.setState({
+                            comments : comments
+                        })
+                    }}
+                    value={this.state.comments}
+                    placeholder = '请输入您想说的话……'
+                    maxLength = {50}
+                    autoCapitalize = "none"
+                    clearButtonMode = "while-editing"
+                />
+                <Text style = {styles.codeLine}></Text>
+                <Text style = {styles.getCode} onPress = {this.saveMsg.bind(this)}>发送</Text>
+            </View>
+        </Animated.View>
+    );
+  }
+}
+
 const styles = StyleSheet.create({
     commentInputCallB:{
         display:'none'
@@ -534,6 +332,7 @@ const styles = StyleSheet.create({
         marginBottom:20,
         flexDirection:'row',
         justifyContent: 'center',
+        // alignItems: 'center',
     },
     commentLeftPerImg:{
         paddingTop:6,
@@ -829,10 +628,19 @@ const styles = StyleSheet.create({
         textAlign:'center'
     },
     perListItem: {
+        
         position:'relative',
         paddingTop:8,
+        
+        // justifyContent: 'center',
+        // alignItems: 'center',
     },
     perTitle: {
+        // width:30,
+        // height:30,
+        // overflow:'hidden',
+        // borderRadius:15,
+        // justifyContent: 'center',
         paddingLeft:5,
         paddingRight:5,
         paddingBottom:8,

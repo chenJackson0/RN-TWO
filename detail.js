@@ -93,9 +93,9 @@ import ConfirmationWindow from './component/confirmationWindow'
         if(publishedList.code == 200){
             this.init(publishedList.list)
         }else if(publishedList.code == 400){
-            alert(message)
+            alert(publishedList.message)
         }else{
-            alert(message)
+            alert(publishedList.message)
         }
     }
     //注册通知
@@ -133,6 +133,7 @@ import ConfirmationWindow from './component/confirmationWindow'
         this.setState({
             id : id,
             data : publishedList,
+            addId : id,
             itemDetail : this.state.itemDetail,
             itemImg : publishedList[this.state.index].publicHeadImg,
             commentsItem : commentsItem,
@@ -315,9 +316,9 @@ import ConfirmationWindow from './component/confirmationWindow'
                     commentNim : this.state.data[this.state.index].commentsNum
                 })
             }else if(commentsSave.code == 400){
-                alert(message)
+                alert(commentsSave.message)
             }else{
-                alert(message)
+                alert(commentsSave.message)
             }
         }else{
             alert("评论不能为空!")
@@ -407,9 +408,9 @@ import ConfirmationWindow from './component/confirmationWindow'
                             shareFlag : false,
                         })
                     }else if(eveyComments.code == 400){
-                        alert(message)
+                        alert(eveyComments.message)
                     }else{
-                        alert(message)
+                        alert(eveyComments.message)
                     }
                 }else{
                     alert("回复评论不能为空!")

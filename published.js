@@ -81,7 +81,7 @@ const photoOptions = {
     addPublised = async () => {
         let published = await getFetch.selectPublished()
         if(published.code == 200){
-            this.id = published.list.length!=0 ? published.list[published.list.length-1].id + 1 : 0
+            this.id = published.list.length!=0 ? published.list[0].id + 1 : 0
             this.init(published.userList)
         }else if(published.code == 400){
             

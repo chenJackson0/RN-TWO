@@ -72,9 +72,9 @@ const photoOptions = {
                 sex : getFetchData.userMessage.sex,
             })
         }else if(getFetchData.code == 400){
-
+            alert(getFetchData.message)
         }else{
-            
+            alert(getFetchData.message)
         }
     }
     //注册通知
@@ -141,13 +141,10 @@ const photoOptions = {
             sex : this.state.sex ? this.state.sex : ''
         }
         let editPerUser = await getFetch.editPerUser(data)
-        let updataPublishList = await getFetch.workPerImg({userName : this.state.account,img:this.state.avatarSource,nickName:this.state.userName})
-        let changeFocus = await getFetch.changeFocus({userName : this.state.account,nickName:this.state.userName,img:this.state.avatarSource})
-        let changeFensi = await getFetch.changeFensi({userName : this.state.account,nickName:this.state.userName,img:this.state.avatarSource})
-        if(editPerUser.code == 200 || updataPublishList.code == 200 || changeFocus.code == 200 || changeFensi.code== 200){
+        if(editPerUser.code == 200){
             const { navigation } = this.props;
             this.props.navigation.goBack()
-        }else if(editPerUser.code == 400 || updataPublishList.code == 400 || changeFocus.code == 400 || changeFensi.code == 400){
+        }else if(editPerUser.code == 400){
             alert(editPerUser.message)
         }else{
             alert(editPerUser.message)
