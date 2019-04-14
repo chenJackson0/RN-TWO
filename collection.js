@@ -30,8 +30,8 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
 import getFetch from './service/index.js'
-import ConfirmationWindow from './component/confirmationWindow'
-import PublicCommit from './component/publicCommit'
+import ConfirmationWindow from './component/confirmationWindow'//弹窗选择组件
+import PublicCommit from './component/publicCommit' //评论区组件
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -119,6 +119,7 @@ const photoOptions = {
             userNameImg : '',
             addCommentItem : [],
             addCommentNum : 0,
+            deleteCommentItemsFlag : false
         })
         let publishedList = await getFetch.selectPublished()
         if(publishedList.code == 200){
@@ -191,7 +192,7 @@ const photoOptions = {
             onTFlag : this.state.onTFlag,
             fadeAnim: new Animated.Value(0),
             sharefadeAnim: new Animated.Value(-110),
-            commentFlag : true,
+            commentFlag : true
          })
     }
     //跳转作者主页

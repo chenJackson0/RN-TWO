@@ -179,7 +179,8 @@ class Row extends Component {
             focusOnTextFlag : this.state.focusOnTextFlag,
             perNameImg : perNameImg,
             address : this.state.address,
-            perItemComment : this.state.perItemComment
+            perItemComment : this.state.perItemComment,
+            changeTabNum : 0
         })
     }
     //关注主播

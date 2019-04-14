@@ -163,7 +163,8 @@ class Row extends Component {
             avatarSource : this.state.avatarSource,
             saysayItem : this.state.saysayItem,
             address : this.state.address,
-            perItemComment : this.state.perItemComment
+            perItemComment : this.state.perItemComment,
+            changeTabNum : 0
         })
     }
     //编辑主页跳转

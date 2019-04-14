@@ -30,8 +30,8 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import ImagePicker from 'react-native-image-picker'
 import getFetch from './service/index.js'
-import ConfirmationWindow from './component/confirmationWindow'
-import PublicCommit from './component/publicCommit'
+import ConfirmationWindow from './component/confirmationWindow' //弹窗选择组件
+import PublicCommit from './component/publicCommit' //评论区组件
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -130,7 +130,8 @@ const options = {
             addCommentItem : [],
             addCommentNum : 0,
             collectionList : [],
-            idArray : []
+            idArray : [],
+            deleteCommentItemsFlag : false
         })
         let publishedList = await getFetch.selectPublished()
         if(publishedList.code == 200){
@@ -223,12 +224,12 @@ const options = {
                 }
             }
         }
+        //初始化
         if(this.state.onTFlagF){
             this.state.onTFlag = true
         }else{
             this.state.onTFlag = false
         }
-        
         if(this.state.onFFlagF){
             this.state.onFFlag = true
         }else{
@@ -249,7 +250,7 @@ const options = {
             onTFlag : this.state.onTFlag
          })
     }
-    //关注的用户,在没有关注的用户中要是能被关注的
+    //关注的用户,在没有关注的用户中要是能被关注的逻辑处理
     changFocusOnFlag = (commentsItem,newAddName) => {
         if(newAddName.length == 0){
             for(let i = 0;i<commentsItem.length;i++){
@@ -633,7 +634,7 @@ const options = {
                 }
             }
         }
-        if(this.state.addCommentItem.length == 0){
+        if(this.state.addCommentItem[deteleFochsIndex].focusOns.length == 0){
             this.state.onFFlag = true
         }else{
             this.state.onFFlag = false
