@@ -25,6 +25,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import Video from 'react-native-video';
 import getFetch from './service/index.js'
 const photoOptions = {
     title:'请选择',
@@ -106,6 +107,7 @@ class Row extends Component {
     init = (publishedList,commentsItem,collectionList) => {
         let userName = Constants.getUserName() ? Constants.getUserName() : ''
         let works = []
+        let editPerUserA = 2
         //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(userName == commentsItem[i].userName){
@@ -114,13 +116,38 @@ class Row extends Component {
                 this.state.fans = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
                 this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
                 this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : userName
+                this.state.nickNameCheck = commentsItem[i].nickName ? commentsItem[i].nickName : ''
+                this.state.webSite = commentsItem[i].webSite ? commentsItem[i].webSite : ''
+                this.state.personalResume = commentsItem[i].personalResume ? commentsItem[i].personalResume : '作者什么都没有说……'
+                this.state.email = commentsItem[i].email ? commentsItem[i].email : ''
+                this.state.phone = commentsItem[i].phone ? commentsItem[i].phone : ''
+                this.state.sex = commentsItem[i].sex ? commentsItem[i].sex : ''
                 break
             }
         }
-        
+        //判断用户资料是否都填写了
+        if(this.state.nickNameCheck){
+            editPerUserA += 1
+        }
+        if(this.state.webSite){
+            editPerUserA += 1
+        }
+        if(this.state.personalResume){
+            editPerUserA += 1
+        }
+        if(this.state.email){
+            editPerUserA += 1
+        }
+        if(this.state.phone){
+            editPerUserA += 1
+        }
+        if(this.state.sex){
+            editPerUserA += 1
+        }
+        this.state.successPerMessage = editPerUserA+'/8'
         //获取作品数量
         for(let i = 0;i<publishedList.length;i++){
-            if(userName == publishedList[i].userName){
+            if(userName == publishedList[i].userName || userName == publishedList[i].nickName){
                 if(publishedList[i].type == 'works'){
                     //获取用户下的所有发布产品
                     this.state.post = this.state.post + 1
@@ -128,9 +155,11 @@ class Row extends Component {
                     for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
                         let data = {
                             id : publishedList[i].id,
-                            img : publishedList[i].publicHeadImg[j].img
+                            img : publishedList[i].publicHeadImg[j].img,
+                            type : publishedList[i].publicHeadImg[j].type
                         }
                         this.state.perItem.push(data)
+                        break //如果一个作品中有多张图,需要全部显示的话,去掉break
                     }
                 }else{
                     //获取用户下的所有发布的说说
@@ -145,9 +174,11 @@ class Row extends Component {
                 for(let j = 0;j<collectionList[i].img.length;j++){
                     let data = {
                         id : collectionList[i].id,
-                        img : collectionList[i].img[j].img
+                        img : collectionList[i].img[j].img,
+                        type : publishedList[i].publicHeadImg[j].type
                     }
                     this.state.perItemComment.push(data)
+                    break //如果一个作品中有多张图,需要全部显示的话,去掉break
                 }
             }
         }
@@ -201,14 +232,26 @@ class Row extends Component {
             menuFlag : false    
           })
     }
+    //判断是否有图片或者视频
+    isImg = (img,type) => {
+        if(type == 'img'){
+            return (
+                <Image source={{uri : img}} style = {styles.userConter4Img}/>
+            )
+        }else if(type == 'video'){
+            return (
+                <Video style = {styles.video} source = {{uri : img}}/>
+            )
+        }
+    }
     //作品展示
     getAll = () => {
         let data = []
         if(this.state.changeTabNum == 0){
             if(this.state.perItem.length !=0){
                 for(let i = 0;i<this.state.perItem.length;i++){
-                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItem[i].id)}>
-                                <Image source={{uri : this.state.perItem[i].img}} style = {styles.userConter4Img}/>
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItem[i].id,this.state.perItem[i].type)}>
+                                {this.isImg(this.state.perItem[i].img,this.state.perItem[i].type)}
                             </TouchableOpacity>
                     data.push(view)
                 }
@@ -237,8 +280,8 @@ class Row extends Component {
         }else if(this.state.changeTabNum == 2){
             if(this.state.perItemComment.length !=0){
                 for(let i = 0;i<this.state.perItemComment.length;i++){
-                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id)}>
-                                <Image source={{uri : this.state.perItemComment[i].img}} style = {styles.userConter4Img}/>
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id,this.state.perItemComment[i].type)}>
+                                {this.isImg(this.state.perItemComment[i].img,this.state.perItemComment[i].type)}
                             </TouchableOpacity>
                     data.push(view)
                 }
@@ -250,10 +293,18 @@ class Row extends Component {
         return data
     }
     //跳作品想情
-    goDetail = (id) => {
+    goDetail = (id,type) => {
         const { navigation } = this.props;
+        let changeTabNum = 0
+        if(type == 'img'){
+            changeTabNum = 0
+        }else if(type == 'video'){
+            changeTabNum = 4
+        }else{
+            changeTabNum = 9
+        }
         this.props.navigation.navigate('Detail',{
-            id : id,changeTabNum : this.state.changeTabNum
+            id : id,changeTabNum : changeTabNum
         })
     }
     //切换作品,说说,收藏
@@ -284,6 +335,18 @@ class Row extends Component {
             perUser : name
         })
     }
+    //退出登陆
+    blackLogin = () => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Login',{
+            account : this.state.userName
+        })
+    }
+    //跳转搜索页面
+    rearch = () => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Rearch')
+    }
     render() {
         let {fadeAnim}  = this.state;
         return(
@@ -313,6 +376,7 @@ class Row extends Component {
                 </View>
                 <View style = {styles.userConter2}>
                     <Text style = {styles.userConterName}>{this.state.nickName}  {this.state.address}</Text>
+                    <Text style = {styles.personalResume}>{this.state.personalResume}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />
@@ -335,8 +399,8 @@ class Row extends Component {
                         {this.getAll()}
                     </View>
                     <View style = {styles.userConter5}>
-                        <Text style = {styles.userConter5Title}>完善个人主页</Text>
-                        <Text style = {styles.userConter5Msg}>完成3/4项</Text>
+                        <Text style = {styles.userConter5Title} onPress = {this.editPage.bind(this)}>完善个人主页</Text>
+                        <Text style = {styles.userConter5Msg}>完成{this.state.successPerMessage}项</Text>
                         <View style = {styles.userConter5Item}>
                             <View style = {[styles.userConter5ItemOne,styles.userConter5ItemOneR]}>
                                 <EvilIcons name = {'comment'} size = {50} color = {'#E066FF'} style = {styles.userConterTab} />
@@ -348,7 +412,7 @@ class Row extends Component {
                                 <EvilIcons name = {'link'} size = {50} color = {'#E066FF'} style = {styles.userConterTab} />
                                 <Text style = {styles.userConter5ItemOneT}>查找用户并关注</Text>
                                 <Text style = {styles.userConter5ItemOneS}>关注想了解的用户和感兴趣的内容.</Text>
-                                <Text style = {[styles.userConter5ItemOneB,styles.userConter5ItemOneButB]}>查看更多</Text>
+                                <Text style = {[styles.userConter5ItemOneB,styles.userConter5ItemOneButB]} onPress = {this.rearch.bind(this)}>查看更多</Text>
                             </View>
                         </View>
                     </View>
@@ -388,6 +452,12 @@ class Row extends Component {
                         </View>
                         <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>发现用户</Text></View>
                     </View>
+                    <View style = {styles.menuBar}>
+                        <View style = {styles.menuBarLeft}>
+                            <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
+                        </View>
+                        <View style = {styles.menuBarRight}><Text style = {[styles.menuBarRightT,styles.blackLogin]} onPress ={this.blackLogin.bind(this)}>退出登陆</Text></View>
+                    </View>
                     <Text style = {styles.menuClose} onPress = {this.closeMenu.bind(this)}>X</Text>
                 </Animated.View> 
             </View>
@@ -396,6 +466,12 @@ class Row extends Component {
  }
 
  const styles = StyleSheet.create({
+    personalResume:{
+        fontSize:13,
+        color:'#7A7A7A',
+        paddingTop:5,
+        paddingBottom:0
+    },
     bindClick: {
         flex:1
     },
@@ -548,6 +624,10 @@ class Row extends Component {
         alignItems: 'flex-start',
         backgroundColor:'#ffffff'
     },
+    video:{
+        width: windowsSize.width/4,
+        height: windowsSize.width/4,
+    },
     userConter4Img: {
         width: windowsSize.width/4,
         height: windowsSize.width/4,
@@ -691,5 +771,8 @@ class Row extends Component {
     saysayBg: {
         backgroundColor:'#2F4F4F',
         width:windowsSize.width
-    }
+    },
+    blackLogin: {
+        color:'#FF3E96'
+    },
 });

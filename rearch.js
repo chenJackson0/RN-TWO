@@ -155,14 +155,18 @@ import getFetch from './service';
         let newAddName = []
         if(this.state.reactInputT){
             let commentsItem = await getFetch.rearch({userName : this.state.reactInputT})
-            if(commentsItem.code == 200 && commentsItem.commitList.length!=0){
-                this.state.reactInputT = ''
-                this.state.onTFlag = false
+            if(commentsItem.code == 200){
+                if(commentsItem.commitList.length==0){
+                    this.state.onTFlag = true
+                }else{
+                    this.state.onTFlag = false
+                    this.state.reactInputT = ''
+                }
                 this.state.addCommentItem = commentsItem.commitList
                 for(let i = 0;i<commentsItem.commitList.length;i++){
-                    if(this.state.user == commentsItem.commitList[i].userName){
+                    if(this.state.user == commentsItem.commitList[i].userName || this.state.user == commentsItem.commitList[i].nickName){
                         this.state.userNameImg = commentsItem.commitList[i].img
-                        this.state.nickName = commentsItem.commitList[i].nickName ? commentsItem.commitList[i].nickName : user
+                        this.state.nickName = commentsItem.commitList[i].nickName ? commentsItem.commitList[i].nickName : this.state.user
                         if(commentsItem.commitList[i].focusOns.length == 0){
                             this.changFocusOnFlag(commentsItem.commitList,newAddName)
                         }else{
@@ -177,9 +181,9 @@ import getFetch from './service';
                     commentsItem.commitList[i].addCommentNum = commentsItem.commitList[i].focusOns.length
                 }
             }else if(commentsItem.code == 400){
-                this.state.onTFlag = true
+                alert(commentsItem.message)
             }else{
-                this.state.onTFlag = true
+                alert(commentsItem.message)
             }
             this.setState({
                 onTFlag : this.state.onTFlag,

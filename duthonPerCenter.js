@@ -24,6 +24,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import ImagePicker from 'react-native-image-picker'
 import Constants from './global.js'
+import Video from 'react-native-video';
 import getFetch from './service/index.js'
 const photoOptions = {
     title:'请选择',
@@ -115,17 +116,15 @@ class Row extends Component {
             if(userName == commentsItem[i].userName || userName == commentsItem[i].nickName){
                 this.state.address = commentsItem[i].address
                 this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : userName
+                this.state.fens = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
+                this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
+                this.state.personalResume = commentsItem[i].personalResume ? commentsItem[i].personalResume : '作者什么都没有说……'
                 for(let j = 0;j<commentsItem[i].fensi.length;j++){
                     if(commentsItem[i].fensi[j].name == perUserName){
                         this.state.focusOnText = '取消关注'
                         this.state.focusOnTextFlag = false
                     }
                 }
-            }
-            if(userName == commentsItem[i].userName || userName == commentsItem[i].nickName){
-                this.state.fens = commentsItem[i].fensi ? commentsItem[i].fensi.length : 0
-                this.state.FocusOn = commentsItem[i].focusOns ? commentsItem[i].focusOns.length : 0
-                break
             }
         }
         
@@ -139,9 +138,11 @@ class Row extends Component {
                     for(let j = 0;j<publishedList[i].publicHeadImg.length;j++){
                         let data = {
                             id : publishedList[i].id,
-                            img : publishedList[i].publicHeadImg[j].img
+                            img : publishedList[i].publicHeadImg[j].img,
+                            type : publishedList[i].publicHeadImg[j].type
                         }
                         this.state.perItem.push(data)
+                        break //如果一个作品中有多张图,需要全部显示的话,去掉break
                     }
                 }else{
                     //获取用户下的所有发布的说说
@@ -152,13 +153,15 @@ class Row extends Component {
         }
         //获取收藏作品
         for(let i = 0;i<collectionList.length;i++){
-            if(userName == collectionList[i].perUserName){
+            if(userName == collectionList[i].perUserName||userName == collectionList[i].name){
                 for(let j = 0;j<collectionList[i].img.length;j++){
                     let data = {
                         id : collectionList[i].id,
-                        img : collectionList[i].img[j].img
+                        img : collectionList[i].img[j].img,
+                        type : collectionList[i].img[j].type
                     }
                     this.state.perItemComment.push(data)
+                    break //如果一个作品中有多张图,需要全部显示的话,去掉break
                 }
             }
         }
@@ -293,14 +296,26 @@ class Row extends Component {
             menuFlag : false    
           })
     }
+    //判断是否有图片或者视频
+    isImg = (img,type) => {
+        if(type == 'img'){
+            return (
+                <Image source={{uri : img}} style = {styles.userConter4Img}/>
+            )
+        }else if(type == 'video'){
+            return (
+                <Video style = {styles.video} source = {{uri : img}}/>
+            )
+        }
+    }
     //作品展示
     getAll = () => {
         let data = []
         if(this.state.changeTabNum == 0){
             if(this.state.perItem.length !=0){
                 for(let i = 0;i<this.state.perItem.length;i++){
-                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItem[i].id)}>
-                                <Image source={{uri : this.state.perItem[i].img}} style = {styles.userConter4Img}/>
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItem[i].id,this.state.perItem[i].type)}>
+                                {this.isImg(this.state.perItem[i].img,this.state.perItem[i].type)}
                             </TouchableOpacity>
                     data.push(view)
                 }
@@ -331,8 +346,8 @@ class Row extends Component {
         }else if(this.state.changeTabNum == 2){
             if(this.state.perItemComment.length !=0){
                 for(let i = 0;i<this.state.perItemComment.length;i++){
-                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id)}>
-                                <Image source={{uri : this.state.perItemComment[i].img}} style = {styles.userConter4Img}/>
+                    let view = <TouchableOpacity style={styles.userConter4Img} key = {i} onPress = {this.goDetail.bind(this,this.state.perItemComment[i].id,this.state.perItemComment[i].type)}>
+                                {this.isImg(this.state.perItemComment[i].img,this.state.perItemComment[i].type)}
                             </TouchableOpacity>
                     data.push(view)
                 }
@@ -359,10 +374,18 @@ class Row extends Component {
         })
     }
     //跳作品详情
-    goDetail = (id) => {
+    goDetail = (id,type) => {
         const { navigation } = this.props;
+        let changeTabNum = 0
+        if(type == 'img'){
+            changeTabNum = 0
+        }else if(type == 'video'){
+            changeTabNum = 4
+        }else{
+            changeTabNum = 9
+        }
         this.props.navigation.navigate('Detail',{
-            id : id,changeTabNum : this.state.changeTabNum
+            id : id,changeTabNum : changeTabNum
         })
     }
     //加载所以作品的图
@@ -407,6 +430,7 @@ class Row extends Component {
                 </View>
                 <View style = {styles.userConter2}>
                     <Text style = {styles.userConterName}>{this.state.nickName} {this.state.address}</Text>
+                    <Text style = {styles.personalResume}>{this.state.personalResume}</Text>
                 </View>
                 <View style = {styles.userConter3}>
                     {/* <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.userConterTab} />
@@ -435,6 +459,12 @@ class Row extends Component {
  }
 
  const styles = StyleSheet.create({
+    personalResume:{
+        fontSize:13,
+        color:'#7A7A7A',
+        paddingTop:5,
+        paddingBottom:0
+    },
     noT: {
         fontSize:13,
         color:'#898989',
@@ -583,6 +613,10 @@ class Row extends Component {
         flexWrap: 'wrap',
         alignItems: 'flex-start',
         backgroundColor:'#ffffff'
+    },
+    video:{
+        width: windowsSize.width/4,
+        height: windowsSize.width/4,
     },
     userConter4Img: {
         width: windowsSize.width/4,

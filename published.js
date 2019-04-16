@@ -73,7 +73,8 @@ const photoOptions = {
                 rightT : '确定',
                 type : 'delImg'
             }
-        ]
+        ],
+        nickName : ''
         }
     }
     num = -1
@@ -84,9 +85,9 @@ const photoOptions = {
             this.id = published.list.length!=0 ? published.list[0].id + 1 : 0
             this.init(published.userList)
         }else if(published.code == 400){
-            
+            alert(published.message)
         }else{
-
+            alert(published.message)
         }
         
     }
@@ -101,13 +102,21 @@ const photoOptions = {
         let itemList = {}
         let imgFlag = navigation.getParam("imgFlag")
         let avatarSource = navigation.getParam("avatarSource")
+        let type = navigation.getParam("type")
         let user = navigation.getParam("user")
+        if(type == 'img'){
+            itemList.type = 'img'
+        }else if(type == 'video'){
+            itemList.type = 'video'
+        }else{
+            itemList.type = null
+        }
         itemList.img = avatarSource
         itemData.push(itemList)
         for(let i = 0;i<commentsItem.length;i++){
             if(user == commentsItem[i].userName){
                 this.state.userNameImg = commentsItem[i].img
-                user = commentsItem[i].nickName ? commentsItem[i].nickName : user
+                this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : user
                 break
             }
         }
@@ -116,6 +125,7 @@ const photoOptions = {
             item : itemData,
             avatarSource : avatarSource,
             user: user,
+            nickName : this.state.nickName,
             userNameImg : this.state.userNameImg,
             publishedList : published
         })
@@ -297,7 +307,7 @@ const photoOptions = {
                 id : this.id,
                 perImg : this.state.userNameImg,
                 userName : this.state.user,
-                nickName : this.state.user,
+                nickName : this.state.nickName,
                 publicHeadImg : [{img : this.state.item[0].img}],
                 text : this.state.publisedText,
                 flag : true,

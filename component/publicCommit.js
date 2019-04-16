@@ -10,7 +10,6 @@ export default class PublicCommit extends Component{
   constructor(props){
       super(props)
       this.state = {
-        fadeAnim: new Animated.Value(0),
         callName : '',
         comments : '',
         replyToCommentText : '',

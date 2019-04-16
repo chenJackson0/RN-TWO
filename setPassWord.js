@@ -88,6 +88,7 @@ export default class SetPassWord extends Component{
         this.message = commentsItem.message
         return false;
     }else if(commentsItem.code == 500){
+        this.message = commentsItem.message
         return false;
     }
     

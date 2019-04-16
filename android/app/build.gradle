@@ -134,6 +134,9 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-orientation')
+    implementation project(':react-native-video')
+    implementation project(':react-native-fs')
     implementation project(':react-native-image-picker')
     implementation project(':react-native-device-info')
     implementation project(':react-native-i18n')

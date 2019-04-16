@@ -176,14 +176,14 @@ export default class ComList extends Component{
                 let data = {
                     id : this.state.addCommentItem[i].id,
                     name : name,
-                    nickName : this.state.addCommentItem[deteleFensiIndex].nickName,
+                    nickName : this.state.addCommentItem[deteleFensiIndex].nickName?this.state.addCommentItem[deteleFensiIndex].nickName:name,
                     img : img
                 }
                 this.state.addCommentItem[deteleFochsIndex].focusOns.push(data)
                 let dataT = {
                     id : this.state.addCommentItem[i].id,
                     name : this.state.user,
-                    nickName : this.state.addCommentItem[deteleFochsIndex].nickName,
+                    nickName : this.state.addCommentItem[deteleFochsIndex].nickName?this.state.addCommentItem[deteleFochsIndex].nickName:this.state.user,
                     img : this.state.userNameImg
                 }
                 this.state.addCommentItem[deteleFensiIndex].fensi.push(dataT)
@@ -219,10 +219,9 @@ export default class ComList extends Component{
         if(!this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
             if(this.state.user == this.state.userName){
                 this.state.FocusOn = this.state.FocusOn + 1
-                this.state.fens = this.state.fens + 1
-            }else{
-                this.state.fens = this.state.fens + 1
             }
+        }else{
+            this.state.FocusOn = this.state.FocusOn - 1
         }
         this.setState({
             addCommentItem : this.state.addCommentItem,

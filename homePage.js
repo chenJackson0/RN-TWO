@@ -32,6 +32,7 @@ import ImagePicker from 'react-native-image-picker'
 import getFetch from './service/index.js'
 import ConfirmationWindow from './component/confirmationWindow' //弹窗选择组件
 import PublicCommit from './component/publicCommit' //评论区组件
+import Video from './component/playVideo'
 const photoOptions = {
     title:'请选择',
     quality: 0.8,
@@ -99,7 +100,9 @@ const options = {
             callName : '',
             addId : 0,
             perId : '',
-            nickName :''
+            nickName :'',
+
+            isPlaying : true
         }
     }
     //时间戳转时间
@@ -159,33 +162,37 @@ const options = {
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
         let lastTime
         //获取作品列表
-        for(let i = 0;i<publishedList.length;i++){
-            lastTime = newTiem - publishedList[i].time
-            if(lastTime>=0){
-                getChangeTime = this.changeTime(lastTime/1000)
-                publishedList[i].timeText = getChangeTime
-                if(publishedList[i].typeNum == 0){
-                    if(publishedList[i].type == 'works'){
-                        works.push(publishedList[i])
-                        this.state.onTFlagF = false
-                    }
-                }else if(publishedList[i].typeNum == 1){
-                    //私密的
-    
-                }else if(publishedList[i].typeNum == 2){
-                    for(let i = 0;i<commentsItem.length;i++){
-                        if(user == commentsItem[i].userName){
-                            for(let j = 0;j<commentsItem[i].focusOns.length;j++){
-                                if(publishedList[i].userName == commentsItem[i].focusOns[j].name){
-                                    works.push(publishedList[i])
+        if(publishedList.length == 0){
+            this.state.onTFlag = true
+        }else{
+            this.state.onTFlag = false
+            for(let i = 0;i<publishedList.length;i++){
+                lastTime = newTiem - publishedList[i].time
+                if(lastTime>=0){
+                    getChangeTime = this.changeTime(lastTime/1000)
+                    publishedList[i].timeText = getChangeTime
+                    if(publishedList[i].typeNum == 0){
+                        if(publishedList[i].type == 'works'){
+                            works.push(publishedList[i])
+                        }
+                    }else if(publishedList[i].typeNum == 1){
+                        //私密的
+        
+                    }else if(publishedList[i].typeNum == 2){
+                        for(let i = 0;i<commentsItem.length;i++){
+                            if(user == commentsItem[i].userName){
+                                for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                                    if(publishedList[i].userName == commentsItem[i].focusOns[j].name){
+                                        works.push(publishedList[i])
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }else{
-                continue
-            } 
+                }else{
+                    continue
+                } 
+            }
         }
         //获取推荐的用户
         for(let i = 0;i<commentsItem.length;i++){
@@ -194,12 +201,13 @@ const options = {
                 this.state.nickName = commentsItem[i].nickName ? commentsItem[i].nickName : user
                 if(commentsItem[i].focusOns.length == 0){
                     this.changFocusOnFlag(commentsItem,newAddName)
+                    this.state.onFFlag = true
                 }else{
                     for(let j = 0;j<commentsItem[i].focusOns.length;j++){
                         newAddName.push(commentsItem[i].focusOns[j].name)
                         foucsOnList.push(commentsItem[i].focusOns[j])
                         this.changFocusOnFlag(commentsItem,newAddName)
-                        this.state.onFFlagF = false
+                        this.state.onFFlag = false
                     }
                 }
             }
@@ -225,16 +233,6 @@ const options = {
             }
         }
         //初始化
-        if(this.state.onTFlagF){
-            this.state.onTFlag = true
-        }else{
-            this.state.onTFlag = false
-        }
-        if(this.state.onFFlagF){
-            this.state.onFFlag = true
-        }else{
-            this.state.onFFlag = false
-        }
         this.setState({
             data : works,
             nickName : this.state.nickName,
@@ -323,21 +321,34 @@ const options = {
         //方法二
         // addCommentItem.splice(num,1)
     }
-    //判断是否有图片
-    isImg = (img) => {
-        if(img){
+    //判断是否有图片或者视频
+    isImg = (img,type) => {
+        if(type == 'img'){
             return (
                 <Image source={{uri:img}} style = {styles.perMaxImg} />
             )
-        }else{
-            return
+        }else if(type == 'video'){
+            return (
+                <Video video = {img}/>
+            )
         }
     }
+    _onLoaded = (data) => {
+        this.setState({
+          duration: data.duration,
+        });
+      };
     //跳转作品详情
-    goDetail = (id) => {
+    goDetail = (id,type) => {
         const { navigation } = this.props;
+        let changeTabNum = 0
+        if(type == 'img'){
+            changeTabNum = 0
+        }else if(type == 'video'){
+            changeTabNum = 4
+        }
         this.props.navigation.navigate('Detail',{
-            id : id,changeTabNum : 0
+            id : id,changeTabNum : changeTabNum
         })
     }
     //跳转作者主页
@@ -369,7 +380,7 @@ const options = {
             let data = {
                 id : this.state.data[i].id,
                 perUserName : this.state.user,
-                name : this.state.data[i].userName,
+                name : this.state.data[i].nickName,
                 img : this.state.data[i].publicHeadImg
             }
             let collectionL = await getFetch.collection(data) //收藏
@@ -503,18 +514,14 @@ const options = {
         }
         for(let i = 0;i<this.state.data.length;i++){
            let item =   <View style = {styles.perListItem} key = {i} ref = {i}>
-                <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.data[i].userName,this.state.data[i].perImg)}>
-                    <View style = {styles.perTitle}>
-                        <Image source={{uri:this.state.data[i].perImg}} style = {styles.perListImg} />
-                        <Text style = {styles.perName}>
-                            {this.state.data[i].nickName ? this.state.data[i].nickName : this.state.data[i].userName}
-                        </Text>
-                        <Ionicons name = {'ios-more'} size = {16} color = {'#000000'} style = {styles.icon}/>
-                    </View>
-                </TouchableOpacity>
-                <TouchableOpacity onPress = {this.goDetail.bind(this,this.state.data[i].id)}>
-                    {this.isImg(this.state.data[i].publicHeadImg[0].img)}
-                </TouchableOpacity>
+                <View style = {styles.perTitle}>
+                    <Image source={{uri:this.state.data[i].perImg}} style = {styles.perListImg}/>
+                    <Text style = {styles.perName} onPress = {this.goPersonCenter.bind(this,this.state.data[i].userName,this.state.data[i].perImg)}>
+                        {this.state.data[i].nickName ? this.state.data[i].nickName : this.state.data[i].userName}
+                    </Text>
+                    <Text style = {styles.detailT} onPress = {this.goDetail.bind(this,this.state.data[i].id,this.state.data[i].publicHeadImg[0].type)}>查看详情</Text>
+                </View>
+                {this.isImg(this.state.data[i].publicHeadImg[0].img,this.state.data[i].publicHeadImg[0].type)}
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i,this.state.data[i].id)}/>
@@ -859,7 +866,7 @@ const options = {
     //发布作品不带图片
     videoImg = () => {
         const { navigation } = this.props;
-        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg : this.state.userNameImg})
+        this.props.navigation.navigate('Published',{imgFlag : false,user : this.state.user,userNameImg:this.state.userNameImg})
     }
     //唤起发布作品选择组件
     getImg = () => {
@@ -885,10 +892,9 @@ const options = {
                 
             }
             else {
-                alert(JSON.stringify(response))
-                // let source = response.uri;
-                // const { navigation } = this.props;
-                // this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
+                let source = response.uri;
+                const { navigation } = this.props;
+                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg,type:'video'})
             }
         });
     }
@@ -911,7 +917,7 @@ const options = {
             else {
                 let source = response.uri;
                 const { navigation } = this.props;
-                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg})
+                this.props.navigation.navigate('Published',{imgFlag :true,avatarSource:source,user : this.state.user,userNameImg:this.state.userNameImg,type:'img'})
             }
         });
     }
@@ -944,7 +950,7 @@ const options = {
         let {sharefadeAnim}  = this.state;
         return(
             <View style = {styles.max}>
-                <Header title = {this.state.title} videoImg = {this.videoImg.bind(this)} open = {true} getImg = {this.getImg.bind(this)}/>
+                <Header title = {this.state.title} open = {true} getImg = {this.getImg.bind(this)}/>
                 <ScrollView style = {styles.items}>
                     <View style = {styles.listItem}>
                     {this.onF()}
@@ -1395,7 +1401,9 @@ const options = {
         fontSize:10,
         color:'#333333'
     },
-    icon: {
+    detailT: {
+        fontSize:10,
+        color:'#898989',
         position:'absolute',
         top:9,
         right:8

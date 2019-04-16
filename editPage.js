@@ -10,7 +10,7 @@ import {
     TextInput,
     ScrollView
 } from 'react-native';
-
+// import imgBase64 from 'react-native-fs';
  //引用插件
 import Header from './component/editPageHeads'
 // 取得屏幕的宽高Dimensions
@@ -94,7 +94,10 @@ const photoOptions = {
                 
             }
             else {
-                let source = response.uri;            
+                let source = response.uri;
+                // imgBase64.readFile(source,'base64').then((base64Img)=>{
+                //     source = base64Img
+                // })
                 this.setState({
                     avatarSource: source
                 });
@@ -289,7 +292,7 @@ const photoOptions = {
                                     })
                                 }}
                                 value={this.state.sex}
-                                maxLength = {1}
+                                maxLength = {3}
                                 autoCapitalize = "none"
                                 placeholder = "性别"
                                 clearButtonMode = "while-editing"

@@ -21,6 +21,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import Swiper from 'react-native-swiper';
 import Constants from './global.js'
 import getFetch from './service/index.js'
+import Video from 'react-native-video';
 import ConfirmationWindow from './component/confirmationWindow'
  export default class Detail extends Component {
   constructor(props) {
@@ -150,24 +151,18 @@ import ConfirmationWindow from './component/confirmationWindow'
         })
     }
     //加载图片或视频
-    showWokerImg = () => {
-        if(this.state.changeTabNum == 0 || this.state.changeTabNum == 2){
-            let wokerImgView = <View style = {styles.workeImg}>
-            <Swiper style={styles.wrapper} autoplay = {true}
-            >
-                {this.workeImg()}
-            </Swiper>
-            </View>
-            return wokerImgView
-        }else if(this.state.changeTabNum == 1){
-            
-        }
-    }
     workeImg = ()=> {
         let data = []
-        for(let i = 0;i<this.state.itemImg.length;i++){
-            let view = <Image source={{uri : this.state.itemImg[i].img}} style = {styles.workeImg} key = {i}/>
-            data.push(view)
+        if(this.state.changeTabNum == 0){
+            for(let i = 0;i<this.state.itemImg.length;i++){
+                let view = <Image source={{uri : this.state.itemImg[i].img}} style = {styles.workeImg} key = {i}/>
+                data.push(view)
+            }
+        }else if(this.state.changeTabNum == 4){
+            for(let i = 0;i<this.state.itemImg.length;i++){
+                let view = <Video style = {styles.video} source = {{uri : this.state.itemImg[i].img}} key = {i}/>
+                data.push(view)
+            }
         }
         return data
     }
@@ -537,7 +532,12 @@ import ConfirmationWindow from './component/confirmationWindow'
         return(
             <View style = {styles.max}>
                 <Header title = {this.state.title} goBackPage = {this.goBackPage.bind(this)}/>
-                {this.showWokerImg()}
+                <View style = {[styles.workeImg,this.state.changeTabNum == 9 ? styles.workeImgDis : '',]}>
+                    <Swiper style={styles.wrapper} autoplay = {true}
+                    >
+                        {this.workeImg()}
+                    </Swiper>
+                </View>
                 <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.user,this.state.userNameImg)}>
                     <View style = {styles.detailMsg}>
                         <Image source={{uri : this.state.userNameImg}} style = {styles.authorImg}/>
@@ -588,6 +588,13 @@ import ConfirmationWindow from './component/confirmationWindow'
  }
 
  const styles = StyleSheet.create({
+    workeImgDis :{
+        display :'none'
+    },
+    video:{
+        height:280,
+        width:ScreenWidth
+    },
     opacityBg: {
         position:'absolute',
         right:0,
@@ -609,13 +616,13 @@ import ConfirmationWindow from './component/confirmationWindow'
     },
     workeImg: {
         width:ScreenWidth,
-        height:200
+        height:280
     },
     wrapper: {
-        // height:250
+        height:280
     },
     workeImgs:{
-        // height:200
+        height:280
     },
     adimatedView: {
         paddingLeft:15,

@@ -94,7 +94,11 @@ get_fetch = async (url,data,type) => {
         return results;
       })
       .catch((error) => {
-        console.error(error);
+        let errorDate = {
+          code : 500,
+          message : '网络连接失败或者服务器没有开启,请检查网络和服务是否启动.'
+        }
+        return errorDate
       });
   }
   const getFetch = {
