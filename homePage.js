@@ -12,7 +12,9 @@ import {
     Share,
     SectionList,
     TouchableOpacity,
-    DeviceEventEmitter
+    DeviceEventEmitter,
+    UIManager,
+    findNodeHandle
 } from 'react-native';
 
  //引用插件
@@ -102,7 +104,8 @@ const options = {
             perId : '',
             nickName :'',
 
-            isPlaying : true
+            isPlaying : true,
+            refI : 0
         }
     }
     //时间戳转时间
@@ -322,15 +325,31 @@ const options = {
         // addCommentItem.splice(num,1)
     }
     //判断是否有图片或者视频
-    isImg = (img,type) => {
+    isImg = (img,type,i) => {
         if(type == 'img'){
             return (
                 <Image source={{uri:img}} style = {styles.perMaxImg} />
             )
         }else if(type == 'video'){
             return (
-                <Video video = {img}/>
+                <Video video = {img} k = {i} setVh = {this.setVh.bind(this)}/>
             )
+        }
+    }
+    //获取子组件值
+    setVh = (vh,i) => {
+        if(vh){
+            this.getScreenXY(vh,i)
+        }
+    }
+    // 获取作品高度
+    getScreenXY = (vh,i)=>{
+        if(vh){
+            var cut = this.refs[i]
+            const handle = findNodeHandle(cut);
+            UIManager.measure(handle, (x,y,width,height,pageX,pageY) => {
+                this.refs.scrollView.scrollTo({y: y-90})
+            })
         }
     }
     _onLoaded = (data) => {
@@ -521,7 +540,7 @@ const options = {
                     </Text>
                     <Text style = {styles.detailT} onPress = {this.goDetail.bind(this,this.state.data[i].id,this.state.data[i].publicHeadImg[0].type)}>查看详情</Text>
                 </View>
-                {this.isImg(this.state.data[i].publicHeadImg[0].img,this.state.data[i].publicHeadImg[0].type)}
+                {this.isImg(this.state.data[i].publicHeadImg[0].img,this.state.data[i].publicHeadImg[0].type,i)}
                 <View style = {styles.shareAndCollection}>
                     <View style = {styles.left}>
                         <Entypo name = {this.state.data[i].cllFlag ? 'heart-outlined' : 'heart'} size = {26} color = {'black'} style = {styles.call} onPress = {this.clickCall.bind(this,i,this.state.data[i].id)}/>
@@ -951,7 +970,7 @@ const options = {
         return(
             <View style = {styles.max}>
                 <Header title = {this.state.title} open = {true} getImg = {this.getImg.bind(this)}/>
-                <ScrollView style = {styles.items}>
+                <ScrollView style = {styles.items} ref={'scrollView'}>
                     <View style = {styles.listItem}>
                     {this.onF()}
                         <ScrollView style = {styles.perItem} horizontal = {true} showsHorizontalScrollIndicator={false}>

@@ -347,6 +347,13 @@ class Row extends Component {
         const { navigation } = this.props;
         this.props.navigation.navigate('Rearch')
     }
+    //跳转礼品页面
+    projuctList = () => {
+        const { navigation } = this.props;
+        this.props.navigation.navigate('Projuct',{
+            userName : this.state.userName
+        })
+    }
     render() {
         let {fadeAnim}  = this.state;
         return(
@@ -438,7 +445,11 @@ class Row extends Component {
                         <View style = {styles.menuBarLeft}>
                             <EvilIcons name = {'archive'} size = {30} color = {'#E066FF'} style = {styles.menuBarIcon} />
                         </View>
-                        <View style = {styles.menuBarRight}><Text style = {styles.menuBarRightT}>收藏夹</Text></View>
+                        <View style = {styles.menuBarRight}>
+                            <Text style = {styles.menuBarRightT} onPress = {this.projuctList.bind(this)}>
+                                积分兑换礼品
+                            </Text>
+                        </View>
                     </View>
                     <View style = {styles.menuBar}>
                         <View style = {styles.menuBarLeft}>

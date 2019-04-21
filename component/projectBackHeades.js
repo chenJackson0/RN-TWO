@@ -4,7 +4,7 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import Feather from 'react-native-vector-icons/Feather'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 global.deviceWidth = Dimensions.get('window').width
-export default class BackHeads extends Component{
+export default class ProjectBackHeades extends Component{
 
   constructor(props){
       super(props)
@@ -14,6 +14,9 @@ export default class BackHeads extends Component{
   };
   go = () => {
       this.props.goBackPage()
+  }
+  goShopping = () => {
+      this.props.goShopping()
   }
   render() {
     return (
@@ -25,7 +28,17 @@ export default class BackHeads extends Component{
                 <Text style = {styles.headerText}>{this.props.title}</Text>
             </View>
             <View style = {styles.headerV}>
-                
+                <Feather name = {'shopping-cart'} size = {22} color = {'black'}/>
+                <Animated.View style={[styles.cardNumber,
+                {
+                    transform: [{
+                        scale: this.props.springBig
+                        }]
+                     }]
+                }
+                >
+                <Text style={[styles.numberText, {color: '#ffffff'}]} onPress = {this.goShopping.bind(this)}>{this.props.number}</Text>
+                </Animated.View>
             </View>
             <View style = {styles.headerS}>
                 {/* <Feather name = {'shopping-cart'} size = {22} color = {'black'}/> */}

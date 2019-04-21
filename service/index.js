@@ -79,6 +79,14 @@ selectPerUser = async (data) => {
 editPerUser = async (data) => {
   return await get_fetch(part+'registered/editPerUser',data,'application/json')
 }
+//查询礼品
+projectlist = async (data) => {
+  return await get_fetch(part+'projects/projectlist',data,'application/json')
+}
+//添加购物车
+shoppingCart = async (data) => {
+  return await get_fetch(part+'shoppingCart/shoppingCart',data,'application/json')
+}
 //请求接口
 get_fetch = async (url,data,type) => {
   return await fetch(url,{
@@ -121,6 +129,8 @@ get_fetch = async (url,data,type) => {
     editPerUser : editPerUser,
     workPerImg : workPerImg,
     changeFocus : changeFocus,
-    changeFensi : changeFensi
+    changeFensi : changeFensi,
+    projectlist : projectlist,
+    shoppingCart : shoppingCart
   }
   export default getFetch

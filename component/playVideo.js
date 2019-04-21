@@ -345,6 +345,7 @@
 // });
 
 global.deviceWidth = Dimensions.get('window').width
+global.deviceHeight = Dimensions.get('window').height
 import React, { Component } from 'react';
 import {
     StyleSheet,
@@ -354,12 +355,14 @@ import {
     Dimensions,
     TouchableWithoutFeedback,
     Slider,
-    UIManager
+    UIManager,
+    findNodeHandle
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import Video from 'react-native-video';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
+global.time = null
 export default class BackHeads extends Component{
     constructor(props){
         super(props)
@@ -369,6 +372,7 @@ export default class BackHeads extends Component{
             isMune : true,
             startTime : 0,
             endTime : 0,
+            vh : true,
         }
     };
     //播放和暂停视频
@@ -395,11 +399,6 @@ export default class BackHeads extends Component{
                 isMune : true
             })
         }
-        // setTimeout(()=>{
-        //     this.setState({
-        //         isMune : true
-        //     })
-        // },5000)
     }
     //获取视频时长
     onLoad = (data) => {
@@ -429,7 +428,7 @@ export default class BackHeads extends Component{
     //视频播放结束
     onPlayEnd = () => {
         this.setState({
-            startTime: this.state.startTime,
+            startTime: 0,
             isPlaying: true
         });
     };
@@ -437,14 +436,30 @@ export default class BackHeads extends Component{
     onSliderValueChanged(startTime) {
         this.videoPlayer.seek(startTime);
     }
+    //放大视频或搜小
+    amplification = async (i) => {
+        if(this.state.vh){
+            this.setState({
+                vh : false
+            })
+        }else{
+            this.setState({
+                vh : true
+            })
+        }
+        await this.props.setVh(this.state.vh,i)
+    }
+    //传值给父
+    
     render() {
         return (
-            <View style = {styles.playButton} >
-                 <TouchableWithoutFeedback style = {[styles.video]} onPress = {this.showMune.bind(this)}>
-                    <Video style = {styles.video} source = {{uri : this.props.video}}
+            <View style = {[styles.playButton,this.state.vh ? '' : styles.amplification]}>
+                 <TouchableWithoutFeedback onPress = {this.showMune.bind(this)}>
+                    <Video style = {[styles.video,this.state.vh ? '' : styles.videoVh]} source = {{uri : this.props.video}}
                     resizeMode={'contain'}
                     ref={(ref) => this.videoPlayer = ref}
                     paused={this.state.isPlaying}
+                    repeat = {true}
                     onLoad = {this.onLoad.bind(this)}
                     onProgress = {this.onProgressChanged.bind(this)}
                     onEnd = {this.onPlayEnd.bind(this)}
@@ -452,7 +467,7 @@ export default class BackHeads extends Component{
                 </TouchableWithoutFeedback>
                 <AntDesign name = {'play'} style={[styles.playIcon,this.state.isPlaying ? '' : styles.disPlayIcon]} size = {30} color = {'black'} onPress = {this.playVideo.bind(this)}/>
                 <View style = {[styles.mnueVideo,this.state.isMune ? styles.isMuneDis : '']}>
-                    <Entypo name = {this.state.isPlaying ? 'controller-play' : 'controller-paus'} size = {30} style = {styles.icon} color = {'white'} onPress = {this.playVideo.bind(this)}/>
+                    <Entypo name = {this.state.isPlaying ? 'controller-play' : 'controller-paus'} size = {30} style = {[styles.icon,this.state.vh ? '' : styles.iconVhL]} color = {'white'} onPress = {this.playVideo.bind(this)}/>
                     <Text style = {styles.time}>{this.changTime(this.state.startTime)}</Text>
                     <Slider
                         style = {styles.duration}
@@ -460,11 +475,12 @@ export default class BackHeads extends Component{
                         minimumTrackTintColor={'#ffffff'}
                         value={this.state.startTime}
                         minimumValue={0}
+                        thumbImage = {require('../image/per.png')}
                         maximumValue={this.state.endTime}
                         onValueChange={(startTime) => { this.onSliderValueChanged(startTime) }}
                     />
                     <Text style = {styles.time}>{this.changTime(this.state.endTime)}</Text>
-                    <MaterialIcons name = {'crop-free'} size = {30} style = {styles.icon} color = {'white'}/>
+                    <MaterialIcons name = {this.state.vh ? 'crop-free' : 'fullscreen-exit'} size = {30} style = {[styles.icon,this.state.vh ? '' : styles.iconVhR]} color = {'white'} onPress = {this.amplification.bind(this,this.props.k)}/>
                 </View>
             </View>
         );
@@ -475,22 +491,29 @@ const styles = StyleSheet.create({
     isMuneDis:{
         display:'none'
     },
+    iconVhL:{
+        textAlign:'right'
+    },
+    iconVhR:{
+        textAlign:'left'
+    },
     mnueVideo:{
         flexDirection:'row',
         position:'absolute',
         justifyContent:'center',
         alignItems:'center',
         left:0,
-        bottom:-2,
+        bottom:0,
         backgroundColor:'#000000',
         paddingLeft:10,
         paddingRight:10,
         paddingTop:10,
-        paddingBottom:10,
+        paddingBottom:8,
         opacity:0.6
     },
     icon:{
-        flex:1
+        flex:1,
+        textAlign:'center',
     },
     time:{
         flex:2,
@@ -500,8 +523,6 @@ const styles = StyleSheet.create({
     },
     duration:{
         flex:4,
-        // backgroundColor:'#FFFAFA',
-        // borderRadius:1
     },
     playButton:{
         justifyContent:'center',
@@ -509,14 +530,11 @@ const styles = StyleSheet.create({
         height:272,
         width:'100%',
         position:'relative',
+        backgroundColor:'#000000'
     },
     video:{
         height:280,
         width:'100%',
-        marginTop:30,
-        position:'absolute',
-        top:-32,
-        left:0
     },
     playIcon:{
         width:30,
@@ -527,5 +545,17 @@ const styles = StyleSheet.create({
     },
     disPlayIcon:{
         display:'none'
-    }
+    },
+    amplification:{
+        height:deviceWidth,
+        width:deviceHeight-140,
+        transform: [{rotate:'90deg'}],
+        left : -deviceWidth/2-35+70,
+        zIndex:9999,
+        top:0,
+    },
+    videoVh : {
+        height:deviceWidth,
+        width:deviceHeight-70,
+    },
 });

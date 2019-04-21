@@ -20,6 +20,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import Octicons from 'react-native-vector-icons/Octicons'
+import Projuct from "./projuct"
 // import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 export default class App extends Component {
     render() {
@@ -152,11 +153,12 @@ const RootStack = createStackNavigator(
       headerTitle:"确定密码",
     })},
     Detail:{screen:Detail,navigationOptions :({navigation})=>({
-      // headerTitle:"首页",
       header:null
     })},
     DuthonPerCenter:{screen:DuthonPerCenter,navigationOptions :({navigation})=>({
-      // headerTitle:"首页",
+      header:null
+    })},
+    Projuct:{screen:Projuct,navigationOptions :({navigation})=>({
       header:null
     })},
   },

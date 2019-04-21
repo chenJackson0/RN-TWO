@@ -10,19 +10,23 @@ import {
     SectionList,
     ScrollView,
     TextInput,
-    TouchableOpacity
+    TouchableOpacity,
+    UIManager,
+    findNodeHandle
 } from 'react-native';
 
  //引用插件
 import Header from './component/backHeads'
 // 取得屏幕的宽高Dimensions
-const { ScreenWidth, height } = Dimensions.get('window');
+global.ScreenWidth = Dimensions.get('window').width
+global.ScreenHeight = Dimensions.get('window').height
 import Entypo from 'react-native-vector-icons/Entypo'
 import Swiper from 'react-native-swiper';
 import Constants from './global.js'
 import getFetch from './service/index.js'
-import Video from 'react-native-video';
 import ConfirmationWindow from './component/confirmationWindow'
+// import Video from './component/playVideo'
+import Video from 'react-native-video';
  export default class Detail extends Component {
   constructor(props) {
    super(props);
@@ -62,7 +66,8 @@ import ConfirmationWindow from './component/confirmationWindow'
                     type : 'delete'
                 }
             ],
-            nickName : ''
+            nickName : '',
+            vh : true
         }
     }
     //时间戳转时间
@@ -151,7 +156,7 @@ import ConfirmationWindow from './component/confirmationWindow'
         })
     }
     //加载图片或视频
-    workeImg = ()=> {
+    workeImg = (videoImg)=> {
         let data = []
         if(this.state.changeTabNum == 0){
             for(let i = 0;i<this.state.itemImg.length;i++){
@@ -160,11 +165,23 @@ import ConfirmationWindow from './component/confirmationWindow'
             }
         }else if(this.state.changeTabNum == 4){
             for(let i = 0;i<this.state.itemImg.length;i++){
-                let view = <Video style = {styles.video} source = {{uri : this.state.itemImg[i].img}} key = {i}/>
+                let view = <Video source = {{uri : this.state.itemImg[i].img}} key = {i} style = {styles.workeImg}/>
                 data.push(view)
             }
         }
         return data
+    }
+    //获取子组件值
+    setVh = (vh,i) => {
+        if(vh){
+            this.setState({
+                vh : !vh
+            })
+        }
+    }
+    // 获取作品高度
+    getScreenXY = (vh,i)=>{
+       
     }
     //返回
     goBackPage = () =>{
@@ -532,12 +549,13 @@ import ConfirmationWindow from './component/confirmationWindow'
         return(
             <View style = {styles.max}>
                 <Header title = {this.state.title} goBackPage = {this.goBackPage.bind(this)}/>
-                <View style = {[styles.workeImg,this.state.changeTabNum == 9 ? styles.workeImgDis : '',]}>
-                    <Swiper style={styles.wrapper} autoplay = {true}
+                <View style = {[styles.workeImg,this.state.changeTabNum == 9 ? styles.workeImgDis : '']} ref = {'videoImg'}>
+                    <Swiper autoplay = {true} style = {styles.workeImg}
                     >
                         {this.workeImg()}
                     </Swiper>
                 </View>
+                
                 <TouchableOpacity onPress = {this.goPersonCenter.bind(this,this.state.user,this.state.userNameImg)}>
                     <View style = {styles.detailMsg}>
                         <Image source={{uri : this.state.userNameImg}} style = {styles.authorImg}/>
@@ -550,7 +568,7 @@ import ConfirmationWindow from './component/confirmationWindow'
                     <Text style = {styles.commentsTitle}>{this.state.commentNim}条评论</Text>
                     <Text style = {[styles.time]}>{this.state.time} {this.state.address}</Text>
                 </View>
-                <ScrollView>
+                <ScrollView ref = {'scrollView'}>
                     <View style = {[styles.adimatedView]}>
                         <SectionList style = {styles.sectList}
                             renderItem={this.addcommentsItem}
@@ -588,6 +606,18 @@ import ConfirmationWindow from './component/confirmationWindow'
  }
 
  const styles = StyleSheet.create({
+    
+    scrllVh:{
+        width:ScreenWidth,
+        height:ScreenHeight,
+        marginLeft:4,
+        marginTop:70,
+        backgroundColor:'#000000'
+    },
+    srcll : {
+        height:272,
+        marginTop:0
+    },
     workeImgDis :{
         display :'none'
     },
@@ -615,14 +645,8 @@ import ConfirmationWindow from './component/confirmationWindow'
         flex :1
     },
     workeImg: {
-        width:ScreenWidth,
-        height:280
-    },
-    wrapper: {
-        height:280
-    },
-    workeImgs:{
-        height:280
+        height:280,
+        width:ScreenWidth
     },
     adimatedView: {
         paddingLeft:15,
