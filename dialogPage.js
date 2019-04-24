@@ -51,7 +51,6 @@ export default class dialogPage extends Component{
         })
     }
     goBackPage = () =>{
-        const { navigation } = this.props;
         this.props.navigation.goBack()
       }
 
@@ -83,7 +82,7 @@ export default class dialogPage extends Component{
             <Send
                 {...props}
             >
-                <View style = {{marginBottom:15,marginRight:5}}>
+                <View style = {{marginBottom:12,marginRight:5}}>
                     <Feather
                         name = 'send'
                         size = {22}
@@ -96,10 +95,10 @@ export default class dialogPage extends Component{
     }
     onPhotoFunction(){
         ImagePicker.showImagePicker(photoOptions, (response) => {
-            console.log('Response = ', response);
+            
           
             if (response.didCancel) {
-              console.log('User cancelled image picker');
+              
             }
             else if (response.error) {
               console.log('ImagePicker Error: ', response.error);
@@ -188,6 +187,7 @@ export default class dialogPage extends Component{
                     // onInputTextChanged = {this.onInputTextChanged.bind(this)}
                     // renderInputToolbar={this.renderInputToolbar.bind(this)}
                     renderSend = {this.renderSend.bind(this)}
+                    accessoryHeight = {(deviceHeight)/3}
                     accessoryStyle={{height: (deviceHeight)/3}}
                     renderBubble = {this.renderBubble}
                     showAvatarForEveryMessage={true}

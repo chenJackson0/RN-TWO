@@ -19,6 +19,7 @@ const { ScreenWidth, height } = Dimensions.get('window');
 import Entypo from 'react-native-vector-icons/Entypo'
 import Swiper from 'react-native-swiper';
 import Constants from './global.js'
+import getFetch from './service/index.js'
 import ConfirmationWindow from './component/confirmationWindow'
  export default class Detail extends Component {
   constructor(props) {
@@ -83,35 +84,37 @@ import ConfirmationWindow from './component/confirmationWindow'
         }
     }
     //绑定监听事件
-    showDataImg = () => {
-        Constants.publishedListStorageF()//加载缓存获取数据
+    showDataImg = async () => {
         Constants.getUserNameImgStorageF()
         Constants.getUserNameStorageF()
         this.setState({
             itemImg : [],
             changeTabNum : ''
         })
-        setTimeout(()=>{
-            this.init()
-        },200)
+        let publishedList = await getFetch.selectPublished()
+        if(publishedList.code == 200){
+            this.init(publishedList.list)
+        }else if(publishedList.code == 400){
+
+        }else{
+
+        }
     }
     //注册通知
     componentWillMount (){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.showDataImg())]; //BottomTab路由改变时增加读取数据的监听事件 
     }
     //加载数据
-    init = () => {
+    init = (publishedList) => {
         let newTiem = Date.parse(new Date())
         const { navigation } = this.props;
         let id = navigation.getParam("id")
         let changeTabNum = navigation.getParam("changeTabNum")
         let userName = Constants.getUserName() ? Constants.getUserName() : ''
         let userNameImg = Constants.getUserNameImg() ? Constants.getUserNameImg() : 'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'
-        let publishedList = Constants.getSublishedList() ? Constants.getSublishedList() : []
         for(let i = 0;i<publishedList.length;i++){
             if(publishedList[i].id == id){
                 this.state.itemDetail = publishedList[i],
-                // this.state.itemImg = publishedList[i].publicHeadImg
                 this.state.index = i
                 this.state.onTFlagF = false
                 break //这里一定要return,否则一个作品多张图时,会执行多次,重复
@@ -199,9 +202,13 @@ import ConfirmationWindow from './component/confirmationWindow'
         })
     }
     //删除
-    deleteI = () => {
+    deleteI = async () => {
         let data = []
         let dataA = []
+        let commitList = []
+        let deteleCommit = {code : 0}
+        let publishedD = {code : 0}
+        let deteleCommitChild = {code : 0}
         if(this.type == 'work'){
             for(let i = 0;i<this.state.data.length;i++){
                 if(this.state.id == this.state.data[i].id){
@@ -210,6 +217,12 @@ import ConfirmationWindow from './component/confirmationWindow'
                     data.push(this.state.data[i])
                 }
             }
+            if(data.length == 0){
+                this.state.onTFlag = true
+            }else{
+                this.state.onTFlag = false
+            }
+            publishedD = await getFetch.deletePublished({id : this.state.id}) //删除作品
         }else if(this.type == 'commit'){
             for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
                 if(this.state.id == this.state.data[this.state.index].data[i].data[0].id){
@@ -221,6 +234,7 @@ import ConfirmationWindow from './component/confirmationWindow'
             this.state.data[this.state.index].data = dataA
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum - 1
             data = this.state.data
+            deteleCommit = await getFetch.commentsWork({id:this.state.addId,data:dataA,commentsNum:this.state.data[this.state.index].commentsNum}) //删除评论
         }else if(this.type == 'commitChild'){
             for(let i = 0 ;i<this.state.data[this.state.index].data.length;i++){
                 if(this.state.perId == this.state.data[this.state.index].data[i].data[0].id){
@@ -231,22 +245,34 @@ import ConfirmationWindow from './component/confirmationWindow'
                             dataA.push(this.state.data[this.state.index].data[i].data[0].replyToComment[j])
                         }
                     }
+                    this.state.data[this.state.index].data[i].data[0].replyToComment = dataA
+                    deteleCommitChild = await getFetch.eveyComments({id:this.state.addId,index:this.state.perId,
+                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
+                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
+                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
+                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
+                    }) //删除多级评论
                 }
-                this.state.data[this.state.index].data[i].data[0].replyToComment = dataA
             }
             data = this.state.data
         }
-        this.setState({
-            data : data,
-            commentsItem : this.state.data[this.state.index].data,
-            deleteCommentItemsFlag : false,
-            commentNim : this.state.data[this.state.index].commentsNum,
-        })
-        Constants.storage.save({
-            key : 'publishedLi',
-            data : data,
-            defaultExpires: true, 
-        })
+        
+        if(publishedD.code == 200 || deteleCommit.code == 200 || deteleCommitChild.code == 200){
+            if(this.type == 'work'){
+                await getFetch.deleteCollection({id : this.state.id}) //取消
+            }
+            this.setState({
+                data : data,
+                commentsItem : this.state.data[this.state.index].data,
+                deleteCommentItemsFlag : false,
+                onTFlag : this.state.onTFlag,
+                commentNim : this.state.data[this.state.index].commentsNum,
+            })
+        }else if(publishedD.code == 400 || deteleCommit.code == 400 || deteleCommitChild.code == 400){
+
+        }else{
+
+        }
     }
     //删除作品选择
    confirmationWindowF = () => {
@@ -259,11 +285,11 @@ import ConfirmationWindow from './component/confirmationWindow'
         }
     }
     //发送评论
-    saveMsg = () => {
+    saveMsg = async () => {
         let num = 0
         if(this.state.comments){
             for(let i = 0;i<this.state.data.length;i++){
-                if(this.state.id == this.state.data[i].id){
+                if(this.state.addId == this.state.data[i].id){
                     num = this.state.data[i].data.length != 0 ? this.state.data[i].data[this.state.data[i].data.length-1].data[0].id + 1 : num
                 }
             }
@@ -279,22 +305,25 @@ import ConfirmationWindow from './component/confirmationWindow'
             }
             let commentsItem = 
                 {
+                    id : num,
                     data : []
                 }
             
             commentsItem.data.unshift(data)
             this.state.data[this.state.index].data.push(commentsItem)
             this.state.data[this.state.index].commentsNum = this.state.data[this.state.index].commentsNum + 1
-            this.setState({
-                comments : '',
-                commentsItem : this.state.data[this.state.index].data,
-                commentNim : this.state.data[this.state.index].commentsNum
-            })
-            Constants.storage.save({
-                key : 'publishedLi',
-                data : this.state.data,
-                defaultExpires: true, 
-            })
+            let commentsSave = await getFetch.commentsWork({id:this.state.addId,data:this.state.data[this.state.index].data,commentsNum:this.state.data[this.state.index].commentsNum + 1})
+            if(commentsSave.code == 200){
+                this.setState({
+                    comments : '',
+                    commentsItem : this.state.data[this.state.index].data,
+                    commentNim : this.state.data[this.state.index].commentsNum
+                })
+            }else if(commentsSave.code == 400){
+
+            }else{
+
+            }
         }else{
             alert("评论不能为空!")
         }
@@ -343,7 +372,7 @@ import ConfirmationWindow from './component/confirmationWindow'
         )
     }
     //回复评论
-    replyToCommentSaveMsg = (id,name,callFlag,childId) => {
+    replyToCommentSaveMsg = async (id,name,callFlag,childId) => {
         let itemName = null
         if(callFlag){
             itemName = name
@@ -369,27 +398,33 @@ import ConfirmationWindow from './component/confirmationWindow'
                     }
                     this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag = false
                     this.state.data[this.state.index].data[i].data[0].replyToCommentListT = '收起'
-                    this.setState({
-                        commentsItem : this.state.data[this.state.index].data,
-                        replyToCommentText : '',
-                        commentInputCallFlag : false,
-                        shareFlag : false,
+                    let eveyComments = await getFetch.eveyComments({id:this.state.addId,index:id,
+                        data:this.state.data[this.state.index].data[i].data[0].replyToComment,
+                        replyToCommentMaxFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag,
+                        replyToCommentListFlag:this.state.data[this.state.index].data[i].data[0].replyToCommentListFlag,
+                        replyToCommentListT : this.state.data[this.state.index].data[i].data[0].replyToCommentListT,
                     })
+                    if(eveyComments.code == 200){
+                        this.setState({
+                            commentsItem : this.state.data[this.state.index].data,
+                            replyToCommentText : '',
+                            commentInputCallFlag : false,
+                            shareFlag : false,
+                        })
+                    }else if(eveyComments.code == 400){
+
+                    }else{
+
+                    }
                 }else{
                     alert("回复评论不能为空!")
                 }
-                Constants.storage.save({
-                    key : 'publishedLi',
-                    data : this.state.data,
-                    defaultExpires: true, 
-                })
             }
         }
     }
     //评论可回复
     eplyToCommentT = (index) => {
         for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
-            this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
             if(index == this.state.data[this.state.index].data[i].data[0].id){
                 if(this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag){
                     this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = false
@@ -400,6 +435,8 @@ import ConfirmationWindow from './component/confirmationWindow'
                     commentsItem : this.state.data[this.state.index].data,
                     replyToCommentText : ''
                 })
+            }else{
+                this.state.data[this.state.index].data[i].data[0].replyToCommentMaxFlag = true
             }
         }
         
@@ -429,7 +466,6 @@ import ConfirmationWindow from './component/confirmationWindow'
         for(let i = 0;i<this.state.data[this.state.index].data.length;i++){
             if(perId == this.state.data[this.state.index].data[i].data[0].id){
                 for(j = 0;j<this.state.data[this.state.index].data[i].data[0].replyToComment.length;j++){
-                    this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
                     if(id == this.state.data[this.state.index].data[i].data[0].replyToComment[j].id){
                         if(this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag){
                             this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = false
@@ -440,6 +476,8 @@ import ConfirmationWindow from './component/confirmationWindow'
                             commentsItem : this.state.data[this.state.index].data,
                             replyToCommentText : ''
                         })
+                    }else{
+                        this.state.data[this.state.index].data[i].data[0].replyToComment[j].replyToCommentMaxFlag = true
                     }
                 }
             }

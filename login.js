@@ -29,7 +29,6 @@ export default class App extends Component{
   //获取前一个page传来的值
   getAccount = () => {
     const { navigation } = this.props;
-    // Constants.storageF()//加载缓存获取数据
     let user = navigation.getParam("account")
     this.setState({
         userName : user
@@ -69,6 +68,11 @@ export default class App extends Component{
   loginCheckAccount = async () => {
     const { navigation } = this.props;
     if(await this.checkAccount()){
+        Constants.storage.save({
+            key : 'userName',
+            data : this.state.userName,
+            defaultExpires: true, 
+        })
         this.props.navigation.navigate('HomePage',{
             perUser : this.state.userName
         })

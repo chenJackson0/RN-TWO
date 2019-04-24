@@ -19,6 +19,7 @@ import Header from './component/reachHeads'
 const { ScreenWidth, height } = Dimensions.get('window');
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import Constants from './global.js'
+import getFetch from './service';
  export default class Rearch extends Component {
   constructor(props) {
    super(props);
@@ -33,10 +34,7 @@ import Constants from './global.js'
     }
     //绑定事件
     rearchList = () => {
-        Constants.getcommentsItemStorageF()
-        setTimeout(()=>{
-            this.init()
-        },500)
+        this.init()
     }
     //注册通知
     componentWillMount(){
@@ -78,7 +76,7 @@ import Constants from './global.js'
         )
     }
     //点击关注
-    focusOn = (j,name,img) => {
+    focusOn = async (j,name,img) => {
         let deteleFochs = []
         let deteleFensi = []
         let deteleFochsIndex = 0
@@ -130,14 +128,17 @@ import Constants from './global.js'
                 }
             }
         }
-        this.setState({
-            addCommentItem : this.state.addCommentItem
-        })
-        Constants.storage.save({
-            key : 'commentsItemFoucsOn',
-            data : this.state.addCommentItem,
-            defaultExpires: true, 
-        })
+        let focusOnIn = await getFetch.focusOn({userName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
+        let fensi = await getFetch.fensi({userName : name,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+        if(focusOnIn.code == 200 && fensi.code == 200){
+            this.setState({
+                addCommentItem : this.state.addCommentItem,
+            })
+        }else if(focusOnIn.code == 400 || fensi.code == 400){
+
+        }else{
+            
+        }
     }
     //没有关注主播的时候ui
     onF = () => {
@@ -148,27 +149,28 @@ import Constants from './global.js'
         }
     }
     //搜索
-    goToRearch = () => {
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
-        let addCommentItem = []
+    goToRearch = async () => {
+        this.state.addCommentItem = []
         if(this.state.reactInputT){
-            for(let i = 0;i<commentsItem.length;i++){
-                if(commentsItem[i].userName.indexOf(this.state.reactInputT)>=0){
-                    addCommentItem.push(commentsItem[i]);
-                    this.state.reactInputT = ''
-                    this.state.onTFlag = false
-                }else{
-                    this.state.onTFlag = true
-                }
+            let commentsItem = await getFetch.rearch({userName : this.state.reactInputT})
+            if(commentsItem.code == 200 && commentsItem.commitList.length!=0){
+                this.state.reactInputT = ''
+                this.state.onTFlag = false
+                this.setState({
+                    addCommentItem : commentsItem.commitList,
+                    reactInputT : this.state.reactInputT
+                })
+            }else if(commentsItem.code == 400){
+                this.state.onTFlag = true
+            }else{
+                this.state.onTFlag = true
             }
+            this.setState({
+                onTFlag : this.state.onTFlag
+            })
         }else{
             alert('搜索内容不能为空!')
         }
-        this.setState({
-            addCommentItem : addCommentItem,
-            reactInputT : this.state.reactInputT,
-            onTFlag : this.state.onTFlag
-        })
     }
     render() {
         return(

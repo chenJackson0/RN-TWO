@@ -13,7 +13,7 @@ import {SectionList, StyleSheet, Text, View, Dimensions, Image, ScrollView, Anim
 import Header from './component/backHeads'
 global.deviceWidth = Dimensions.get('window').width
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import Constants from './global.js'
+import getFetch from './service/index.js'
 export default class ComList extends Component{
 
   constructor(props){
@@ -30,27 +30,31 @@ export default class ComList extends Component{
       }
   }
   //绑定事件
-    commentList = () => {
-        Constants.getcommentsItemStorageF()
+    commentList = async () => {
         this.setState({
             showFensiList : [],
             foucsOnList : []
         })
-        setTimeout(()=>{
-            this.init()
-        },500)
+        let publishedList = await getFetch.selectPublished()
+        if(publishedList.code == 200){
+            this.init(publishedList.userList)
+        }else if(publishedList.code == 400){
+
+        }else{
+
+        }
     }
     //注册通知
     componentWillMount(){
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.commentList())]; //BottomTab路由改变时增加读取数据的监听事件 
     }
     //获取数据
-    init = () => {
+    init = (commentsItem) => {
         this.state.foucsOnList = []
         this.state.showFensiList = []
+        let newAddName = []
         const { navigation } = this.props;
         let user = navigation.getParam("perUser") ? navigation.getParam("perUser") : ''
-        let commentsItem = Constants.getcommentsItem() ? Constants.getcommentsItem() : []
         //获取关注人数和粉丝人数
         for(let i = 0;i<commentsItem.length;i++){
             if(user == commentsItem[i].userName){
@@ -61,6 +65,16 @@ export default class ComList extends Component{
                 }
                 for(let k = 0;k<commentsItem[i].fensi.length;k++){
                     this.state.showFensiList.push(commentsItem[i].fensi[k])
+                }
+                if(commentsItem[i].focusOns.length == 0){
+                    this.changFocusOnFlag(commentsItem,newAddName)
+                }else{
+                    for(let j = 0;j<commentsItem[i].focusOns.length;j++){
+                        newAddName.push(commentsItem[i].focusOns[j].name)
+                        this.state.foucsOnList.push(commentsItem[i].focusOns[j])
+                        this.changFocusOnFlag(commentsItem,newAddName)
+                        this.state.onFFlagF = false
+                    }
                 }
                 break
             }
@@ -74,17 +88,44 @@ export default class ComList extends Component{
             showFensiList : this.state.showFensiList
         })
     }
+    //关注的用户,在没有关注的用户中要是能被关注的
+    changFocusOnFlag = (commentsItem,newAddName) => {
+        let newCommentsItemIndex = []
+        if(newAddName.length == 0){
+            for(let i = 0;i<commentsItem.length;i++){
+                commentsItem[i].focusOnFlag = true
+                commentsItem[i].focusOn = '关注'
+            }
+        }else{
+            for(let i = 0;i<commentsItem.length;i++){
+                for(let j = 0;j<newAddName.length;j++){
+                    if(commentsItem[i].userName == newAddName[j]){
+                        commentsItem[i].focusOnFlag = false
+                        commentsItem[i].focusOn = '取消关注'
+                        break //此处的break很重要
+                    }else{
+                        commentsItem[i].focusOnFlag = true
+                        commentsItem[i].focusOn = '关注'
+                        // newCommentsItem.push(commentsItem[i])
+                    }
+                }
+            }
+        }
+        // this.setState({
+        //     addCommentItem : newCommentsItem
+        // })
+    }
     //跳转作者主页
-    goPersonCenter = (userName) => {
+    goPersonCenter = (userName,perNameImg) => {
         const { navigation } = this.props;
         this.props.navigation.navigate('DuthonPerCenter',{
-            userName : userName
+            userName : userName,perNameImg:perNameImg
         })
     }
   //加载推荐用户
   addPerItem = ({item,index}) =>{
     return (
-        <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName)}>
+        <TouchableOpacity style = {styles.addList} key = {index} onPress = {this.goPersonCenter.bind(this,item.userName,item.img)}>
             <View style = {styles.addOne}>
                 <Image source={{uri:item.img?item.img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.addListImg} />
             </View>
@@ -118,7 +159,7 @@ export default class ComList extends Component{
     })
   }
   //点击关注
-  focusOn = (j,name,img) => {
+  focusOn = async (j,name,img) => {
     let deteleFochs = []
     let deteleFensi = []
     let deteleFochsIndex = 0
@@ -173,12 +214,36 @@ export default class ComList extends Component{
     this.setState({
         addCommentItem : this.state.addCommentItem
     })
-    this.init()
-    Constants.storage.save({
-        key : 'commentsItemFoucsOn',
-        data : this.state.addCommentItem,
-        defaultExpires: true, 
-    })
+
+
+    let focusOnIn = await getFetch.focusOn({userName : this.state.user,focusOns:this.state.addCommentItem[deteleFochsIndex].focusOns})
+    let fensi = await getFetch.fensi({userName : name,fensi:this.state.addCommentItem[deteleFensiIndex].fensi})
+    if(focusOnIn.code == 200 && fensi.code == 200){
+        if(!this.state.addCommentItem[deteleFensiIndex].focusOnFlag){
+            if(this.state.perUserName == this.state.userName){
+                this.state.FocusOn = this.state.FocusOn + 1
+                this.state.fens = this.state.fens + 1
+            }else{
+                this.state.fens = this.state.fens + 1
+            }
+        }else{
+            if(this.state.perUserName == this.state.userName){
+                this.state.FocusOn = this.state.FocusOn - 1
+                this.state.fens = this.state.fens - 1
+            }else{
+                this.state.fens = this.state.fens - 1
+            }
+        }
+        this.setState({
+            addCommentItem : this.state.addCommentItem,
+            FocusOn : this.state.FocusOn,
+            fens : this.state.fens
+        })
+    }else if(focusOnIn.code == 400 || fensi.code == 400){
+
+    }else{
+        
+    }
   }
   //点击tab切换
   changeTab = (i) => {
@@ -226,7 +291,7 @@ export default class ComList extends Component{
             fensi:[]
         }
         for(let i = 0;i<this.state.showFensiList.length;i++){
-            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name)}>
+            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.showFensiList[i].name,this.state.showFensiList[i].img)}>
                     <View style = {styles.radius}>
                         <Image source={{uri:this.state.showFensiList[i].img?this.state.showFensiList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
                     </View> 
@@ -253,7 +318,7 @@ export default class ComList extends Component{
             foncsOn:[]
         }
         for(let i = 0;i<this.state.foucsOnList.length;i++){
-            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name)}>
+            let item = <TouchableOpacity style = {styles.per} key = {i} onPress = {this.goPersonCenter.bind(this,this.state.foucsOnList[i].name,this.state.foucsOnList[i].img)}>
                         <View style = {styles.radius}>
                             <Image source={{uri:this.state.foucsOnList[i].img?this.state.foucsOnList[i].img:'http://p1.meituan.net/deal/849d8b59a2d9cc5864d65784dfd6fdc6105232.jpg'}} style = {styles.perImg} />
                         </View> 

@@ -124,7 +124,13 @@ export default class SetPassWord extends Component{
         addCommentNum : this.state.addCommentNum,
         focusOn :'关注',
         focusOnFlag : true,
-        address : this.state.address
+        address : this.state.address,
+        nickName : this.state.account,
+        webSite : '',
+        personalResume : '',
+        email : '',
+        phone : '',
+        sex : ''
     }
     getFetch.registered(data)
   }
