@@ -21,6 +21,7 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import Octicons from 'react-native-vector-icons/Octicons'
 import Projuct from "./projuct"
+import CartShopping from "./cartShopping"
 // import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 export default class App extends Component {
     render() {
@@ -159,6 +160,9 @@ const RootStack = createStackNavigator(
       header:null
     })},
     Projuct:{screen:Projuct,navigationOptions :({navigation})=>({
+      header:null
+    })},
+    CartShopping:{screen:CartShopping,navigationOptions :({navigation})=>({
       header:null
     })},
   },

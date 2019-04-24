@@ -87,6 +87,10 @@ projectlist = async (data) => {
 shoppingCart = async (data) => {
   return await get_fetch(part+'shoppingCart/shoppingCart',data,'application/json')
 }
+//购物车
+getShoppingCart = async (data) => {
+  return await get_fetch(part+'shoppingCart/getShoppingCart',data,'application/json')
+}
 //请求接口
 get_fetch = async (url,data,type) => {
   return await fetch(url,{
@@ -131,6 +135,7 @@ get_fetch = async (url,data,type) => {
     changeFocus : changeFocus,
     changeFensi : changeFensi,
     projectlist : projectlist,
-    shoppingCart : shoppingCart
+    shoppingCart : shoppingCart,
+    getShoppingCart : getShoppingCart
   }
   export default getFetch

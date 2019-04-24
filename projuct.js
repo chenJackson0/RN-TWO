@@ -34,13 +34,13 @@ class ProjectList extends Component {
         return(
             <View style={styles.projectRightList} ref = {this.props.refIndex}>
                 <View style = {styles.ProjectImg}>
-                    <Image style = {styles.img}/>
+                    <Image style = {styles.img} source = {{uri : this.props.data.img ? this.props.data.img : '......'}}/>
                 </View>
                 <View style = {styles.ProjectMessage}>
                     <Text style = {styles.title} numberOfLines={2} ellipsizeMode={'tail'}>{this.props.data.name}</Text>
                     <Text style = {styles.price}>¥{this.props.data.price}.00</Text>
                     <View style = {styles.addCart}>
-                        <Text style = {styles.number}>销量 : {this.props.data.number}</Text>
+                        <Text style = {styles.number}>销量 : {this.props.data.sales}</Text>
                         <EvilIcons name = {'cart'} size = {30}  color = {'#cccccc'} style = {styles.cart} onPress={this.addCard.bind(this,this.props.refIndex,this.props.data)}/>
                     </View>
                 </View>
@@ -77,12 +77,20 @@ export default class Projuct extends Component {
             type : type
         }
         this.setState({
-            projectData : [],
+            // projectData : [],
+            index : 0
         })
+        
+        const { navigation } = this.props;
+        let userName = navigation.getParam("userName")
+        let userData = {
+            userName : userName
+        }
         let projectData = await getFetch.projectlist(data)
-        if(projectData.code == 200){
-            this.init(projectData.projectlist,projectData.projectTitle)
-        }else if(projectData.code == 400){
+        let getShoppingCartData = await getFetch.getShoppingCart(userData)
+        if(projectData.code == 200 && getShoppingCartData.code == 200){
+            this.init(projectData.projectlist,projectData.projectTitle,getShoppingCartData.number)
+        }else if(projectData.code == 400 && getShoppingCartData.code == 400){
             alert(projectData.message)
         }else{
             alert(projectData.message)
@@ -93,13 +101,14 @@ export default class Projuct extends Component {
         this.addPublisedList = [this.props.navigation.addListener('willFocus', () => this.showProjuct())]; //BottomTab路由改变时增加读取数据的监听事件 
     }
     //加载数据
-    init = (projectlist,projectTitle) => {
+    init = (projectlist,projectTitle,number) => {
         const { navigation } = this.props;
         let userName = navigation.getParam("userName")
         this.setState({
             projectData : projectlist,
             projectTitleData : projectTitle,
-            userName : userName
+            userName : userName,
+            number : number
         })
     }
    
@@ -128,6 +137,7 @@ export default class Projuct extends Component {
             })
             shoppingCartData = data
             shoppingCartData.userName = this.state.userName
+            shoppingCartData.number = 1
             let shoppingCartData = await getFetch.shoppingCart(shoppingCartData)
             if(shoppingCartData.code == 200){
                 this.run(pos,data)
@@ -168,7 +178,7 @@ export default class Projuct extends Component {
                 firction: 1
             }).start();
             if(this.state.number + 1 >99){
-                this.state.number = 99 + '+'
+                this.state.number = '99+'
             }else{
                 this.state.number = this.state.number + 1
             }
@@ -220,11 +230,10 @@ export default class Projuct extends Component {
     }
     //跳购物车列表
     goShopping = () => {
-        alert(JSON.stringify(this.state.addCartData))
-        // const { navigation } = this.props;
-        // this.props.navigation.navigate('CartShopping',{
-        //     shoppingData : this.state.addCartData
-        // })
+        const { navigation } = this.props;
+        this.props.navigation.navigate('CartShopping',{
+            userName : this.state.userName
+        })
     }
     render() {
         const springBig = this.state.springValue.interpolate({
@@ -280,7 +289,7 @@ export default class Projuct extends Component {
     },
     proLeft :{
         width:120,
-        backgroundColor:'#dddddd',
+        backgroundColor:'#f2f2f2',
     },
     proRight:{
         width:255
@@ -298,7 +307,7 @@ export default class Projuct extends Component {
         paddingBottom:10
     },
     clickLeftTitle : {
-        backgroundColor:'#666666',
+        backgroundColor:'#000000',
         color:'#ffffff'
     },
     projectRightList : {
@@ -310,14 +319,14 @@ export default class Projuct extends Component {
         height:100,
         borderWidth:1,
         borderColor:'#cccccc',
-        marginLeft:5
+        marginLeft:0
     },
     img:{
         flex:1
     },
     ProjectMessage:{
         marginLeft:10,
-        width:135,
+        width:140,
     },
     title:{
         fontSize:15,

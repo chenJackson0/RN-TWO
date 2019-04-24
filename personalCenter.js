@@ -1,7 +1,6 @@
 //czg data 2019-02-19
 import React, { Component } from 'react';
 import {
-    Platform,
     StyleSheet,
     Text,
     View,
@@ -10,8 +9,6 @@ import {
     Animated,
     ScrollView,
     TouchableOpacity,
-    SectionList,
-    DeviceEventEmitter
 } from 'react-native';
 
  //引用插件
