@@ -23,7 +23,7 @@ published = async (data) => {
 //查找作品
 selectPublished = async (data) => {
   return await get_fetch('http://127.0.0.1:27017/published/selectPublished',data,'application/json')
-=======
+
   return await get_fetch(part+'registered/getUser',data,'application/json')
 }
 //模糊查询用户列表
@@ -89,7 +89,7 @@ selectPerUser = async (data) => {
 //编辑用户信息
 editPerUser = async (data) => {
   return await get_fetch(part+'registered/editPerUser',data,'application/json')
->>>>>>> master
+
 }
 //请求接口
 get_fetch = async (url,data,type) => {
