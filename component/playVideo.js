@@ -21,11 +21,11 @@
 // }
 
 // export default class PlayVideo extends Component {
-  
+
 //   static navigationOptions = {
 //     headerTitle: '测试视频播放'
 //   };
-  
+
 //   constructor(props) {
 //     super(props);
 //     this.state = {
@@ -42,7 +42,7 @@
 //       playFromBeginning: false, // 是否从头开始播放
 //     };
 //   }
-  
+
 //   render() {
 //     return (
 //       <View style={styles.container} onLayout={this._onLayout}>
@@ -142,24 +142,24 @@
 //       </View>
 //     )
 //   }
-  
+
 //   /// -------Video组件回调事件-------
-  
+
 //   _onLoadStart = () => {
 //     console.log('视频开始加载');
 //   };
-  
+
 //   _onBuffering = () => {
 //     console.log('视频缓冲中...')
 //   };
-  
+
 //   _onLoaded = (data) => {
 //     console.log('视频加载完成');
 //     this.setState({
 //       duration: data.duration,
 //     });
 //   };
-  
+
 //   _onProgressChanged = (data) => {
 //     console.log('视频进度更新');
 //     if (this.state.isPlaying) {
@@ -168,7 +168,7 @@
 //       })
 //     }
 //   };
-  
+
 //   _onPlayEnd = () => {
 //     console.log('视频播放结束');
 //     this.setState({
@@ -177,13 +177,13 @@
 //       playFromBeginning: true
 //     });
 //   };
-  
+
 //   _onPlayError = () => {
 //     console.log('视频播放失败');
 //   };
-  
+
 //   ///-------控件点击事件-------
-  
+
 //   /// 控制播放器工具栏的显示和隐藏
 //   hideControl() {
 //     if (this.state.showVideoControl) {
@@ -208,7 +208,7 @@
 //       )
 //     }
 //   }
-  
+
 //   /// 点击了播放器正中间的播放按钮
 //   onPressPlayButton() {
 //     let isPlay = !this.state.isPlaying;
@@ -223,12 +223,12 @@
 //       })
 //     }
 //   }
-  
+
 //   /// 点击了工具栏上的播放按钮
 //   onControlPlayPress() {
 //     this.onPressPlayButton();
 //   }
-  
+
 //   /// 点击了工具栏上的全屏按钮
 //   onControlShrinkPress() {
 //     if (this.state.isFullScreen) {
@@ -237,7 +237,7 @@
 //       Orientation.lockToLandscape();
 //     }
 //   }
-  
+
 //   /// 进度条值改变
 //   onSliderValueChanged(currentTime) {
 //     this.videoPlayer.seek(currentTime);
@@ -253,14 +253,14 @@
 //       })
 //     }
 //   }
-  
+
 //   /// 屏幕旋转时宽高会发生变化，可以在onLayout的方法中做处理，比监听屏幕旋转更加及时获取宽高变化
 //   _onLayout = (event) => {
 //     //获取根View的宽高
 //     let {width, height} = event.nativeEvent.layout;
 //     console.log('通过onLayout得到的宽度：' + width);
 //     console.log('通过onLayout得到的高度：' + height);
-    
+
 //     // 一般设备横屏下都是宽大于高，这里可以用这个来判断横竖屏
 //     let isLandscape = (width > height);
 //     if (isLandscape){
@@ -278,9 +278,9 @@
 //     }
 //     Orientation.unlockAllOrientations();
 //   };
-  
+
 //   /// -------外部调用事件方法-------
-  
+
 //   ///播放视频，提供给外部调用
 //   playVideo() {
 //     this.setState({
@@ -288,14 +288,14 @@
 //       showVideoCover: false
 //     })
 //   }
-  
+
 //   /// 暂停播放，提供给外部调用
 //   pauseVideo() {
 //     this.setState({
 //       isPlaying: false,
 //     })
 //   }
-  
+
 //   /// 切换视频并可以指定视频开始播放的时间，提供给外部调用
 //   switchVideo(videoURL, seekTime) {
 //     this.setState({
@@ -363,53 +363,53 @@ import Video from 'react-native-video';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
 global.time = null
-export default class BackHeads extends Component{
-    constructor(props){
+export default class BackHeads extends Component {
+    constructor(props) {
         super(props)
         this.state = {
-            isPlaying : true,
-            showVideoControl : false,
-            isMune : true,
-            startTime : 0,
-            endTime : 0,
-            vh : true,
+            isPlaying: true,
+            showVideoControl: false,
+            isMune: true,
+            startTime: 0,
+            endTime: 0,
+            vh: true,
         }
     };
     //播放和暂停视频
-    playVideo = ()=>{
-        if(this.state.isPlaying){
+    playVideo = () => {
+        if (this.state.isPlaying) {
             this.setState({
-                isPlaying : false
+                isPlaying: false
             })
-        }else{
+        } else {
             this.setState({
-                isPlaying : true
+                isPlaying: true
             })
         }
-        
+
     }
     //显示视频菜单栏
     showMune = () => {
-        if(this.state.isMune){
+        if (this.state.isMune) {
             this.setState({
-                isMune : false
+                isMune: false
             })
-        }else{
+        } else {
             this.setState({
-                isMune : true
+                isMune: true
             })
         }
     }
     //获取视频时长
     onLoad = (data) => {
         this.setState({
-            endTime : data.duration
+            endTime: data.duration
         })
     }
     //将视频时长转换成时分秒
     changTime = (time) => {
-        let hour =  parseInt((time % (3600*24)) / 3600);
-        let minute = parseInt((time % 3600)/60);
+        let hour = parseInt((time % (3600 * 24)) / 3600);
+        let minute = parseInt((time % 3600) / 60);
         let s = parseInt(time % 60);
         // 补零
         let zero = function (v) {
@@ -438,49 +438,49 @@ export default class BackHeads extends Component{
     }
     //放大视频或搜小
     amplification = async (i) => {
-        if(this.state.vh){
+        if (this.state.vh) {
             this.setState({
-                vh : false
+                vh: false
             })
-        }else{
+        } else {
             this.setState({
-                vh : true
+                vh: true
             })
         }
-        await this.props.setVh(this.state.vh,i)
+        await this.props.setVh(this.state.vh, i)
     }
     //传值给父
-    
+
     render() {
         return (
-            <View style = {[styles.playButton,this.state.vh ? '' : styles.amplification]}>
-                 <TouchableWithoutFeedback onPress = {this.showMune.bind(this)}>
-                    <Video style = {[styles.video,this.state.vh ? '' : styles.videoVh]} source = {{uri : this.props.video}}
-                    resizeMode={'contain'}
-                    ref={(ref) => this.videoPlayer = ref}
-                    paused={this.state.isPlaying}
-                    repeat = {true}
-                    onLoad = {this.onLoad.bind(this)}
-                    onProgress = {this.onProgressChanged.bind(this)}
-                    onEnd = {this.onPlayEnd.bind(this)}
+            <View style={[styles.playButton, this.state.vh ? '' : styles.amplification]}>
+                <TouchableWithoutFeedback onPress={this.showMune.bind(this)}>
+                    <Video style={[styles.video, this.state.vh ? '' : styles.videoVh]} source={{ uri: this.props.video }}
+                        resizeMode={'contain'}
+                        ref={(ref) => this.videoPlayer = ref}
+                        paused={this.state.isPlaying}
+                        repeat={true}
+                        onLoad={this.onLoad.bind(this)}
+                        onProgress={this.onProgressChanged.bind(this)}
+                        onEnd={this.onPlayEnd.bind(this)}
                     />
                 </TouchableWithoutFeedback>
-                <AntDesign name = {'play'} style={[styles.playIcon,this.state.isPlaying ? '' : styles.disPlayIcon]} size = {30} color = {'black'} onPress = {this.playVideo.bind(this)}/>
-                <View style = {[styles.mnueVideo,this.state.isMune ? styles.isMuneDis : '']}>
-                    <Entypo name = {this.state.isPlaying ? 'controller-play' : 'controller-paus'} size = {30} style = {[styles.icon,this.state.vh ? '' : styles.iconVhL]} color = {'white'} onPress = {this.playVideo.bind(this)}/>
-                    <Text style = {styles.time}>{this.changTime(this.state.startTime)}</Text>
+                <AntDesign name={'play'} style={[styles.playIcon, this.state.isPlaying ? '' : styles.disPlayIcon]} size={30} color={'black'} onPress={this.playVideo.bind(this)} />
+                <View style={[styles.mnueVideo, this.state.isMune ? styles.isMuneDis : '']}>
+                    <Entypo name={this.state.isPlaying ? 'controller-play' : 'controller-paus'} size={30} style={[styles.icon, this.state.vh ? '' : styles.iconVhL]} color={'white'} onPress={this.playVideo.bind(this)} />
+                    <Text style={styles.time}>{this.changTime(this.state.startTime)}</Text>
                     <Slider
-                        style = {styles.duration}
+                        style={styles.duration}
                         maximumTrackTintColor={'#999999'}
                         minimumTrackTintColor={'#ffffff'}
                         value={this.state.startTime}
                         minimumValue={0}
-                        thumbImage = {require('../image/per.png')}
+                        thumbImage={require('../image/per.png')}
                         maximumValue={this.state.endTime}
                         onValueChange={(startTime) => { this.onSliderValueChanged(startTime) }}
                     />
-                    <Text style = {styles.time}>{this.changTime(this.state.endTime)}</Text>
-                    <MaterialIcons name = {this.state.vh ? 'crop-free' : 'fullscreen-exit'} size = {30} style = {[styles.icon,this.state.vh ? '' : styles.iconVhR]} color = {'white'} onPress = {this.amplification.bind(this,this.props.k)}/>
+                    <Text style={styles.time}>{this.changTime(this.state.endTime)}</Text>
+                    <MaterialIcons name={this.state.vh ? 'crop-free' : 'fullscreen-exit'} size={30} style={[styles.icon, this.state.vh ? '' : styles.iconVhR]} color={'white'} onPress={this.amplification.bind(this, this.props.k)} />
                 </View>
             </View>
         );
@@ -488,74 +488,74 @@ export default class BackHeads extends Component{
 }
 
 const styles = StyleSheet.create({
-    isMuneDis:{
-        display:'none'
+    isMuneDis: {
+        display: 'none'
     },
-    iconVhL:{
-        textAlign:'right'
+    iconVhL: {
+        textAlign: 'right'
     },
-    iconVhR:{
-        textAlign:'left'
+    iconVhR: {
+        textAlign: 'left'
     },
-    mnueVideo:{
-        flexDirection:'row',
-        position:'absolute',
-        justifyContent:'center',
-        alignItems:'center',
-        left:0,
-        bottom:0,
-        backgroundColor:'#000000',
-        paddingLeft:10,
-        paddingRight:10,
-        paddingTop:10,
-        paddingBottom:8,
-        opacity:0.6
+    mnueVideo: {
+        flexDirection: 'row',
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        left: 0,
+        bottom: 0,
+        backgroundColor: '#000000',
+        paddingLeft: 10,
+        paddingRight: 10,
+        paddingTop: 10,
+        paddingBottom: 8,
+        opacity: 0.6
     },
-    icon:{
-        flex:1,
-        textAlign:'center',
+    icon: {
+        flex: 1,
+        textAlign: 'center',
     },
-    time:{
-        flex:2,
-        fontSize:12,
-        color:'#ffffff',
-        textAlign:'center'
+    time: {
+        flex: 2,
+        fontSize: 12,
+        color: '#ffffff',
+        textAlign: 'center'
     },
-    duration:{
-        flex:4,
+    duration: {
+        flex: 4,
     },
-    playButton:{
-        justifyContent:'center',
-        alignItems:'center',
-        height:272,
-        width:'100%',
-        position:'relative',
-        backgroundColor:'#000000'
+    playButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 272,
+        width: '100%',
+        position: 'relative',
+        backgroundColor: '#000000'
     },
-    video:{
-        height:280,
-        width:'100%',
+    video: {
+        height: 280,
+        width: '100%',
     },
-    playIcon:{
-        width:30,
-        height:30,
-        position:'absolute',
-        top:'50%',
-        marginTop:-15
+    playIcon: {
+        width: 30,
+        height: 30,
+        position: 'absolute',
+        top: '50%',
+        marginTop: -15
     },
-    disPlayIcon:{
-        display:'none'
+    disPlayIcon: {
+        display: 'none'
     },
-    amplification:{
-        height:deviceWidth,
-        width:deviceHeight-140,
-        transform: [{rotate:'90deg'}],
-        left : -deviceWidth/2-35+70,
-        zIndex:9999,
-        top:0,
+    amplification: {
+        height: deviceWidth,
+        width: deviceHeight - 140,
+        transform: [{ rotate: '90deg' }],
+        left: -deviceWidth / 2 - 35 + 70,
+        zIndex: 9999,
+        top: 0,
     },
-    videoVh : {
-        height:deviceWidth,
-        width:deviceHeight-70,
+    videoVh: {
+        height: deviceWidth,
+        width: deviceHeight - 70,
     },
 });

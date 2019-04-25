@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import { AsyncStorage } from 'react-native';
 import Storage from 'react-native-storage';
 var storage = new Storage({
-  // 最大容量，默认值1000条数据循环存储
-  size: 1000,
-  // 存储引擎：对于RN使用AsyncStorage，对于web使用window.localStorage
-  // 如果不指定则数据只会保存在内存中，重启后即丢失
-  storageBackend: AsyncStorage,
-  // 数据过期时间，默认一整天（1000 * 3600 * 24 毫秒），设为null则永不过期
-  defaultExpires: 1000 * 24 * 360000000000000000,
-  // 读写时在内存中缓存数据。默认启用。
-  enableCache: true,
+    // 最大容量，默认值1000条数据循环存储
+    size: 1000,
+    // 存储引擎：对于RN使用AsyncStorage，对于web使用window.localStorage
+    // 如果不指定则数据只会保存在内存中，重启后即丢失
+    storageBackend: AsyncStorage,
+    // 数据过期时间，默认一整天（1000 * 3600 * 24 毫秒），设为null则永不过期
+    defaultExpires: 1000 * 24 * 360000000000000000,
+    // 读写时在内存中缓存数据。默认启用。
+    enableCache: true,
 })
 accountList = []//所以注册用户列表
 publishedList = [] //发表的作品
@@ -30,8 +30,8 @@ getUserName = () => {
 //模拟api获取用户名
 getUserNameStorageF = () => {
     storage.load({
-        key : 'userName',
-        autoSync : true
+        key: 'userName',
+        autoSync: true
     }).then(ret => {
         this.userName = ret
     }).catch(err => {
@@ -41,8 +41,8 @@ getUserNameStorageF = () => {
 //模拟登录用户个人图像api
 getUserNameImgStorageF = () => {
     storage.load({
-        key : 'userNameImg',
-        autoSync : true
+        key: 'userNameImg',
+        autoSync: true
     }).then(ret => {
         this.userNameImg = ret
     }).catch(err => {
@@ -70,8 +70,8 @@ getcommentsItem = () => {
 //模拟获取收藏作品api
 getCollectionItemsStorageF = () => {
     storage.load({
-        key : 'collectionItem',
-        autoSync : true
+        key: 'collectionItem',
+        autoSync: true
     }).then(ret => {
         this.collectionItems = ret
     }).catch(err => {
@@ -82,8 +82,8 @@ getCollectionItemsStorageF = () => {
 //模拟获取粉丝和不关注关联表api
 getcommentsItemStorageF = () => {
     storage.load({
-        key : 'commentsItemFoucsOn',
-        autoSync : true
+        key: 'commentsItemFoucsOn',
+        autoSync: true
     }).then(ret => {
         this.commentsItemFoucsOn = ret
     }).catch(err => {
@@ -92,9 +92,9 @@ getcommentsItemStorageF = () => {
 }
 
 //清除数据用的,到时候删--------------------
-removeNameList = ['account','commentsItemFoucsOn','publishedLi','userName','userNameImg','collectionItem']
+removeNameList = ['account', 'commentsItemFoucsOn', 'publishedLi', 'userName', 'userNameImg', 'collectionItem']
 removeName = () => {
-    for(let i = 0;i<this.removeNameList.length;i++){
+    for (let i = 0; i < this.removeNameList.length; i++) {
         storage.remove({
             key: this.removeNameList[i]
         });
@@ -106,8 +106,8 @@ removeName = () => {
 //模拟获取api用户表
 storageF = () => {
     storage.load({
-        key : 'account',
-        autoSync : true
+        key: 'account',
+        autoSync: true
     }).then(ret => {
         this.accountList = ret
     }).catch(err => {
@@ -118,8 +118,8 @@ storageF = () => {
 //模拟获取api用户发布作品表
 publishedListStorageF = () => {
     storage.load({
-        key : 'publishedLi',
-        autoSync : true
+        key: 'publishedLi',
+        autoSync: true
     }).then(ret => {
         this.publishedList = ret
     }).catch(err => {
@@ -127,18 +127,18 @@ publishedListStorageF = () => {
     })
 }
 const storageG = {
-  storage : storage,
-  storageF : storageF,
-  publishedListStorageF : publishedListStorageF,
-  getcommentsItemStorageF : getcommentsItemStorageF,
-  getStorageAccount : getStorageAccount,
-  getSublishedList : getSublishedList,
-  getcommentsItem : getcommentsItem,
-  getUserNameImg : getUserNameImg,
-  getCollectionItems : getCollectionItems,
-  getCollectionItemsStorageF : getCollectionItemsStorageF,
-  getUserNameImgStorageF : getUserNameImgStorageF,
-  getUserName : getUserName,
-  getUserNameStorageF : getUserNameStorageF,
+    storage: storage,
+    storageF: storageF,
+    publishedListStorageF: publishedListStorageF,
+    getcommentsItemStorageF: getcommentsItemStorageF,
+    getStorageAccount: getStorageAccount,
+    getSublishedList: getSublishedList,
+    getcommentsItem: getcommentsItem,
+    getUserNameImg: getUserNameImg,
+    getCollectionItems: getCollectionItems,
+    getCollectionItemsStorageF: getCollectionItemsStorageF,
+    getUserNameImgStorageF: getUserNameImgStorageF,
+    getUserName: getUserName,
+    getUserNameStorageF: getUserNameStorageF,
 }
 export default storageG
